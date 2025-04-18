@@ -1,10 +1,24 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import supabase from '../supabase';
 
 const profiles = ref([]);
 const loading = ref(true);
 const error = ref(null);
+
+const maleRemaining = computed(() => {
+  if (loading.value || error.value) return null;
+  const maleCount = profiles.value.filter(profile => profile.gender === '남자').length;
+  console.log('남자 프로필 수:', maleCount, '남은 자리:', 50 - maleCount);
+  return Math.max(0, 50 - maleCount);
+});
+
+const femaleRemaining = computed(() => {
+  if (loading.value || error.value) return null;
+  const femaleCount = profiles.value.filter(profile => profile.gender === '여자').length;
+  console.log('여자 프로필 수:', femaleCount, '남은 자리:', 50 - femaleCount);
+  return Math.max(0, 50 - femaleCount);
+});
 
 async function fetchProfiles() {
   try {
@@ -17,6 +31,11 @@ async function fetchProfiles() {
     if (err) throw err;
     
     profiles.value = data;
+    console.log('로드된 프로필 데이터:', data);
+    console.log('성별 분포:', data.reduce((acc, profile) => {
+      acc[profile.gender] = (acc[profile.gender] || 0) + 1;
+      return acc;
+    }, {}));
     loading.value = false;
   } catch (err) {
     console.error('Error fetching profiles:', err);
@@ -48,6 +67,16 @@ onMounted(() => {
           <h3 class="section-title">현재 신청목록</h3>
           <span class="realtime-label">실시간</span>
         </div>
+        <div class="remaining-slots" v-if="!loading && !error">
+          <div class="slot-item">
+            <span class="slot-emoji">👨</span>
+            <span class="slot-text">남성 <strong>{{ maleRemaining }}</strong>자리 남음</span>
+          </div>
+          <div class="slot-item">
+            <span class="slot-emoji">👩</span>
+            <span class="slot-text">여성 <strong>{{ femaleRemaining }}</strong>자리 남음</span>
+          </div>
+        </div>
         <div class="participants-list">
           <div v-if="loading" class="loading">데이터를 불러오는 중...</div>
           <div v-else-if="error" class="error">{{ error }}</div>
@@ -56,7 +85,7 @@ onMounted(() => {
             <div v-for="(profile, index) in profiles.slice(0, 5)" :key="index" class="profile-entry">
               <span class="profile-name">
                 {{ profile.gender }}
-                <span class="gender-emoji">{{ profile.gender === '남성' ? '👨' : profile.gender === '여성' ? '👩' : '' }}</span>
+                <span class="gender-emoji">{{ profile.gender === '남자' ? '👨' : profile.gender === '여자' ? '👩' : '' }}</span>
               </span>
               <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
             </div>
@@ -224,6 +253,35 @@ h2 {
   height: 100px;
   color: var(--cream);
   opacity: 0.8;
+}
+
+.remaining-slots {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: var(--cream);
+}
+
+.slot-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-emoji {
+  font-size: 1.3rem;
+}
+
+.slot-text {
+  font-size: 0.95rem;
+}
+
+.slot-text strong {
+  font-size: 1.2rem;
+  color: var(--light-brown);
 }
 
 .cta-button {
