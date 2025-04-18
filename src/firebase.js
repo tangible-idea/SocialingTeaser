@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "226998479560",
   appId: "1:226998479560:web:df3a9d97b5aa49a31793fd",
   measurementId: "G-W638MFBF0K",
-  databaseURL: "https://dating-8ad83-default-rtdb.firebaseio.com" // 꼭 필요합니다 - Realtime Database URL
+  databaseURL: "https://dating-8ad83-default-rtdb.asia-southeast1.firebasedatabase.app" // 아시아 지역 데이터베이스 URL로 수정
 };
 
 // Firebase 초기화
