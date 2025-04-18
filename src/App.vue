@@ -5,6 +5,7 @@ import TestimonialsSection from './components/TestimonialsSection.vue';
 import RegistrationForm from './components/RegistrationForm.vue';
 import FooterSection from './components/FooterSection.vue';
 import DatingProfiles from './components/DatingProfiles.vue';
+import VisitorCounter from './components/VisitorCounter.vue';
 </script>
 
 <template>
@@ -15,6 +16,7 @@ import DatingProfiles from './components/DatingProfiles.vue';
     <TestimonialsSection />
     <RegistrationForm />
     <FooterSection />
+    <VisitorCounter />
   </div>
 </template>
 
