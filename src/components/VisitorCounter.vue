@@ -1,22 +1,22 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { trackVisitors, subscribeToActiveVisitors } from '../firebase';
+import { trackVisitors, subscribeToActiveVisitors } from '../visitor-tracker';
 
 const activeVisitors = ref(0);
 let unsubscribe = null;
 
 onMounted(() => {
-  // Firebase가 로드되었을 때 실행
+  // Supabase 방문자 추적 시작
   try {
     // 방문자 추적 시작
     trackVisitors();
     
     // 실시간 접속자 수 구독
-    subscribeToActiveVisitors((count) => {
+    unsubscribe = subscribeToActiveVisitors((count) => {
       activeVisitors.value = count;
     });
   } catch (error) {
-    console.error('Firebase 방문자 추적 초기화 오류:', error);
+    console.error('방문자 추적 초기화 오류:', error);
   }
 });
 
