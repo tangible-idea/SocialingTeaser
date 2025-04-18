@@ -1,5 +1,33 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import supabase from '../supabase';
+
+const profiles = ref([]);
+const loading = ref(true);
+const error = ref(null);
+
+async function fetchProfiles() {
+  try {
+    loading.value = true;
+    const { data, error: err } = await supabase
+      .from('dating')
+      .select('gender, height, field')
+      .order('created_at', { ascending: false });
+    
+    if (err) throw err;
+    
+    profiles.value = data;
+    loading.value = false;
+  } catch (err) {
+    console.error('Error fetching profiles:', err);
+    error.value = 'Failed to load profiles data';
+    loading.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchProfiles();
+});
 </script>
 
 <template>
@@ -16,11 +44,21 @@ import { ref } from 'vue';
       </div>
       
       <div class="promotion">
-        <div class="price-tag">
-          <span class="price">5,000원</span>
-          <span class="limited">선착순 100명 한정</span>
+        <div class="title-wrapper">
+          <h3 class="section-title">현재 신청목록</h3>
+          <span class="realtime-label">실시간</span>
         </div>
-        <p class="regular-price">정상가 15,000원</p>
+        <div class="participants-list">
+          <div v-if="loading" class="loading">데이터를 불러오는 중...</div>
+          <div v-else-if="error" class="error">{{ error }}</div>
+          <div v-else-if="profiles.length === 0" class="no-participants">아직 등록된 참가자가 없습니다.</div>
+          <div v-else class="profile-entries">
+            <div v-for="(profile, index) in profiles.slice(0, 5)" :key="index" class="profile-entry">
+              <span class="profile-name">{{ profile.gender }}</span>
+              <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- 네이버 스마트 스토어로 연결 -->
       <a href="https://smartstore.naver.com/tangible/products/11422139807" target="_blank" class="cta-button">
@@ -104,31 +142,77 @@ h2 {
   max-width: 90%;
 }
 
-.price-tag {
+.title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.realtime-label {
+  font-size: 1rem;
+  color: var(--accent);
+  background-color: var(--dark-brown);
+  padding: 0.2rem 0.5rem;
+  border-radius: 20px;
+}
+
+.participants-list {
+  text-align: left;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  height: 160px; /* 높이를 조정하여 약 2.5개의 프로필이 보이도록 설정 */
+  overflow: hidden;
+  position: relative;
+}
+
+.participants-list::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 30px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(105, 80, 61, 0.5));
+  pointer-events: none;
+}
+
+.profile-entries {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+.profile-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-name {
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.profile-details {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.loading, .error, .no-participants {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.price {
-  font-size: 3rem;
-  font-weight: 800;
-  color: var(--light-brown);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.limited {
-  font-size: 1.2rem;
-  background-color: var(--accent);
-  padding: 0.3rem 1rem;
-  border-radius: 20px;
-  margin-top: 0.5rem;
-}
-
-.regular-price {
-  font-size: 1.2rem;
-  text-decoration: line-through;
+  height: 100px;
+  color: var(--cream);
   opacity: 0.8;
 }
 
@@ -183,10 +267,6 @@ h2 {
   h2 {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
-  }
-  
-  .price {
-    font-size: 2.5rem;
   }
   
   .promotion {
