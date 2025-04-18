@@ -5,8 +5,16 @@ import { ref } from 'vue';
 <template>
   <section class="hero">
     <div class="hero-content">
+      <div class="english-title">Tangible Christian Dating</div>
       <h1>특별한 만남의 시작</h1>
-      <h2>1:1 소셜 데이팅 이벤트</h2>
+      <h2>교회 청년들 모두 다 짝 찾아주자 이벤트</h2>
+      
+      <div class="intro-text">
+        <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 준비하신 인연 어디있는지 모르겠고..</p>
+        <p>- 시험공부도 기도만 열심히하고 공부안하면 점수가 오르는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 ㅇㅇㅇ합니다.</p>
+        <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜩 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
+      </div>
+      
       <div class="promotion">
         <div class="price-tag">
           <span class="price">5,000원</span>
@@ -41,6 +49,35 @@ import { ref } from 'vue';
 .hero-content {
   max-width: 800px;
   width: 100%;
+}
+
+.english-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.intro-text {
+  text-align: left;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem auto 2rem;
+  backdrop-filter: blur(10px);
+  max-width: 90%;
+  line-height: 1.6;
+  color: var(--cream);
+}
+
+.intro-text p {
+  margin-bottom: 1rem;
+}
+
+.intro-text p:last-child {
+  margin-bottom: 0;
 }
 
 h1 {
@@ -130,6 +167,15 @@ h2 {
     min-height: 90vh;
   }
   
+  .english-title {
+    font-size: 1.5rem;
+  }
+  
+  .intro-text {
+    font-size: 0.95rem;
+    padding: 1.2rem;
+  }
+  
   h1 {
     font-size: 2.5rem;
   }
@@ -157,6 +203,16 @@ h2 {
 }
 
 @media (max-width: 480px) {
+  .english-title {
+    font-size: 1.3rem;
+  }
+  
+  .intro-text {
+    font-size: 0.9rem;
+    padding: 1rem;
+    line-height: 1.5;
+  }
+  
   h1 {
     font-size: 2rem;
   }
