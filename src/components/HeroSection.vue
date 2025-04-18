@@ -39,7 +39,7 @@ onMounted(() => {
       
       <div class="intro-text">
         <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 준비하신 인연 어디있는지 모르겠고..</p>
-        <p>- 시험공부도 기도만 열심히하고 공부안하면 점수가 오르는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 ㅇㅇㅇ합니다.</p>
+        <p>- 시험공부도/취업준비도 기도만 열심히하고 현실적으로 준비 안하면 결과가 나오는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 기도 응답을 받기 어렵다고 생각합니다.</p>
         <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜩 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
       </div>
       
@@ -54,7 +54,10 @@ onMounted(() => {
           <div v-else-if="profiles.length === 0" class="no-participants">아직 등록된 참가자가 없습니다.</div>
           <div v-else class="profile-entries">
             <div v-for="(profile, index) in profiles.slice(0, 5)" :key="index" class="profile-entry">
-              <span class="profile-name">{{ profile.gender }}</span>
+              <span class="profile-name">
+                {{ profile.gender }}
+                <span class="gender-emoji">{{ profile.gender === '남성' ? '👨' : profile.gender === '여성' ? '👩' : '' }}</span>
+              </span>
               <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
             </div>
           </div>
@@ -200,6 +203,13 @@ h2 {
 .profile-name {
   font-weight: 600;
   color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gender-emoji {
+  font-size: 1.2rem;
 }
 
 .profile-details {
