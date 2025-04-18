@@ -4,52 +4,52 @@
 
 <template>
   <section class="features">
-    <h2 class="section-title">uc774ubca4ud2b8 ud2b9uc9d5</h2>
+    <h2 class="section-title">이벤트 특징</h2>
     
     <div class="features-grid">
       <div class="feature-card">
         <div class="icon">
           <i class="icon-calendar"></i>
         </div>
-        <h3>ud2b9ubcc4ud55c ub9e4uce6d uc54cuace0ub9acuc998</h3>
-        <p>uc131uaca9, ucde8ubbf8, uad00uc2ecuc0acub97c uae30ubc18uc73cub85c ucd5cuc801ud654ub41c ub9e4uce6duc744 uc81cuacf5ud569ub2c8ub2e4.</p>
+        <h3>특별한 매칭 알고리즘</h3>
+        <p>성격, 취미, 관심사를 기반으로 최적화된 매칭을 제공합니다.</p>
       </div>
       
       <div class="feature-card">
         <div class="icon">
           <i class="icon-location"></i>
         </div>
-        <h3>ud2b9ubcc4ud55c uc7a5uc18c</h3>
-        <p>uc11cuc6b8 uac15ub0a8uc5d0 uc704uce58ud55c ud504ub9acubbf8uc5c4 ub8e8ud504ud0d1 ub808uc2a4ud1a0ub791uc5d0uc11c uc9c4ud589ub429ub2c8ub2e4.</p>
+        <h3>특별한 장소</h3>
+        <p>서울 강남에 위치한 프리미엄 루프탑 레스토랑에서 진행됩니다.</p>
       </div>
       
       <div class="feature-card">
         <div class="icon">
           <i class="icon-glass"></i>
         </div>
-        <h3>uc74cub8cc & uc2a4ub0b5 uc81cuacf5</h3>
-        <p>ub2e4uc591ud55c uce74ud14cuace0ub9acuc758 uc74cub8ccuc640 uace0uae09 uc2a4ub0b5uc774 ubb34uc81cud55c uc81cuacf5ub429ub2c8ub2e4.</p>
+        <h3>와인 & 칵테일</h3>
+        <p>고품질 와인과 전문 바리스타가 준비한 칵테일을 즐기실 수 있습니다.</p>
       </div>
       
       <div class="feature-card">
         <div class="icon">
           <i class="icon-people"></i>
         </div>
-        <h3>uc751uc6d0 uc774ubca4ud2b8</h3>
-        <p>uc0acub78cub4e4uc774 uc11cub85c uc26cuc6b4 ubd84uc704uae30uc5d0uc11c ub300ud654ud560 uc218 uc788ub294 uc7acubbf8uc788ub294 uc751uc6d0 uc774ubca4ud2b8ub97c uc9c4ud589ud569ub2c8ub2e4.</p>
+        <h3>유대감 있는 사람들</h3>
+        <p>20-35세의 유대감 있는 사람들과 의미 있는 만남을 가질 수 있습니다.</p>
       </div>
     </div>
     
     <div class="event-details">
-      <h2 class="section-title">uc774ubca4ud2b8 uc815ubcf4</h2>
+      <h2 class="section-title">이벤트 정보</h2>
       
       <div class="detail-item">
         <div class="detail-icon">
           <i class="icon-date"></i>
         </div>
         <div class="detail-content">
-          <h4>ub0a0uc9dc</h4>
-          <p>2025ub144 5uc6d4 15uc77c (ud1a0uc694uc77c) uc624ud6c4 6uc2dc</p>
+          <h4>일자</h4>
+          <p>2025년 5월 15일 (목요일) 오후 6시</p>
         </div>
       </div>
       
@@ -58,8 +58,8 @@
           <i class="icon-marker"></i>
         </div>
         <div class="detail-content">
-          <h4>uc7a5uc18c</h4>
-          <p>uc11cuc6b8uc2dc uac15ub0a8uad6c uc2e0uc0acub3d9 ub8e8ud504ud0d1 ub808uc2a4ud1a0ub791 (XXube4cub529 20uce35)</p>
+          <h4>장소</h4>
+          <p>서울 강남구 역삼동 XX빌딩 20층</p>
         </div>
       </div>
       
@@ -68,8 +68,8 @@
           <i class="icon-ticket"></i>
         </div>
         <div class="detail-content">
-          <h4>uac00uaca9</h4>
-          <p><span class="highlight">uc120ucc29uc21c 100uba85 ud2b9ubcc4uac00: 5,000uc6d0</span> (uc815uc0c1uac00 15,000uc6d0)</p>
+          <h4>티켓</h4>
+          <p><span class="highlight">일반 티켓: 5,000원</span> (예약 티켓: 15,000원)</p>
         </div>
       </div>
       
@@ -78,8 +78,8 @@
           <i class="icon-info"></i>
         </div>
         <div class="detail-content">
-          <h4>ucc38uac00uc870uac74</h4>
-          <p>25-35uc138 uc131uc778 ub0a8ub140 (uc2e0ubd84uc99d ud655uc778 ud544uc218)</p>
+          <h4>참가 대상</h4>
+          <p>20-35세의 유대감 있는 사람들 (커플, 친구, 지인 등)</p>
         </div>
       </div>
     </div>

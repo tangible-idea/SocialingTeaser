@@ -4,12 +4,14 @@ import FeaturesSection from './components/FeaturesSection.vue';
 import TestimonialsSection from './components/TestimonialsSection.vue';
 import RegistrationForm from './components/RegistrationForm.vue';
 import FooterSection from './components/FooterSection.vue';
+import DatingProfiles from './components/DatingProfiles.vue';
 </script>
 
 <template>
   <div class="app">
     <HeroSection />
     <FeaturesSection />
+    <DatingProfiles />
     <TestimonialsSection />
     <RegistrationForm />
     <FooterSection />

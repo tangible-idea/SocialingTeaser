@@ -3,23 +3,23 @@
 const testimonials = [
   {
     id: 1,
-    name: 'uae40uc9c0uc6b0',
+    name: '김지우',
     age: 28,
-    comment: 'uc804 uc774 uc774ubca4ud2b8ub97c ud1b5ud574 uc800uc758 ud604uc7ac ub0a8uc790uce5cuad6cub97c ub9ccub0acuc5b4uc694! ubd80ub2f4 uc5c6ub294 ub9ccub0a8uc774uc5c8uace0 uc9c4uc9dc uc990uac70uc6e0uc5b4uc694.',
+    comment: '전 이 이벤트를 통해 저의 현재 남자친구를 만났어요! 부담 없는 만남이었고 진짜 즐거웠어요.',
     rating: 5
   },
   {
     id: 2,
-    name: 'uc774uc11cuc9c4',
+    name: '이서진',
     age: 31,
-    comment: 'uc0acub78cuc744 ub9ccub098ub294 uac83uc774 uc5b4ub824uc6e0ub294ub370 uc774ub807uac8c uc880 ub354 uc790uc5f0uc2a4ub7fduac8c uc18cuac1cubc1buc744 uc218 uc788uc5b4uc11c uc88buc558uc5b4uc694.',
+    comment: '사람을 만나는 것이 어려웠는데 이렇게 좀 더 자연스럽게 소개받을 수 있어서 좋았어요.',
     rating: 4
   },
   {
     id: 3,
-    name: 'ubc15ubbfcuc218',
+    name: '박민수',
     age: 27,
-    comment: 'uc0c8ub85cuc6b4 uc0acub78cub4e4uc744 ub9ccub098uace0 uc2f6uc5c8ub294ub370 uc774 uc774ubca4ud2b8uac00 uc815ub9d0 uc88buc740 uae30ud68cuac00 ub418uc5c8uc5b4uc694. ub2e4uc74cuc5d0ub3c4 ubc18ub4dcuc2dc ucc38uc5ecud560uac8cuc694!',
+    comment: '새로운 사람들을 만나고 싶었는데 이 이벤트가 정말 좋은 기회가 되었어요. 다음에도 반드시 참여할게요!',
     rating: 5
   }
 ];
@@ -27,7 +27,7 @@ const testimonials = [
 
 <template>
   <section class="testimonials">
-    <h2 class="section-title">uc774uc804 ucc38uac00uc790 ud6c4uae30</h2>
+    <h2 class="section-title">이전 참가자 후기</h2>
     
     <div class="testimonials-slider">
       <div class="testimonial-cards">
@@ -48,7 +48,7 @@ const testimonials = [
             </div>
             <div class="author-info">
               <h4>{{ testimonial.name }}</h4>
-              <p>{{ testimonial.age }}uc138</p>
+              <p>{{ testimonial.age }}세</p>
             </div>
           </div>
         </div>
@@ -56,8 +56,8 @@ const testimonials = [
     </div>
     
     <div class="cta-container">
-      <h3>ub2f9uc2e0ub3c4 uc0c8ub85cuc6b4 ub9ccub0a8uc744 ucc3euace0 uc788ub098uc694?</h3>
-      <a href="#register" class="cta-button">uc9c0uae08 uc2e0uccadud558uae30</a>
+      <h3>지금 바로 신청하고 새로운 만남의 기회를 잡으세요! 빠른 신청이 남은 자리를 선착순으로 확보합니다!</h3>
+      <a href="#register" class="cta-button">지금 바로 신청하기</a>
     </div>
   </section>
 </template>
