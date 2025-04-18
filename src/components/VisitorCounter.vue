@@ -4,15 +4,17 @@ import { trackVisitors, subscribeToActiveVisitors } from '../visitor-tracker';
 
 const activeVisitors = ref(0);
 let unsubscribe = null;
+let cleanupTracker = null;
 
 onMounted(() => {
   // Supabase 방문자 추적 시작
   try {
-    // 방문자 추적 시작
-    trackVisitors();
+    // 방문자 추적 시작 - 반환된 정리 함수 저장
+    cleanupTracker = trackVisitors();
     
     // 실시간 접속자 수 구독
     unsubscribe = subscribeToActiveVisitors((count) => {
+      console.log(`접속자 수 업데이트: ${count}명`);
       activeVisitors.value = count;
     });
   } catch (error) {
@@ -24,6 +26,11 @@ onUnmounted(() => {
   // 구독 해제 (만약 함수가 반환되었다면)
   if (unsubscribe) {
     unsubscribe();
+  }
+  
+  // 방문자 추적 정리 (타이머 정리, 오프라인 상태 업데이트 등)
+  if (cleanupTracker) {
+    cleanupTracker();
   }
 });
 </script>
