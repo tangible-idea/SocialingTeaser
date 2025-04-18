@@ -7,39 +7,39 @@ const currentYear = new Date().getFullYear();
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-section">
-        <h3>ub9e4uce6d ub370uc774ud305 uc774ubca4ud2b8</h3>
-        <p>uc5b8uc81c: 2025ub144 5uc6d4 15uc77c (ud1a0uc694uc77c) uc624ud6c4 6uc2dc</p>
-        <p>uc5b4ub514uc11c: uc11cuc6b8uc2dc uac15ub0a8uad6c uc2e0uc0acub3d9 ub8e8ud504ud0d1 ub808uc2a4ud1a0ub791</p>
+        <h3>매칭 데이팅 이벤트</h3>
+        <p>언제: 2025년 5월 15일 (토요일) 오후 6시</p>
+        <p>어디서: 서울시 강남구 신사동 루프탑 레스토랑</p>
       </div>
       
       <div class="footer-section">
-        <h3>ubb38uc758ud558uae30</h3>
-        <p>uc804ud654: 010-1234-5678</p>
-        <p>uc774uba54uc77c: info@matchevent.co.kr</p>
+        <h3>문의하기</h3>
+        <p>전화: 010-1234-5678</p>
+        <p>이메일: info@matchevent.co.kr</p>
       </div>
       
       <div class="footer-section social-links">
-        <h3>uc18cuc15c ubbf8ub514uc5b4</h3>
+        <h3>소셜 미디어</h3>
         <div class="social-icons">
-          <a href="#" class="social-icon">u{1F4F2}</a>
-          <a href="#" class="social-icon">u{1F310}</a>
-          <a href="#" class="social-icon">u{1F4E7}</a>
-          <a href="#" class="social-icon">u{1F4F8}</a>
+          <a href="#" class="social-icon">📲</a>
+          <a href="#" class="social-icon">🌐</a>
+          <a href="#" class="social-icon">📧</a>
+          <a href="#" class="social-icon">📸</a>
         </div>
       </div>
     </div>
     
     <div class="copyright">
-      <p>&copy; {{ currentYear }} ub9e4uce6d ub370uc774ud305 uc774ubca4ud2b8. All rights reserved.</p>
+      <p>&copy; {{ currentYear }} 매칭 데이팅 이벤트. All rights reserved.</p>
     </div>
   </footer>
 </template>
 
 <style scoped>
 .footer {
-  background-color: #333;
-  color: white;
-  padding: 4rem 2rem 2rem;
+  background-color: var(--dark-brown);
+  color: var(--cream);
+  padding: 4rem 1rem 2rem;
 }
 
 .footer-content {
@@ -60,6 +60,7 @@ const currentYear = new Date().getFullYear();
   font-size: 1.3rem;
   margin-bottom: 1.5rem;
   position: relative;
+  color: var(--light-brown);
 }
 
 .footer-section h3:after {
@@ -69,7 +70,7 @@ const currentYear = new Date().getFullYear();
   left: 0;
   width: 40px;
   height: 3px;
-  background: linear-gradient(to right, #ff6b6b, #794bc4);
+  background: linear-gradient(to right, var(--secondary-brown), var(--accent));
   border-radius: 1.5px;
 }
 
@@ -83,6 +84,7 @@ const currentYear = new Date().getFullYear();
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .social-icon {
@@ -91,7 +93,7 @@ const currentYear = new Date().getFullYear();
   justify-content: center;
   width: 40px;
   height: 40px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--secondary-brown);
   border-radius: 50%;
   color: white;
   text-decoration: none;
@@ -100,7 +102,7 @@ const currentYear = new Date().getFullYear();
 }
 
 .social-icon:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--accent);
   transform: translateY(-3px);
 }
 
@@ -113,6 +115,10 @@ const currentYear = new Date().getFullYear();
 }
 
 @media (max-width: 768px) {
+  .footer {
+    padding: 3rem 1rem 1.5rem;
+  }
+  
   .footer-content {
     flex-direction: column;
     gap: 2rem;
@@ -129,6 +135,11 @@ const currentYear = new Date().getFullYear();
   
   .social-icons {
     justify-content: center;
+  }
+  
+  .copyright {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
   }
 }
 </style>

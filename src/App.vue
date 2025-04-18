@@ -24,18 +24,38 @@ import FooterSection from './components/FooterSection.vue';
   box-sizing: border-box;
 }
 
+:root {
+  --primary-brown: #8B5A2B;
+  --secondary-brown: #A67C52;
+  --light-brown: #D4B996;
+  --cream: #F5EBE0;
+  --dark-brown: #4A3728;
+  --text-color: #3F2E22;
+  --text-light: #6B5344;
+  --accent: #C8A27C;
+}
+
 html {
   scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
 }
 
 body {
   font-family: 'Noto Sans KR', 'Arial', sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-color);
+  background-color: var(--cream);
 }
 
 .app {
   overflow: hidden;
+  max-width: 100%;
 }
 
 button {
@@ -44,9 +64,31 @@ button {
 
 h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
+  color: var(--dark-brown);
 }
 
 section {
   overflow: hidden;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Mobile Optimizations */
+input, select, textarea, button {
+  font-size: 16px; /* Prevents zooming on mobile when focusing inputs */
+}
+
+/* Add a standard container class for consistent spacing */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
 }
 </style>

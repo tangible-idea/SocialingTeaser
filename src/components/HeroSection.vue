@@ -51,18 +51,19 @@ const countdown = ref({
 
 <style scoped>
 .hero {
-  height: 100vh;
-  background: linear-gradient(135deg, #ff6b6b, #794bc4);
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--secondary-brown), var(--dark-brown));
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 0 2rem;
+  padding: 2rem 1rem;
 }
 
 .hero-content {
   max-width: 800px;
+  width: 100%;
 }
 
 h1 {
@@ -70,20 +71,23 @@ h1 {
   margin-bottom: 0.5rem;
   font-weight: 800;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  color: var(--cream);
 }
 
 h2 {
   font-size: 2rem;
   margin-bottom: 2rem;
   font-weight: 400;
+  color: var(--cream);
 }
 
 .promotion {
-  margin: 2rem 0;
+  margin: 2rem auto;
   padding: 1.5rem;
   background-color: rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   backdrop-filter: blur(10px);
+  max-width: 90%;
 }
 
 .price-tag {
@@ -96,13 +100,13 @@ h2 {
 .price {
   font-size: 3rem;
   font-weight: 800;
-  color: #ffff00;
+  color: var(--light-brown);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .limited {
   font-size: 1.2rem;
-  background-color: #ff3366;
+  background-color: var(--accent);
   padding: 0.3rem 1rem;
   border-radius: 20px;
   margin-top: 0.5rem;
@@ -123,21 +127,24 @@ h2 {
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .time-block {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 0.25rem;
 }
 
 .number {
   font-size: 2.5rem;
   font-weight: 700;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--primary-brown);
   padding: 1rem;
   border-radius: 8px;
   min-width: 4rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .label {
@@ -146,7 +153,7 @@ h2 {
 }
 
 .cta-button {
-  background-color: #ff3366;
+  background-color: var(--accent);
   color: white;
   font-size: 1.5rem;
   font-weight: 700;
@@ -156,20 +163,28 @@ h2 {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  margin-top: 1rem;
 }
 
 .cta-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+  background-color: var(--secondary-brown);
 }
 
 @media (max-width: 768px) {
+  .hero {
+    padding: 3rem 1rem;
+    min-height: 90vh;
+  }
+  
   h1 {
     font-size: 2.5rem;
   }
   
   h2 {
     font-size: 1.5rem;
+    margin-bottom: 1.5rem;
   }
   
   .price {
@@ -183,6 +198,45 @@ h2 {
   .number {
     font-size: 1.8rem;
     min-width: 3rem;
+    padding: 0.75rem;
+  }
+  
+  .promotion {
+    padding: 1rem;
+    margin: 1.5rem auto;
+  }
+  
+  .cta-button {
+    font-size: 1.25rem;
+    padding: 0.75rem 2rem;
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  .timer {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .time-block {
+    width: calc(50% - 1rem);
+    margin-bottom: 0.5rem;
+  }
+  
+  .number {
+    font-size: 1.5rem;
+    min-width: 2.5rem;
+    padding: 0.5rem;
   }
 }
 </style>

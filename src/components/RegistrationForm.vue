@@ -148,16 +148,25 @@ const submitForm = () => {
 </template>
 
 <style scoped>
+:root {
+  --cream: #f5f5f5;
+  --dark-brown: #754975;
+  --primary-brown: #964B00;
+  --secondary-brown: #786C3B;
+  --text-color: #333;
+  --text-light: #666;
+}
+
 .registration {
   padding: 5rem 2rem;
-  background-color: #fff;
+  background-color: var(--cream);
 }
 
 .section-title {
   text-align: center;
   font-size: 2.5rem;
   margin-bottom: 3rem;
-  color: #333;
+  color: var(--dark-brown);
   position: relative;
 }
 
@@ -169,13 +178,14 @@ const submitForm = () => {
   transform: translateX(-50%);
   width: 80px;
   height: 4px;
-  background: linear-gradient(to right, #ff6b6b, #794bc4);
+  background: linear-gradient(to right, var(--secondary-brown), var(--primary-brown));
   border-radius: 2px;
 }
 
 .form-container {
   max-width: 600px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .form-box {
@@ -189,18 +199,18 @@ const submitForm = () => {
   text-align: center;
   margin-bottom: 0.5rem;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--dark-brown);
 }
 
 .price-highlight {
-  color: #ff3366;
+  color: var(--primary-brown);
   font-weight: 700;
   font-size: 1.8rem;
 }
 
 .form-subtitle {
   text-align: center;
-  color: #666;
+  color: var(--text-light);
   margin-bottom: 2rem;
   text-decoration: line-through;
 }
@@ -219,7 +229,7 @@ const submitForm = () => {
 label {
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-color);
 }
 
 input[type="text"],
@@ -231,12 +241,13 @@ input[type="email"] {
   border-radius: 8px;
   font-size: 1rem;
   transition: border-color 0.3s;
+  -webkit-appearance: none; /* Prevents iOS styling */
 }
 
 input:focus {
-  border-color: #794bc4;
+  border-color: var(--primary-brown);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(121, 75, 196, 0.2);
+  box-shadow: 0 0 0 2px rgba(139, 90, 43, 0.2);
 }
 
 .radio-group {
@@ -269,7 +280,7 @@ input:focus {
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #ff6b6b, #794bc4);
+  background: linear-gradient(135deg, var(--secondary-brown), var(--primary-brown));
   color: white;
   font-size: 1.2rem;
   font-weight: 700;
@@ -298,7 +309,7 @@ input:focus {
 .success-icon {
   width: 80px;
   height: 80px;
-  background-color: #4caf50;
+  background-color: var(--primary-brown);
   color: white;
   font-size: 3rem;
   display: flex;
@@ -311,31 +322,82 @@ input:focus {
 .success-message h3 {
   font-size: 1.8rem;
   margin-bottom: 1rem;
-  color: #333;
+  color: var(--dark-brown);
 }
 
 .success-message p {
-  color: #666;
+  color: var(--text-light);
   margin-bottom: 0.5rem;
 }
 
 .payment-info {
   margin-top: 1.5rem;
   font-weight: 500;
-  color: #333;
-  background-color: #f5f5f5;
+  color: var(--text-color);
+  background-color: var(--cream);
   padding: 1rem;
   border-radius: 8px;
   display: inline-block;
 }
 
 @media (max-width: 768px) {
+  .registration {
+    padding: 3rem 1rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  
   .form-box {
     padding: 1.5rem;
   }
   
   .interests-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .radio-group {
+    gap: 1rem;
+  }
+  
+  input[type="text"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="email"] {
+    padding: 0.75rem;
+    font-size: 16px; /* Ensure no zooming on focus in mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .form-box h3 {
+    font-size: 1.3rem;
+  }
+  
+  .price-highlight {
+    font-size: 1.5rem;
+  }
+  
+  .interests-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+  
+  .submit-button {
+    font-size: 1.1rem;
+    padding: 0.9rem;
+  }
+  
+  .success-message {
+    padding: 2rem 1rem;
+  }
+  
+  .success-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
   }
 }
 </style>
