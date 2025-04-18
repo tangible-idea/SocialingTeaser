@@ -1,14 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-
-const countdown = ref({
-  days: 15,
-  hours: 8,
-  minutes: 30,
-  seconds: 0
-});
-
-// Could implement actual countdown timer logic here if needed
 </script>
 
 <template>
@@ -22,27 +13,6 @@ const countdown = ref({
           <span class="limited">선착순 100명 한정</span>
         </div>
         <p class="regular-price">정상가 15,000원</p>
-      </div>
-      <div class="countdown">
-        <p>이벤트 마감까지</p>
-        <div class="timer">
-          <div class="time-block">
-            <span class="number">{{ countdown.days }}</span>
-            <span class="label">일</span>
-          </div>
-          <div class="time-block">
-            <span class="number">{{ countdown.hours }}</span>
-            <span class="label">시간</span>
-          </div>
-          <div class="time-block">
-            <span class="number">{{ countdown.minutes }}</span>
-            <span class="label">분</span>
-          </div>
-          <div class="time-block">
-            <span class="number">{{ countdown.seconds }}</span>
-            <span class="label">초</span>
-          </div>
-        </div>
       </div>
       <button class="cta-button">지금 신청하기</button>
     </div>
@@ -118,40 +88,6 @@ h2 {
   opacity: 0.8;
 }
 
-.countdown {
-  margin: 2rem 0;
-}
-
-.timer {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
-}
-
-.time-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 0.25rem;
-}
-
-.number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background-color: var(--primary-brown);
-  padding: 1rem;
-  border-radius: 8px;
-  min-width: 4rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.label {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-}
-
 .cta-button {
   background-color: var(--accent);
   color: white;
@@ -191,16 +127,6 @@ h2 {
     font-size: 2.5rem;
   }
   
-  .timer {
-    gap: 0.5rem;
-  }
-  
-  .number {
-    font-size: 1.8rem;
-    min-width: 3rem;
-    padding: 0.75rem;
-  }
-  
   .promotion {
     padding: 1rem;
     margin: 1.5rem auto;
@@ -223,20 +149,11 @@ h2 {
     font-size: 1.25rem;
   }
   
-  .timer {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .time-block {
-    width: calc(50% - 1rem);
-    margin-bottom: 0.5rem;
-  }
-  
-  .number {
-    font-size: 1.5rem;
-    min-width: 2.5rem;
-    padding: 0.5rem;
+  .cta-button {
+    font-size: 1.25rem;
+    padding: 0.75rem 2rem;
+    width: 100%;
+    max-width: 300px;
   }
 }
 </style>

@@ -33,7 +33,7 @@ onUnmounted(() => {
     <div class="counter-content">
       <div class="pulse-dot"></div>
       <div class="counter-text">
-        <span class="counter-label">실시간 접속자:</span>
+        <span class="counter-label">현재 방문자:</span>
         <span class="counter-value">{{ activeVisitors }}</span>
         <span class="counter-unit">명</span>
       </div>
@@ -44,36 +44,36 @@ onUnmounted(() => {
 <style scoped>
 .visitor-counter {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  top: 10px;
+  right: 10px;
   z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
-  border-radius: 50px;
-  padding: 8px 16px;
-  font-size: 0.9rem;
+  border-radius: 18px;
+  padding: 12px 20px;
+  font-size: 1.1rem;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .visitor-counter:hover {
-  background-color: rgba(0, 0, 0, 0.8);
   transform: translateY(-3px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 .counter-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .pulse-dot {
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   background-color: #4CAF50;
   border-radius: 50%;
   position: relative;
@@ -98,38 +98,38 @@ onUnmounted(() => {
 .counter-text {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .counter-label {
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .counter-value {
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: #4CAF50;
+  text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
 }
 
 .counter-unit {
-  font-size: 0.85rem;
-  opacity: 0.8;
+  font-size: 1rem;
+  opacity: 0.9;
 }
 
 @media (max-width: 768px) {
   .visitor-counter {
-    bottom: 15px;
-    right: 15px;
-    padding: 6px 12px;
-    font-size: 0.8rem;
+    padding: 10px 16px;
+    font-size: 1rem;
   }
   
   .pulse-dot {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
   }
   
   .counter-value {
-    font-size: 1rem;
+    font-size: 1.5rem;
   }
 }
 </style>
