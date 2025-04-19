@@ -6,6 +6,7 @@ const profiles = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const showApplicationForm = ref(false);
+const scrollContainer = ref(null);
 
 // Form data
 const formData = ref({
@@ -13,11 +14,11 @@ const formData = ref({
   birthYear: '',
   gender: '',
   phone: '',
-  church: '',
+  church_name: '',
   location: '',
   height: '',
   occupation: '',
-  company: ''
+  company_name: ''
 });
 
 const formErrors = ref({});
@@ -34,6 +35,20 @@ const femaleRemaining = computed(() => {
   const femaleCount = profiles.value.filter(profile => profile.gender === '여자').length;
   console.log('여자 프로필 수:', femaleCount, '남은 자리:', 50 - femaleCount);
   return Math.max(0, 50 - femaleCount);
+});
+
+// Prepare display profiles - repeat the array if too few entries
+const displayProfiles = computed(() => {
+  if (profiles.value.length === 0) return [];
+  // If we have fewer than 5 profiles, duplicate them to ensure smooth scrolling
+  if (profiles.value.length < 5) {
+    let result = [...profiles.value];
+    while (result.length < 10) {
+      result = result.concat([...profiles.value]);
+    }
+    return result;
+  }
+  return profiles.value;
 });
 
 async function fetchProfiles() {
@@ -63,13 +78,15 @@ async function fetchProfiles() {
 async function submitApplication() {
   // Reset errors
   formErrors.value = {};
+  console.log('Form submission started');
+  console.log('Form data:', formData.value);
   
   // Simple validation for all required fields
   if (!formData.value.name) formErrors.value.name = '이름을 입력해주세요';
   if (!formData.value.birthYear) formErrors.value.birthYear = '태어난 연도를 입력해주세요';
   if (!formData.value.gender) formErrors.value.gender = '성별을 선택해주세요';
   if (!formData.value.phone) formErrors.value.phone = '연락처를 입력해주세요';
-  if (!formData.value.church) formErrors.value.church = '교회 이름을 입력해주세요';
+  if (!formData.value.church_name) formErrors.value.church_name = '섬기는 교회 이름을 입력해주세요';
   if (!formData.value.location) formErrors.value.location = '거주 지역을 입력해주세요';
   if (!formData.value.height) formErrors.value.height = '키를 입력해주세요';
   if (!formData.value.occupation) formErrors.value.occupation = '직업을 입력해주세요';
@@ -96,34 +113,55 @@ async function submitApplication() {
     }
   }
   
-  // If there are validation errors, stop submission
-  if (Object.keys(formErrors.value).length > 0) return;
+  // Log validation errors if any
+  if (Object.keys(formErrors.value).length > 0) {
+    console.log('Validation errors:', formErrors.value);
+    return;
+  }
+  
+  console.log('Validation passed, preparing to submit');
   
   try {
-    const { data, error: err } = await supabase
-      .from('applications')
-      .insert([
-        {
-          name: formData.value.name,
-          birth_year: formData.value.birthYear,
-          gender: formData.value.gender,
-          phone: formData.value.phone,
-          church: formData.value.church,
-          location: formData.value.location,
-          height: formData.value.height,
-          occupation: formData.value.occupation,
-          company: formData.value.company || null,
-        }
-      ]);
+    console.log('Submitting to Supabase table "dating"');
+    // First, save to Supabase
+    const submissionData = {
+      name: formData.value.name,
+      birth_year: formData.value.birthYear,
+      gender: formData.value.gender,
+      phone: formData.value.phone,
+      church_name: formData.value.church_name,
+      location: formData.value.location,
+      height: formData.value.height,
+      occupation: formData.value.occupation,
+      company_name: formData.value.company_name || null,
+    };
     
-    if (err) throw err;
+    console.log('Data being submitted to Supabase:', submissionData);
+    
+    const { data, error: err } = await supabase
+      .from('dating')
+      .insert([submissionData]);
+    
+    console.log('Supabase response - data:', data);
+    console.log('Supabase response - error:', err);
+    
+    if (err) {
+      console.error('Supabase insert error:', err);
+      throw err;
+    }
+    
+    console.log('Supabase submission successful');
     
     // Reset form and close modal on success
     resetForm();
     showApplicationForm.value = false;
+    console.log('Form reset and modal closed');
     alert('신청이 완료되었습니다!');
   } catch (err) {
-    console.error('Application submission error:', err);
+    console.error('Application submission error details:', err);
+    console.error('Error type:', typeof err);
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
     alert('신청 중 오류가 발생했습니다. 다시 시도해주세요.');
   }
 }
@@ -135,17 +173,28 @@ function resetForm() {
     birthYear: '',
     gender: '',
     phone: '',
-    church: '',
+    church_name: '',
     location: '',
     height: '',
     occupation: '',
-    company: ''
+    company_name: ''
   };
   formErrors.value = {};
 }
 
 onMounted(() => {
   fetchProfiles();
+  
+  // Add pause animation on hover
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('mouseenter', () => {
+      document.querySelector('.profile-entries').style.animationPlayState = 'paused';
+    });
+    
+    scrollContainer.value.addEventListener('mouseleave', () => {
+      document.querySelector('.profile-entries').style.animationPlayState = 'running';
+    });
+  }
 });
 </script>
 
@@ -159,7 +208,7 @@ onMounted(() => {
       <div class="intro-text">
         <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 준비하신 인연 어디있는지 모르겠고..</p>
         <p>- 시험공부도/취업준비도 기도만 열심히하고 현실적으로 준비 안하면 결과가 나오는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 기도 응답을 받기 어렵다고 생각합니다.</p>
-        <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜩 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
+        <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜨 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
       </div>
       
       <div class="promotion">
@@ -181,13 +230,22 @@ onMounted(() => {
           <div v-if="loading" class="loading">데이터를 불러오는 중...</div>
           <div v-else-if="error" class="error">{{ error }}</div>
           <div v-else-if="profiles.length === 0" class="no-participants">아직 등록된 참가자가 없습니다.</div>
-          <div v-else class="profile-entries">
-            <div v-for="(profile, index) in profiles.slice(0, 5)" :key="index" class="profile-entry">
-              <span class="profile-name">
-                {{ profile.gender }}
-                <span class="gender-emoji">{{ profile.gender === '남자' ? '👨' : profile.gender === '여자' ? '👩' : '' }}</span>
-              </span>
-              <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
+          <div v-else ref="scrollContainer" class="profile-entries-container">
+            <div class="profile-entries">
+              <div v-for="(profile, index) in displayProfiles" :key="'original-'+index" class="profile-entry">
+                <span class="profile-name">
+                  {{ profile.gender }}
+                  <span class="gender-emoji">{{ profile.gender === '남자' ? '👨' : profile.gender === '여자' ? '👩' : '' }}</span>
+                </span>
+                <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
+              </div>
+              <div v-for="(profile, index) in displayProfiles" :key="'duplicate-'+index" class="profile-entry">
+                <span class="profile-name">
+                  {{ profile.gender }}
+                  <span class="gender-emoji">{{ profile.gender === '남자' ? '👨' : profile.gender === '여자' ? '👩' : '' }}</span>
+                </span>
+                <span class="profile-details">{{ profile.height }}cm, {{ profile.field }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -225,7 +283,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="birthYear">태어난 연도 (예: 1990) <span class="required">*</span></label>
+          <label for="birthYear">태어난 연도 <span class="required">*</span></label>
           <input 
             type="number" 
             id="birthYear" 
@@ -263,14 +321,14 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="church">섬기는 교회 이름 <span class="required">*</span></label>
+          <label for="church_name">섬기는 교회 이름 <span class="required">*</span></label>
           <input 
             type="text" 
-            id="church" 
-            v-model="formData.church"
-            :class="{ 'error-input': formErrors.church }"
+            id="church_name" 
+            v-model="formData.church_name"
+            :class="{ 'error-input': formErrors.church_name }"
           >
-          <div v-if="formErrors.church" class="error-message">{{ formErrors.church }}</div>
+          <div v-if="formErrors.church_name" class="error-message">{{ formErrors.church_name }}</div>
         </div>
         
         <div class="form-group">
@@ -309,11 +367,11 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="company">회사명 (선택입력)</label>
+          <label for="company_name">회사명 (선택입력)</label>
           <input 
             type="text" 
-            id="company" 
-            v-model="formData.company"
+            id="company_name" 
+            v-model="formData.company_name"
           >
         </div>
         
@@ -426,7 +484,7 @@ h2 {
   padding: 1rem;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  height: 160px; /* 높이를 조정하여 약 2.5개의 프로필이 보이도록 설정 */
+  height: 160px;
   overflow: hidden;
   position: relative;
 }
@@ -442,10 +500,26 @@ h2 {
   pointer-events: none;
 }
 
+.profile-entries-container {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
 .profile-entries {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  animation: scroll-up 15s linear infinite;
+}
+
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
 }
 
 .profile-entry {
@@ -453,6 +527,7 @@ h2 {
   justify-content: space-between;
   padding: 0.5rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 25px; /* Ensure consistent height */
 }
 
 .profile-name {
@@ -511,7 +586,7 @@ h2 {
 }
 
 .cta-button {
-  background-color: #19ce60; /* 신청하기 버튼 색상 */
+  background-color: #19ce60;
   color: white;
   font-size: 1.5rem;
   font-weight: 700;
@@ -533,7 +608,7 @@ h2 {
 .cta-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
-  background-color: #00b843; /* 신청하기 버튼 호버 색상 */
+  background-color: #00b843;
 }
 
 .naver-button {
@@ -561,35 +636,36 @@ h2 {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.85); /* Darker overlay for better contrast */
+  background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
   padding: 20px;
   overflow-y: auto;
+  backdrop-filter: blur(3px);
 }
 
 .modal-content {
-  background-color: #ffffff; /* Pure white background for maximum visibility */
+  background-color: #ffffff;
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
   padding: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); /* Stronger shadow */
-  color: #333333; /* Darker text for better readability */
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  color: #333333;
   opacity: 1;
-  border: 1px solid #ddd; /* Adding a border */
+  border: 1px solid #ddd;
 }
 
 .modal-content h2 {
-  color: #5a3a1a; /* Darker color for the heading */
+  color: #5a3a1a;
   margin-bottom: 1.5rem;
   text-align: center;
   font-size: 1.8rem;
-  font-weight: 700; /* Make header bolder */
+  font-weight: 700;
 }
 
 .application-form {
@@ -602,24 +678,24 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  background-color: #ffffff; /* Ensure form group has solid background */
+  background-color: #ffffff;
 }
 
 .form-group label {
   font-weight: 600;
   font-size: 1rem;
-  color: #333333; /* Darker text for better readability */
+  color: #333333;
 }
 
 .form-group input,
 .form-group select {
   padding: 0.8rem;
-  border: 1px solid #cccccc; /* Slightly darker border */
+  border: 1px solid #cccccc;
   border-radius: 8px;
   font-size: 1rem;
   background-color: white;
-  color: #333333; /* Ensure text is dark */
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
+  color: #333333;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .form-group input:focus,
@@ -631,26 +707,26 @@ h2 {
 
 .error-input {
   border-color: #e74c3c !important;
-  background-color: #fff6f6 !important; /* Add background to error fields */
+  background-color: #fff6f6 !important;
 }
 
 .error-message {
   color: #e74c3c;
   font-size: 0.8rem;
   margin-top: 0.2rem;
-  font-weight: 600; /* Make error messages more visible */
+  font-weight: 600;
 }
 
 .verification-notice {
-  background-color: #f8f4ea; /* Lighter background for notice */
+  background-color: #f8f4ea;
   border-radius: 8px;
   padding: 1rem;
   margin: 1rem 0;
   font-size: 0.9rem;
   line-height: 1.4;
   color: #5a3a1a;
-  border-left: 3px solid #5a3a1a; /* Add accent border */
-  font-weight: 500; /* Make text slightly bolder */
+  border-left: 3px solid #5a3a1a;
+  font-weight: 500;
 }
 
 .form-actions {
@@ -669,16 +745,16 @@ h2 {
   cursor: pointer;
   flex: 1;
   transition: background-color 0.2s, transform 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow to buttons */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .cancel-button {
-  background-color: #e0e0e0; /* Slightly darker background */
+  background-color: #e0e0e0;
   color: #333;
 }
 
 .submit-button {
-  background-color: #19ce60; /* Match green from naver button */
+  background-color: #19ce60;
   color: white;
 }
 
