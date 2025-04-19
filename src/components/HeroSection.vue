@@ -64,7 +64,7 @@ async function submitApplication() {
   // Reset errors
   formErrors.value = {};
   
-  // Simple validation
+  // Simple validation for all required fields
   if (!formData.value.name) formErrors.value.name = '이름을 입력해주세요';
   if (!formData.value.birthYear) formErrors.value.birthYear = '태어난 연도를 입력해주세요';
   if (!formData.value.gender) formErrors.value.gender = '성별을 선택해주세요';
@@ -73,6 +73,28 @@ async function submitApplication() {
   if (!formData.value.location) formErrors.value.location = '거주 지역을 입력해주세요';
   if (!formData.value.height) formErrors.value.height = '키를 입력해주세요';
   if (!formData.value.occupation) formErrors.value.occupation = '직업을 입력해주세요';
+  
+  // Additional validation for phone number format
+  if (formData.value.phone && !/^\d{10,11}$/.test(formData.value.phone)) {
+    formErrors.value.phone = '유효한 전화번호를 입력해주세요 (10-11자리 숫자)';
+  }
+  
+  // Birth year validation (reasonable range)
+  if (formData.value.birthYear) {
+    const year = parseInt(formData.value.birthYear);
+    const currentYear = new Date().getFullYear();
+    if (year < 1950 || year > currentYear - 18) {
+      formErrors.value.birthYear = '유효한 출생연도를 입력해주세요 (1950~' + (currentYear - 18) + ')';
+    }
+  }
+  
+  // Height validation (reasonable range)
+  if (formData.value.height) {
+    const height = parseInt(formData.value.height);
+    if (height < 140 || height > 210) {
+      formErrors.value.height = '유효한 키를 입력해주세요 (140~210cm)';
+    }
+  }
   
   // If there are validation errors, stop submission
   if (Object.keys(formErrors.value).length > 0) return;
@@ -192,7 +214,7 @@ onMounted(() => {
       <h2>참가 신청</h2>
       <form @submit.prevent="submitApplication" class="application-form">
         <div class="form-group">
-          <label for="name">이름 (실명)</label>
+          <label for="name">이름 (실명) <span class="required">*</span></label>
           <input 
             type="text" 
             id="name" 
@@ -203,7 +225,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="birthYear">태어난 연도 (예: 1990)</label>
+          <label for="birthYear">태어난 연도 (예: 1990) <span class="required">*</span></label>
           <input 
             type="number" 
             id="birthYear" 
@@ -215,7 +237,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="gender">성별</label>
+          <label for="gender">성별 <span class="required">*</span></label>
           <select 
             id="gender" 
             v-model="formData.gender"
@@ -229,7 +251,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="phone">연락처 (- 없이 숫자만 입력)</label>
+          <label for="phone">연락처 (- 없이 숫자만 입력) <span class="required">*</span></label>
           <input 
             type="tel" 
             id="phone" 
@@ -241,7 +263,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="church">섬기는 교회 이름</label>
+          <label for="church">섬기는 교회 이름 <span class="required">*</span></label>
           <input 
             type="text" 
             id="church" 
@@ -252,7 +274,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="location">현재 거주 지역 (시+구), 매칭시 활용</label>
+          <label for="location">현재 거주 지역 (시+구), 매칭시 활용 <span class="required">*</span></label>
           <input 
             type="text" 
             id="location" 
@@ -264,7 +286,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="height">본인 키</label>
+          <label for="height">본인 키 <span class="required">*</span></label>
           <input 
             type="number" 
             id="height" 
@@ -276,7 +298,7 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="occupation">직업 또는 일하는 직군/업계</label>
+          <label for="occupation">직업 또는 일하는 직군/업계 <span class="required">*</span></label>
           <input 
             type="text" 
             id="occupation" 
@@ -738,5 +760,11 @@ h2 {
     max-width: 300px;
     margin: 0.5rem auto;
   }
+}
+
+.required {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-left: 2px;
 }
 </style>
