@@ -17,7 +17,7 @@ const formData = ref({
   church_name: '',
   location: '',
   height: '',
-  occupation: '',
+  field: '',
   company_name: ''
 });
 
@@ -89,7 +89,7 @@ async function submitApplication() {
   if (!formData.value.church_name) formErrors.value.church_name = '섬기는 교회 이름을 입력해주세요';
   if (!formData.value.location) formErrors.value.location = '거주 지역을 입력해주세요';
   if (!formData.value.height) formErrors.value.height = '키를 입력해주세요';
-  if (!formData.value.occupation) formErrors.value.occupation = '직업을 입력해주세요';
+  if (!formData.value.field) formErrors.value.field = '직업을 입력해주세요';
   
   // Additional validation for phone number format
   if (formData.value.phone && !/^\d{10,11}$/.test(formData.value.phone)) {
@@ -125,6 +125,8 @@ async function submitApplication() {
     console.log('Submitting to Supabase table "dating"');
     // First, save to Supabase
     const submissionData = {
+      // Generate a numeric ID for int8 field type (using timestamp to ensure uniqueness)
+      id: Date.now(),
       name: formData.value.name,
       birth_year: formData.value.birthYear,
       gender: formData.value.gender,
@@ -132,8 +134,9 @@ async function submitApplication() {
       church_name: formData.value.church_name,
       location: formData.value.location,
       height: formData.value.height,
-      occupation: formData.value.occupation,
+      field: formData.value.field,
       company_name: formData.value.company_name || null,
+      created_at: new Date().toISOString()
     };
     
     console.log('Data being submitted to Supabase:', submissionData);
@@ -176,7 +179,7 @@ function resetForm() {
     church_name: '',
     location: '',
     height: '',
-    occupation: '',
+    field: '',
     company_name: ''
   };
   formErrors.value = {};
@@ -356,14 +359,14 @@ onMounted(() => {
         </div>
         
         <div class="form-group">
-          <label for="occupation">직업 또는 일하는 직군/업계 <span class="required">*</span></label>
+          <label for="field">직업 또는 일하는 직군/업계 <span class="required">*</span></label>
           <input 
             type="text" 
-            id="occupation" 
-            v-model="formData.occupation"
-            :class="{ 'error-input': formErrors.occupation }"
+            id="field" 
+            v-model="formData.field"
+            :class="{ 'error-input': formErrors.field }"
           >
-          <div v-if="formErrors.occupation" class="error-message">{{ formErrors.occupation }}</div>
+          <div v-if="formErrors.field" class="error-message">{{ formErrors.field }}</div>
         </div>
         
         <div class="form-group">
