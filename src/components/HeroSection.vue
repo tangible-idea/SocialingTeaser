@@ -5,6 +5,22 @@ import supabase from '../supabase';
 const profiles = ref([]);
 const loading = ref(true);
 const error = ref(null);
+const showApplicationForm = ref(false);
+
+// Form data
+const formData = ref({
+  name: '',
+  birthYear: '',
+  gender: '',
+  phone: '',
+  church: '',
+  location: '',
+  height: '',
+  occupation: '',
+  company: ''
+});
+
+const formErrors = ref({});
 
 const maleRemaining = computed(() => {
   if (loading.value || error.value) return null;
@@ -42,6 +58,68 @@ async function fetchProfiles() {
     error.value = 'Failed to load profiles data';
     loading.value = false;
   }
+}
+
+async function submitApplication() {
+  // Reset errors
+  formErrors.value = {};
+  
+  // Simple validation
+  if (!formData.value.name) formErrors.value.name = '이름을 입력해주세요';
+  if (!formData.value.birthYear) formErrors.value.birthYear = '태어난 연도를 입력해주세요';
+  if (!formData.value.gender) formErrors.value.gender = '성별을 선택해주세요';
+  if (!formData.value.phone) formErrors.value.phone = '연락처를 입력해주세요';
+  if (!formData.value.church) formErrors.value.church = '교회 이름을 입력해주세요';
+  if (!formData.value.location) formErrors.value.location = '거주 지역을 입력해주세요';
+  if (!formData.value.height) formErrors.value.height = '키를 입력해주세요';
+  if (!formData.value.occupation) formErrors.value.occupation = '직업을 입력해주세요';
+  
+  // If there are validation errors, stop submission
+  if (Object.keys(formErrors.value).length > 0) return;
+  
+  try {
+    const { data, error: err } = await supabase
+      .from('applications')
+      .insert([
+        {
+          name: formData.value.name,
+          birth_year: formData.value.birthYear,
+          gender: formData.value.gender,
+          phone: formData.value.phone,
+          church: formData.value.church,
+          location: formData.value.location,
+          height: formData.value.height,
+          occupation: formData.value.occupation,
+          company: formData.value.company || null,
+        }
+      ]);
+    
+    if (err) throw err;
+    
+    // Reset form and close modal on success
+    resetForm();
+    showApplicationForm.value = false;
+    alert('신청이 완료되었습니다!');
+  } catch (err) {
+    console.error('Application submission error:', err);
+    alert('신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+}
+
+function resetForm() {
+  // Reset all form fields
+  formData.value = {
+    name: '',
+    birthYear: '',
+    gender: '',
+    phone: '',
+    church: '',
+    location: '',
+    height: '',
+    occupation: '',
+    company: ''
+  };
+  formErrors.value = {};
 }
 
 onMounted(() => {
@@ -93,15 +171,141 @@ onMounted(() => {
         </div>
       </div>
       <!-- 네이버 스마트 스토어로 연결 -->
-      <a href="https://smartstore.naver.com/tangible/products/11422139807" target="_blank" class="cta-button">
+      <a href="https://smartstore.naver.com/tangible/products/11422139807" target="_blank" class="cta-button naver-button">
         <svg class="naver-icon" width="24" height="24" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M11 4H10.2V12H11V4Z" fill="currentColor"/>
           <path d="M5 4H4V12H5L9 7V12H10V4H9L5 9V4Z" fill="currentColor"/>
         </svg>
         네이버에서 구매하기
       </a>
+      
+      <!-- 참가신청 폼 버튼 -->
+      <button @click="showApplicationForm = true" class="cta-button application-button">
+        참가신청 폼 입력하기
+      </button>
     </div>
   </section>
+  
+  <!-- 참가신청 폼 모달 -->
+  <div v-if="showApplicationForm" class="modal-overlay" @click.self="showApplicationForm = false">
+    <div class="modal-content">
+      <h2>참가 신청</h2>
+      <form @submit.prevent="submitApplication" class="application-form">
+        <div class="form-group">
+          <label for="name">이름 (실명)</label>
+          <input 
+            type="text" 
+            id="name" 
+            v-model="formData.name" 
+            :class="{ 'error-input': formErrors.name }"
+          >
+          <div v-if="formErrors.name" class="error-message">{{ formErrors.name }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="birthYear">태어난 연도 (예: 1990)</label>
+          <input 
+            type="number" 
+            id="birthYear" 
+            v-model="formData.birthYear" 
+            placeholder="1990"
+            :class="{ 'error-input': formErrors.birthYear }"
+          >
+          <div v-if="formErrors.birthYear" class="error-message">{{ formErrors.birthYear }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="gender">성별</label>
+          <select 
+            id="gender" 
+            v-model="formData.gender"
+            :class="{ 'error-input': formErrors.gender }"
+          >
+            <option value="" disabled selected>선택해주세요</option>
+            <option value="남자">남자</option>
+            <option value="여자">여자</option>
+          </select>
+          <div v-if="formErrors.gender" class="error-message">{{ formErrors.gender }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">연락처 (- 없이 숫자만 입력)</label>
+          <input 
+            type="tel" 
+            id="phone" 
+            v-model="formData.phone" 
+            placeholder="01012345678"
+            :class="{ 'error-input': formErrors.phone }"
+          >
+          <div v-if="formErrors.phone" class="error-message">{{ formErrors.phone }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="church">섬기는 교회 이름</label>
+          <input 
+            type="text" 
+            id="church" 
+            v-model="formData.church"
+            :class="{ 'error-input': formErrors.church }"
+          >
+          <div v-if="formErrors.church" class="error-message">{{ formErrors.church }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="location">현재 거주 지역 (시+구), 매칭시 활용</label>
+          <input 
+            type="text" 
+            id="location" 
+            v-model="formData.location" 
+            placeholder="서울시 강남구"
+            :class="{ 'error-input': formErrors.location }"
+          >
+          <div v-if="formErrors.location" class="error-message">{{ formErrors.location }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="height">본인 키</label>
+          <input 
+            type="number" 
+            id="height" 
+            v-model="formData.height" 
+            placeholder="170"
+            :class="{ 'error-input': formErrors.height }"
+          >
+          <div v-if="formErrors.height" class="error-message">{{ formErrors.height }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="occupation">직업 또는 일하는 직군/업계</label>
+          <input 
+            type="text" 
+            id="occupation" 
+            v-model="formData.occupation"
+            :class="{ 'error-input': formErrors.occupation }"
+          >
+          <div v-if="formErrors.occupation" class="error-message">{{ formErrors.occupation }}</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="company">회사명 (선택입력)</label>
+          <input 
+            type="text" 
+            id="company" 
+            v-model="formData.company"
+          >
+        </div>
+        
+        <div class="verification-notice">
+          교회인증(교회주보로 인증), 회사인증(사원증 or 명함) 으로 인증하는 절차가 나중에 진행됩니다.
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" @click="showApplicationForm = false" class="cancel-button">취소</button>
+          <button type="submit" class="submit-button">신청하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -300,6 +504,8 @@ h2 {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  width: 100%;
+  max-width: 350px;
 }
 
 .cta-button:hover {
@@ -308,9 +514,159 @@ h2 {
   background-color: #00b843; /* 신청하기 버튼 호버 색상 */
 }
 
+.naver-button {
+  background-color: #19ce60;
+  margin-bottom: 1rem;
+}
+
+.application-button {
+  background-color: #5a3a1a;
+}
+
+.application-button:hover {
+  background-color: #7a5a3a;
+}
+
 .naver-icon {
   margin-right: 14px;
   font-size: 1.3em;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85); /* Darker overlay for better contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background-color: #ffffff; /* Pure white background for maximum visibility */
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+  color: #333333; /* Darker text for better readability */
+  opacity: 1;
+  border: 1px solid #ddd; /* Adding a border */
+}
+
+.modal-content h2 {
+  color: #5a3a1a; /* Darker color for the heading */
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700; /* Make header bolder */
+}
+
+.application-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: #ffffff; /* Ensure form group has solid background */
+}
+
+.form-group label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #333333; /* Darker text for better readability */
+}
+
+.form-group input,
+.form-group select {
+  padding: 0.8rem;
+  border: 1px solid #cccccc; /* Slightly darker border */
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  color: #333333; /* Ensure text is dark */
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(25, 206, 96, 0.2);
+}
+
+.error-input {
+  border-color: #e74c3c !important;
+  background-color: #fff6f6 !important; /* Add background to error fields */
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
+  font-weight: 600; /* Make error messages more visible */
+}
+
+.verification-notice {
+  background-color: #f8f4ea; /* Lighter background for notice */
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #5a3a1a;
+  border-left: 3px solid #5a3a1a; /* Add accent border */
+  font-weight: 500; /* Make text slightly bolder */
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancel-button,
+.submit-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add shadow to buttons */
+}
+
+.cancel-button {
+  background-color: #e0e0e0; /* Slightly darker background */
+  color: #333;
+}
+
+.submit-button {
+  background-color: #19ce60; /* Match green from naver button */
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #cccccc;
+}
+
+.submit-button:hover {
+  background-color: #00b843;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
@@ -347,6 +703,12 @@ h2 {
     padding: 0.75rem 2rem;
     width: 100%;
     max-width: 300px;
+    margin: 0.5rem auto;
+  }
+  
+  .modal-content {
+    padding: 1.5rem;
+    max-width: 95%;
   }
 }
 
@@ -374,6 +736,7 @@ h2 {
     padding: 0.75rem 2rem;
     width: 100%;
     max-width: 300px;
+    margin: 0.5rem auto;
   }
 }
 </style>

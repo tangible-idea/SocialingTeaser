@@ -14,7 +14,7 @@ onMounted(() => {
     
     // 실시간 접속자 수 구독
     unsubscribe = subscribeToActiveVisitors((count) => {
-      console.log(`접속자 수 업데이트: ${count}명`);
+      //console.log(`접속자 수 업데이트: ${count}명`);
       activeVisitors.value = count;
     });
   } catch (error) {
