@@ -155,6 +155,33 @@ async function submitApplication() {
     
     console.log('Supabase submission successful');
     
+    // Send SMS confirmation to the user
+    try {
+      console.log('Sending SMS confirmation...');
+      const smsMessage = `${formData.value.name} 님 참가신청해주셔서 감사합니다! 아래 네이버 구매링크로 구매하시면 휴대폰번호가 매칭되어서 자동으로 리스트에 올라갑니다. 저희가 5월 중에 매칭결과가 나오면 다시 알려드릴께요!`;
+      
+      const smsResponse = await fetch('http://api.tangibly.link/sendsms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: formData.value.phone,
+          message: smsMessage
+        })
+      });
+      
+      if (!smsResponse.ok) {
+        console.error('SMS sending failed:', await smsResponse.text());
+        // Don't throw error here, so form submission still succeeds even if SMS fails
+      } else {
+        console.log('SMS sent successfully');
+      }
+    } catch (smsErr) {
+      console.error('Error sending SMS:', smsErr);
+      // Don't throw error here, so form submission still succeeds even if SMS fails
+    }
+    
     // Reset form and close modal on success
     resetForm();
     showApplicationForm.value = false;
