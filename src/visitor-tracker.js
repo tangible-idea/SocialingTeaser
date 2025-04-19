@@ -32,12 +32,12 @@ export const trackVisitors = async () => {
 
     if (error) throw error;
 
-    console.log('방문자 상태 업데이트: 온라인');
+    //console.log('방문자 상태 업데이트: 온라인');
 
     // 페이지 종료 시 오프라인 상태로 업데이트하는 이벤트 리스너
     const updateOfflineStatus = async () => {
       try {
-        console.log('방문자 상태 업데이트: 오프라인');
+        //console.log('방문자 상태 업데이트: 오프라인');
         await supabase
           .from('visitors')
           .update({ online: false })
@@ -57,7 +57,7 @@ export const trackVisitors = async () => {
           .from('visitors')
           .update({ last_seen: new Date().toISOString() })
           .eq('visitor_id', visitorId);
-        console.log('방문자 상태 핑 업데이트');
+        //console.log('방문자 상태 핑 업데이트');
       } catch (err) {
         console.error('방문자 핑 업데이트 오류:', err);
       }
@@ -143,7 +143,7 @@ export const subscribeToActiveVisitors = (callback) => {
     .on('postgres_changes', 
       { event: 'UPDATE', schema: 'public', table: 'visitors' }, 
       payload => {
-        console.log('방문자 상태 변경 감지:', payload);
+        //console.log('방문자 상태 변경 감지:', payload);
         loadInitialCount();
       }
     )
