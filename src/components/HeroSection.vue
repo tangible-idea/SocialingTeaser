@@ -8,6 +8,10 @@ const error = ref(null);
 const showApplicationForm = ref(false);
 const scrollContainer = ref(null);
 
+// Form step tracking
+const currentStep = ref(1);
+const totalSteps = 3;
+
 // Form data
 const formData = ref({
   name: '',
@@ -18,7 +22,10 @@ const formData = ref({
   location: '',
   height: '',
   field: '',
-  company_name: ''
+  company_name: '',
+  mbti: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+  enneagram: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+  hobby: ''
 });
 
 const formErrors = ref({});
@@ -136,6 +143,9 @@ async function submitApplication() {
       height: formData.value.height,
       field: formData.value.field,
       company_name: formData.value.company_name || null,
+      mbti: formData.value.mbti,
+      enneagram: formData.value.enneagram,
+      hobby: formData.value.hobby,
       created_at: new Date().toISOString()
     };
     
@@ -207,9 +217,74 @@ function resetForm() {
     location: '',
     height: '',
     field: '',
-    company_name: ''
+    company_name: '',
+    mbti: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+    enneagram: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+    hobby: ''
   };
   formErrors.value = {};
+  currentStep.value = 1;
+}
+
+// Navigation functions for multi-step form
+function nextStep() {
+  // Validate current step before proceeding
+  if (currentStep.value === 1) {
+    // Validate step 1 fields
+    formErrors.value = {};
+    if (!formData.value.name) formErrors.value.name = '이름을 입력해주세요';
+    if (!formData.value.birthYear) formErrors.value.birthYear = '태어난 연도를 입력해주세요';
+    if (!formData.value.gender) formErrors.value.gender = '성별을 선택해주세요';
+    if (!formData.value.phone) formErrors.value.phone = '연락처를 입력해주세요';
+    
+    // Additional validation for phone number format
+    if (formData.value.phone && !/^\d{10,11}$/.test(formData.value.phone)) {
+      formErrors.value.phone = '유효한 전화번호를 입력해주세요 (10-11자리 숫자)';
+    }
+    
+    // Birth year validation (reasonable range)
+    if (formData.value.birthYear) {
+      const year = parseInt(formData.value.birthYear);
+      const currentYear = new Date().getFullYear();
+      if (year < 1950 || year > currentYear - 18) {
+        formErrors.value.birthYear = '유효한 출생연도를 입력해주세요 (1950~' + (currentYear - 18) + ')';
+      }
+    }
+    
+    if (Object.keys(formErrors.value).length > 0) {
+      return; // Don't proceed if validation fails
+    }
+  } else if (currentStep.value === 2) {
+    // Validate step 2 fields
+    formErrors.value = {};
+    if (!formData.value.church_name) formErrors.value.church_name = '섬기는 교회 이름을 입력해주세요';
+    if (!formData.value.location) formErrors.value.location = '거주 지역을 입력해주세요';
+    if (!formData.value.height) formErrors.value.height = '키를 입력해주세요';
+    if (!formData.value.field) formErrors.value.field = '직업을 입력해주세요';
+    
+    // Height validation (reasonable range)
+    if (formData.value.height) {
+      const height = parseInt(formData.value.height);
+      if (height < 140 || height > 210) {
+        formErrors.value.height = '유효한 키를 입력해주세요 (140~210cm)';
+      }
+    }
+    
+    if (Object.keys(formErrors.value).length > 0) {
+      return; // Don't proceed if validation fails
+    }
+  }
+  
+  // If validation passes, move to next step
+  if (currentStep.value < totalSteps) {
+    currentStep.value++;
+  }
+}
+
+function prevStep() {
+  if (currentStep.value > 1) {
+    currentStep.value--;
+  }
 }
 
 onMounted(() => {
@@ -301,117 +376,173 @@ onMounted(() => {
     <div class="modal-content">
       <h2>참가 신청</h2>
       <form @submit.prevent="submitApplication" class="application-form">
-        <div class="form-group">
-          <label for="name">이름 (실명) <span class="required">*</span></label>
-          <input 
-            type="text" 
-            id="name" 
-            v-model="formData.name" 
-            :class="{ 'error-input': formErrors.name }"
-          >
-          <div v-if="formErrors.name" class="error-message">{{ formErrors.name }}</div>
+        <!-- Progress indicators -->
+        <div class="step-indicators">
+          <div v-for="step in totalSteps" :key="step" class="step-indicator" :class="{ 'active': currentStep === step, 'completed': currentStep > step }">
+            <div class="step-number">{{ step }}</div>
+            <div class="step-label">
+              {{ step === 1 ? '기본 정보' : step === 2 ? '교회/직업 정보' : '성격 유형' }}
+            </div>
+          </div>
         </div>
         
-        <div class="form-group">
-          <label for="birthYear">태어난 연도 <span class="required">*</span></label>
-          <input 
-            type="number" 
-            id="birthYear" 
-            v-model="formData.birthYear" 
-            placeholder="1990"
-            :class="{ 'error-input': formErrors.birthYear }"
-          >
-          <div v-if="formErrors.birthYear" class="error-message">{{ formErrors.birthYear }}</div>
+        <p class="step-count">
+          {{ currentStep }}/{{ totalSteps }} 단계 ({{ Math.round(currentStep / totalSteps * 100) }}% 완료)
+        </p>
+
+        <div v-if="currentStep === 1" class="step-1">
+          <div class="form-group">
+            <label for="name">이름 (실명) <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="name" 
+              v-model="formData.name" 
+              :class="{ 'error-input': formErrors.name }"
+            >
+            <div v-if="formErrors.name" class="error-message">{{ formErrors.name }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="birthYear">태어난 연도 <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="birthYear" 
+              v-model="formData.birthYear" 
+              placeholder="1990"
+              :class="{ 'error-input': formErrors.birthYear }"
+            >
+            <div v-if="formErrors.birthYear" class="error-message">{{ formErrors.birthYear }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="gender">성별 <span class="required">*</span></label>
+            <select 
+              id="gender" 
+              v-model="formData.gender"
+              :class="{ 'error-input': formErrors.gender }"
+            >
+              <option value="" disabled selected>선택해주세요</option>
+              <option value="남자">남자</option>
+              <option value="여자">여자</option>
+            </select>
+            <div v-if="formErrors.gender" class="error-message">{{ formErrors.gender }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="phone">연락처 (- 없이 숫자만 입력) <span class="required">*</span></label>
+            <input 
+              type="tel" 
+              id="phone" 
+              v-model="formData.phone" 
+              placeholder="01012345678"
+              :class="{ 'error-input': formErrors.phone }"
+            >
+            <div v-if="formErrors.phone" class="error-message">{{ formErrors.phone }}</div>
+          </div>
         </div>
         
-        <div class="form-group">
-          <label for="gender">성별 <span class="required">*</span></label>
-          <select 
-            id="gender" 
-            v-model="formData.gender"
-            :class="{ 'error-input': formErrors.gender }"
-          >
-            <option value="" disabled selected>선택해주세요</option>
-            <option value="남자">남자</option>
-            <option value="여자">여자</option>
-          </select>
-          <div v-if="formErrors.gender" class="error-message">{{ formErrors.gender }}</div>
+        <div v-if="currentStep === 2" class="step-2">
+          <div class="form-group">
+            <label for="church_name">섬기는 교회 이름 <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="church_name" 
+              v-model="formData.church_name"
+              :class="{ 'error-input': formErrors.church_name }"
+            >
+            <div v-if="formErrors.church_name" class="error-message">{{ formErrors.church_name }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="location">현재 거주 지역 (시+구), 매칭시 활용 <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="location" 
+              v-model="formData.location" 
+              placeholder="서울시 강남구"
+              :class="{ 'error-input': formErrors.location }"
+            >
+            <div v-if="formErrors.location" class="error-message">{{ formErrors.location }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="height">본인 키 <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="height" 
+              v-model="formData.height" 
+              placeholder="170"
+              :class="{ 'error-input': formErrors.height }"
+            >
+            <div v-if="formErrors.height" class="error-message">{{ formErrors.height }}</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="field">직업 또는 일하는 직군/업계 <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="field" 
+              v-model="formData.field"
+              :class="{ 'error-input': formErrors.field }"
+            >
+            <div v-if="formErrors.field" class="error-message">{{ formErrors.field }}</div>
+          </div>
+
+          <div class="form-group">
+            <label for="company_name">회사명 (선택입력)</label>
+            <input 
+              type="text" 
+              id="company_name" 
+              v-model="formData.company_name"
+            >
+          </div>
         </div>
-        
-        <div class="form-group">
-          <label for="phone">연락처 (- 없이 숫자만 입력) <span class="required">*</span></label>
-          <input 
-            type="tel" 
-            id="phone" 
-            v-model="formData.phone" 
-            placeholder="01012345678"
-            :class="{ 'error-input': formErrors.phone }"
-          >
-          <div v-if="formErrors.phone" class="error-message">{{ formErrors.phone }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label for="church_name">섬기는 교회 이름 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            id="church_name" 
-            v-model="formData.church_name"
-            :class="{ 'error-input': formErrors.church_name }"
-          >
-          <div v-if="formErrors.church_name" class="error-message">{{ formErrors.church_name }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label for="location">현재 거주 지역 (시+구), 매칭시 활용 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            id="location" 
-            v-model="formData.location" 
-            placeholder="서울시 강남구"
-            :class="{ 'error-input': formErrors.location }"
-          >
-          <div v-if="formErrors.location" class="error-message">{{ formErrors.location }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label for="height">본인 키 <span class="required">*</span></label>
-          <input 
-            type="number" 
-            id="height" 
-            v-model="formData.height" 
-            placeholder="170"
-            :class="{ 'error-input': formErrors.height }"
-          >
-          <div v-if="formErrors.height" class="error-message">{{ formErrors.height }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label for="field">직업 또는 일하는 직군/업계 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            id="field" 
-            v-model="formData.field"
-            :class="{ 'error-input': formErrors.field }"
-          >
-          <div v-if="formErrors.field" class="error-message">{{ formErrors.field }}</div>
-        </div>
-        
-        <div class="form-group">
-          <label for="company_name">회사명 (선택입력)</label>
-          <input 
-            type="text" 
-            id="company_name" 
-            v-model="formData.company_name"
-          >
-        </div>
-        
-        <div class="verification-notice">
-          교회인증(교회주보로 인증), 회사인증(사원증 or 명함) 으로 인증하는 절차가 나중에 진행됩니다.
+
+        <div v-if="currentStep === 3" class="step-3">
+          <div class="form-group">
+            <label for="mbti">MBTI (선택입력)</label>
+            <input 
+              type="text" 
+              id="mbti" 
+              v-model="formData.mbti"
+              placeholder="예: INFJ, ENTJ"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="enneagram">애니어그램 (선택입력)</label>
+            <input 
+              type="text" 
+              id="enneagram" 
+              v-model="formData.enneagram"
+              placeholder="예: 1w2, 9w8"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="hobby">취미 (선택입력)</label>
+            <input 
+              type="text" 
+              id="hobby" 
+              v-model="formData.hobby"
+              placeholder="예: 등산, 독서, 영화감상"
+            >
+          </div>
+
+          <div class="verification-notice">
+            교회인증(교회주보로 인증), 회사인증(사원증 or 명함) 으로 인증하는 절차가 나중에 진행됩니다.
+          </div>
         </div>
         
         <div class="form-actions">
-          <button type="button" @click="showApplicationForm = false" class="cancel-button">취소</button>
-          <button type="submit" class="submit-button">신청하기</button>
+          <div class="button-row">
+            <button type="button" @click="showApplicationForm = false" class="cancel-button">취소</button>
+            <div class="navigation-buttons">
+              <button v-if="currentStep > 1" type="button" @click="prevStep" class="prev-button">이전</button>
+              <button v-if="currentStep < totalSteps" type="button" @click="nextStep" class="next-button">다음</button>
+              <button v-if="currentStep === totalSteps" type="submit" class="submit-button">신청하기</button>
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -704,6 +835,77 @@ h2 {
   gap: 1rem;
 }
 
+.step-indicators {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.step-indicators::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 10%;
+  width: 80%;
+  height: 2px;
+  background-color: #e0e0e0;
+  z-index: 0;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 1;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step-indicator.active .step-number {
+  background-color: #19ce60;
+  color: white;
+}
+
+.step-indicator.completed .step-number {
+  background-color: #00b843;
+  color: white;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #666;
+  text-align: center;
+}
+
+.step-indicator.active .step-label {
+  color: #333;
+  font-weight: 600;
+}
+
+.step-count {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
@@ -748,56 +950,161 @@ h2 {
 }
 
 .verification-notice {
-  background-color: #f8f4ea;
-  border-radius: 8px;
+  margin-top: 1.5rem;
   padding: 1rem;
-  margin: 1rem 0;
+  background-color: #f8f9fa;
+  border-radius: 8px;
   font-size: 0.9rem;
-  line-height: 1.4;
-  color: #5a3a1a;
-  border-left: 3px solid #5a3a1a;
-  font-weight: 500;
+  color: #666;
+  line-height: 1.5;
+  border-left: 4px solid #19ce60;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.cancel-button,
+.prev-button,
+.next-button,
 .submit-button {
   padding: 0.8rem 1.5rem;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  flex: 1;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+.next-button:hover,
+.submit-button:hover {
+  background-color: #00b843;
+  transform: translateY(-2px);
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
 .cancel-button {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.prev-button,
+.next-button,
+.submit-button {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+}
+
+.step-1,
+.step-2,
+.step-3 {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cancel-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  background-color: #f1f1f1;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.prev-button,
+.next-button,
+.submit-button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.prev-button {
   background-color: #e0e0e0;
   color: #333;
 }
 
+.next-button,
 .submit-button {
   background-color: #19ce60;
   color: white;
 }
 
 .cancel-button:hover {
-  background-color: #cccccc;
+  background-color: #e0e0e0;
 }
 
+.prev-button:hover {
+  background-color: #d1d1d1;
+}
+
+.next-button:hover,
 .submit-button:hover {
   background-color: #00b843;
   transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
+  .step-indicators::after {
+    top: 16px;
+    left: 15%;
+    width: 70%;
+  }
+  
+  .button-row {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .cancel-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .navigation-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .prev-button,
+  .next-button,
+  .submit-button {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Restore other mobile styles */
   .hero {
     padding: 3rem 1rem;
     min-height: 90vh;
@@ -838,6 +1145,25 @@ h2 {
     padding: 1.5rem;
     max-width: 95%;
   }
+  
+  .step-indicators {
+    margin-bottom: 1rem;
+  }
+  
+  .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+  
+  .step-label {
+    font-size: 0.7rem;
+  }
+  
+  .step-count {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -865,6 +1191,16 @@ h2 {
     width: 100%;
     max-width: 300px;
     margin: 0.5rem auto;
+  }
+  
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+  
+  .step-label {
+    font-size: 0.65rem;
   }
 }
 
