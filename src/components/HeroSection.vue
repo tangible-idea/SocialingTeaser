@@ -24,7 +24,6 @@ const formData = ref({
   field: '',
   company_name: '',
   mbti: '제공하지않음',
-  personality_trait: '제공하지않음',
   hobby: ''
 });
 
@@ -144,7 +143,6 @@ async function submitApplication() {
       field: formData.value.field,
       company_name: formData.value.company_name || null,
       mbti: formData.value.mbti,
-      personality_trait: formData.value.personality_trait,
       hobby: formData.value.hobby,
       created_at: new Date().toISOString()
     };
@@ -219,7 +217,6 @@ function resetForm() {
     field: '',
     company_name: '',
     mbti: '제공하지않음',
-    personality_trait: '제공하지않음',
     hobby: ''
   };
   formErrors.value = {};
@@ -386,7 +383,7 @@ onMounted(() => {
           <div v-for="step in totalSteps" :key="step" class="step-indicator" :class="{ 'active': currentStep === step, 'completed': currentStep > step }">
             <div class="step-number">{{ step }}</div>
             <div class="step-label">
-              {{ step === 1 ? '기본 정보' : step === 2 ? '교회/직업 정보' : '성격 유형' }}
+              {{ step === 1 ? '기본 정보' : step === 2 ? '교회/직업 정보' : 'MBTI' }}
             </div>
           </div>
         </div>
@@ -526,38 +523,12 @@ onMounted(() => {
           </div>
           
           <div class="form-group">
-            <label for="personality_trait">나와 닮은 성경인물 (선택입력)</label>
-            <select 
-              id="personality_trait"
-              v-model="formData.personality_trait"
-              class="form-select"
-            >
-              <option value="제공하지않음">제공하지 않음</option>
-              <option value="다윗">다윗 (열정적이고 리더십이 있는)</option>
-              <option value="모세">모세 (지혜롭고 결단력 있는)</option>
-              <option value="에스더">에스더 (용기있고 헌신적인)</option>
-              <option value="아브라함">아브라함 (신실하고 믿음이 강한)</option>
-              <option value="사라">사라 (인내심 있고 지지하는)</option>
-              <option value="베드로">베드로 (열정적이고 솔직한)</option>
-              <option value="요한">요한 (사랑이 많고 깊은 통찰력이 있는)</option>
-              <option value="마리아">마리아 (온유하고 순종적인)</option>
-              <option value="바울">바울 (지적이고 결단력 있는)</option>
-              <option value="룻">룻 (충성스럽고 헌신적인)</option>
-              <option value="요셉">요셉 (꿈이 많고 지혜로운)</option>
-              <option value="미리암">미리암 (창의적이고 표현력이 풍부한)</option>
-              <option value="여호수아">여호수아 (용감하고 결단력 있는)</option>
-              <option value="드보라">드보라 (강인하고 현명한 지도자)</option>
-              <option value="다니엘">다니엘 (지혜롭고 원칙적인)</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
             <label for="hobby">취미 (선택입력)</label>
             <input 
               type="text" 
               id="hobby" 
               v-model="formData.hobby"
-              placeholder="예: 등산, 독서, 영화감상"
+              placeholder="예: 테니스, 클라이밍, 보드게임..."
             >
           </div>
 
