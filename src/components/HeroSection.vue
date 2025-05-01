@@ -23,8 +23,8 @@ const formData = ref({
   height: '',
   field: '',
   company_name: '',
-  mbti: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
-  enneagram: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+  mbti: '제공하지않음',
+  personality_trait: '제공하지않음',
   hobby: ''
 });
 
@@ -144,7 +144,7 @@ async function submitApplication() {
       field: formData.value.field,
       company_name: formData.value.company_name || null,
       mbti: formData.value.mbti,
-      enneagram: formData.value.enneagram,
+      personality_trait: formData.value.personality_trait,
       hobby: formData.value.hobby,
       created_at: new Date().toISOString()
     };
@@ -218,8 +218,8 @@ function resetForm() {
     height: '',
     field: '',
     company_name: '',
-    mbti: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
-    enneagram: '제공하지않음 (매칭 정확도가 낮아질수있습니다.)',
+    mbti: '제공하지않음',
+    personality_trait: '제공하지않음',
     hobby: ''
   };
   formErrors.value = {};
@@ -394,9 +394,10 @@ onMounted(() => {
 
         <div v-if="currentStep === 1" class="step-1">
           <div class="form-group">
-            <label for="name">이름 (실명) <span class="required">*</span></label>
+            <label for="name">이름 <span class="required">*</span></label>
             <input 
               type="text" 
+              placeholder="김땡땡"
               id="name" 
               v-model="formData.name" 
               :class="{ 'error-input': formErrors.name }"
@@ -410,7 +411,7 @@ onMounted(() => {
               type="number" 
               id="birthYear" 
               v-model="formData.birthYear" 
-              placeholder="1990"
+              placeholder="1990, 2005"
               :class="{ 'error-input': formErrors.birthYear }"
             >
             <div v-if="formErrors.birthYear" class="error-message">{{ formErrors.birthYear }}</div>
@@ -461,7 +462,7 @@ onMounted(() => {
               type="text" 
               id="location" 
               v-model="formData.location" 
-              placeholder="서울시 강남구, 성남시 분당"
+              placeholder="서울시 강남구, 성남시 분당구"
               :class="{ 'error-input': formErrors.location }"
             >
             <div v-if="formErrors.location" class="error-message">{{ formErrors.location }}</div>
@@ -490,36 +491,64 @@ onMounted(() => {
             >
             <div v-if="formErrors.field" class="error-message">{{ formErrors.field }}</div>
           </div>
-
-          <div class="form-group">
-            <label for="company_name">회사명 (선택입력)</label>
-            <input 
-              type="text" 
-              id="company_name" 
-              v-model="formData.company_name"
-            >
+          <div class="verification-notice">
+            교회인증(교회주보로 인증), 회사인증(사원증 or 명함) 으로 인증하는 절차가 나중에 진행됩니다.
           </div>
         </div>
 
         <div v-if="currentStep === 3" class="step-3">
           <div class="form-group">
             <label for="mbti">MBTI (선택입력)</label>
-            <input 
-              type="text" 
-              id="mbti" 
+            <select 
+              id="mbti"
               v-model="formData.mbti"
-              placeholder="예: INFJ, ENTJ"
+              class="form-select"
             >
+              <option value="제공하지않음">제공하지 않음</option>
+              <option value="INTJ">INTJ</option>
+              <option value="INTP">INTP</option>
+              <option value="ENTJ">ENTJ</option>
+              <option value="ENTP">ENTP</option>
+              <option value="INFJ">INFJ</option>
+              <option value="INFP">INFP</option>
+              <option value="ENFJ">ENFJ</option>
+              <option value="ENFP">ENFP</option>
+              <option value="ISTJ">ISTJ</option>
+              <option value="ISFJ">ISFJ</option>
+              <option value="ESTJ">ESTJ</option>
+              <option value="ESFJ">ESFJ</option>
+              <option value="ISTP">ISTP</option>
+              <option value="ISFP">ISFP</option>
+              <option value="ESTP">ESTP</option>
+              <option value="ESFP">ESFP</option>
+              <option value="모릅니다">모릅니다</option>
+            </select>
           </div>
           
           <div class="form-group">
-            <label for="enneagram">애니어그램 (선택입력)</label>
-            <input 
-              type="text" 
-              id="enneagram" 
-              v-model="formData.enneagram"
-              placeholder="예: 1w2, 9w8"
+            <label for="personality_trait">나와 닮은 성경인물 (선택입력)</label>
+            <select 
+              id="personality_trait"
+              v-model="formData.personality_trait"
+              class="form-select"
             >
+              <option value="제공하지않음">제공하지 않음</option>
+              <option value="다윗">다윗 (열정적이고 리더십이 있는)</option>
+              <option value="모세">모세 (지혜롭고 결단력 있는)</option>
+              <option value="에스더">에스더 (용기있고 헌신적인)</option>
+              <option value="아브라함">아브라함 (신실하고 믿음이 강한)</option>
+              <option value="사라">사라 (인내심 있고 지지하는)</option>
+              <option value="베드로">베드로 (열정적이고 솔직한)</option>
+              <option value="요한">요한 (사랑이 많고 깊은 통찰력이 있는)</option>
+              <option value="마리아">마리아 (온유하고 순종적인)</option>
+              <option value="바울">바울 (지적이고 결단력 있는)</option>
+              <option value="룻">룻 (충성스럽고 헌신적인)</option>
+              <option value="요셉">요셉 (꿈이 많고 지혜로운)</option>
+              <option value="미리암">미리암 (창의적이고 표현력이 풍부한)</option>
+              <option value="여호수아">여호수아 (용감하고 결단력 있는)</option>
+              <option value="드보라">드보라 (강인하고 현명한 지도자)</option>
+              <option value="다니엘">다니엘 (지혜롭고 원칙적인)</option>
+            </select>
           </div>
           
           <div class="form-group">
@@ -533,8 +562,9 @@ onMounted(() => {
           </div>
 
           <div class="verification-notice">
-            교회인증(교회주보로 인증), 회사인증(사원증 or 명함) 으로 인증하는 절차가 나중에 진행됩니다.
+           나중에 이상형 정보도 추가로 입력요청 드릴게요.
           </div>
+
         </div>
         
         <div class="form-actions">
@@ -1139,5 +1169,31 @@ h2 {
   color: #e74c3c;
   font-weight: 600;
   margin-left: 2px;
+}
+
+.form-select {
+  display: block;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  background-color: #ffffff;
+  background-clip: padding-box;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: border-color 0.15s ease-in-out;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 1em;
+}
+
+.form-select:focus {
+  border-color: #19ce60;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(25, 206, 96, 0.25);
 }
 </style>
