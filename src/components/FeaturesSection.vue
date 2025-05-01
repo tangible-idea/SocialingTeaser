@@ -43,8 +43,8 @@ onMounted(() => {
           <div class="step-icon">
             <i class="icon-signup"></i>
           </div>
-          <p>문의주실 앤분들이에요! 남자 50명, 여자 50명을 컨택해서 4월 30일까지 모집하고 있어요.</p>
-          <div class="date-tag">~ 4월 30일</div>
+          <p>교회의 청년분들 남자 50명, 여자 50명을 컨택해서 5월까지 모집하고 있어요. 현재는 할인쿠폰 적용시, <b>4000-5000원</b> 선입니다.</p>
+          <div class="date-tag">~ 5월 19일</div>
         </div>
       </div>
       
@@ -59,8 +59,8 @@ onMounted(() => {
           <div class="step-icon">
             <i class="icon-matching"></i>
           </div>
-          <p>설문조사 내용을 기반으로 알고리즘과 전문가 2분이 함께 최적의 짝을 찾아드리고 있어요. 사람의 마음, 안됨과 존중을 담은 매칭이에요.</p>
-          <div class="date-tag">~ 5월 19일</div>
+          <p>설문조사 내용을 기반으로 데이터 전문가 1명, 매칭 전문가 1명이 함께 최적의 짝을 찾아드리고 있어요..</p>
+          <div class="date-tag">~ 5월 중순</div>
         </div>
       </div>
       
@@ -75,8 +75,8 @@ onMounted(() => {
           <div class="step-icon">
             <i class="icon-results"></i>
           </div>
-          <p>사랑을 담아 발송해드릴게요! 귀하의 매칭 결과를 개별적으로 알려드립니다. 친절한 반니와 하켠이는 하나님이 준비해두신 만남일지도 모른당이요~</p>
-          <div class="date-tag">5월 20일</div>
+          <p>귀하의 매칭 결과를 개별적으로 알려드립니다. 매칭이 안될 가능성도 있습니다. 이에 경우에는 전액환불해드립니다. 6월에 새롭게 2차 매칭도 준비중이니, 새로 알림을 원하신다고 체크하신 분만 입력하신 번호로 알려드릴게요!</p>
+          <div class="date-tag">5월 31일</div>
         </div>
       </div>
       
@@ -91,8 +91,8 @@ onMounted(() => {
           <div class="step-icon">
             <i class="icon-calendar"></i>
           </div>
-          <p>서로의 일정에 맞춰 만남 날짜를 정할 수 있도록 도와드릴게요. 따로 빼목타서 일정 잡으세요. 좀 뻔해도 그냥 성실이 중요한거예요!</p>
-          <div class="date-tag">5월 중순</div>
+          <p>서로의 일정에 맞춰 만남 날짜를 정할 수 있도록 도와드릴게요. 두 분이 서로 일정이 맞아야 진행됩니다!</p>
+          <div class="date-tag">6월 중</div>
         </div>
       </div>
       
@@ -107,8 +107,9 @@ onMounted(() => {
           <div class="step-icon">
             <i class="icon-location"></i>
           </div>
-          <p>조용하고 편안한 식당이나 카페를 추천해드릴게요. 만남 비용은 서로 부담해주시는 게 좋을 것 같아요. 처음이라 부담스럽다면 카페나 저렴한 식당이라도 좋아요!</p>
-          <div class="date-tag">5월 말</div>
+          <p>저희가 두 분이 만날때 시너지를 낼 장소도 같이 알려드려요!
+            조용하고 편안한 식당이나 카페를 추천해드릴게요. </p>
+          <div class="date-tag">6월 중</div>
         </div>
       </div>
     </div>

@@ -40,7 +40,7 @@ onMounted(() => {
       
       <div class="footer-section">
         <h3>문의하기</h3>
-        <p>카카오: @tangibleidea</p>
+        <p>카카오: <a href="http://pf.kakao.com/_JaFsn">@텐저블아이디어</a></p>
         <p>이메일: <a href="mailto:mark.choi@tangibleidea.net">mark.choi@tangibleidea.net</a></p>
       </div>
       
