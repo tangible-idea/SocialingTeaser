@@ -12,9 +12,9 @@ import VisitorCounter from './components/VisitorCounter.vue';
   <div class="app">
     <HeroSection />
     <FeaturesSection />
-    <DatingProfiles />
-    <TestimonialsSection />
-    <RegistrationForm />
+    <!-- <DatingProfiles /> -->
+    <!-- <TestimonialsSection /> -->
+    <!-- <RegistrationForm /> -->
     <FooterSection />
     <VisitorCounter />
   </div>

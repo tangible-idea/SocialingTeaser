@@ -8,14 +8,14 @@ const currentYear = new Date().getFullYear();
     <div class="footer-content">
       <div class="footer-section">
         <h3>매칭 데이팅 이벤트</h3>
-        <p>언제: 2025년 5월 15일 (토요일) 오후 6시</p>
-        <p>어디서: 서울시 강남구 신사동 루프탑 레스토랑</p>
+        <p>사업자등록번호: 183-24-00392</p>
+        <p>통신판매업신고번호: 2021-성남분당B-0404</p>
       </div>
       
       <div class="footer-section">
         <h3>문의하기</h3>
-        <p>전화: 010-1234-5678</p>
-        <p>이메일: info@matchevent.co.kr</p>
+        <p>카카오: @tangibleidea</p>
+        <p>이메일: <a href="mailto:mark.choi@tangibleidea.net">mark.choi@tangibleidea.net</a></p>
       </div>
       
       <div class="footer-section social-links">
@@ -30,7 +30,7 @@ const currentYear = new Date().getFullYear();
     </div>
     
     <div class="copyright">
-      <p>&copy; {{ currentYear }} 매칭 데이팅 이벤트. All rights reserved.</p>
+      <p>&copy; {{ currentYear }} TangibleIdea All rights reserved.</p>
     </div>
   </footer>
 </template>

@@ -374,7 +374,12 @@ onMounted(() => {
   <!-- 참가신청 폼 모달 -->
   <div v-if="showApplicationForm" class="modal-overlay" @click.self="showApplicationForm = false">
     <div class="modal-content">
-      <h2>참가 신청</h2>
+      <div class="modal-header">
+        <h2>참가 신청</h2>
+        <button @click="showApplicationForm = false" class="close-button" aria-label="Close modal">
+          <span>&times;</span>
+        </button>
+      </div>
       <form @submit.prevent="submitApplication" class="application-form">
         <!-- Progress indicators -->
         <div class="step-indicators">
@@ -385,10 +390,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        
-        <p class="step-count">
-          {{ currentStep }}/{{ totalSteps }} 단계 ({{ Math.round(currentStep / totalSteps * 100) }}% 완료)
-        </p>
+    
 
         <div v-if="currentStep === 1" class="step-1">
           <div class="form-group">
@@ -459,7 +461,7 @@ onMounted(() => {
               type="text" 
               id="location" 
               v-model="formData.location" 
-              placeholder="서울시 강남구"
+              placeholder="서울시 강남구, 성남시 분당"
               :class="{ 'error-input': formErrors.location }"
             >
             <div v-if="formErrors.location" class="error-message">{{ formErrors.location }}</div>
@@ -471,7 +473,7 @@ onMounted(() => {
               type="number" 
               id="height" 
               v-model="formData.height" 
-              placeholder="170"
+              placeholder="170, 183"
               :class="{ 'error-input': formErrors.height }"
             >
             <div v-if="formErrors.height" class="error-message">{{ formErrors.height }}</div>
@@ -482,6 +484,7 @@ onMounted(() => {
             <input 
               type="text" 
               id="field" 
+              placeholder="예: IT, 공무원, 간호사"
               v-model="formData.field"
               :class="{ 'error-input': formErrors.field }"
             >
@@ -536,7 +539,6 @@ onMounted(() => {
         
         <div class="form-actions">
           <div class="button-row">
-            <button type="button" @click="showApplicationForm = false" class="cancel-button">취소</button>
             <div class="navigation-buttons">
               <button v-if="currentStep > 1" type="button" @click="prevStep" class="prev-button">이전</button>
               <button v-if="currentStep < totalSteps" type="button" @click="nextStep" class="next-button">다음</button>
@@ -821,6 +823,28 @@ h2 {
   border: 1px solid #ddd;
 }
 
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  color: #666;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
 .modal-content h2 {
   color: #5a3a1a;
   margin-bottom: 1.5rem;
@@ -899,18 +923,12 @@ h2 {
   font-weight: 600;
 }
 
-.step-count {
-  font-size: 0.85rem;
-  color: #666;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   background-color: #ffffff;
+  margin-bottom: 1.2rem;
 }
 
 .form-group label {
@@ -970,10 +988,25 @@ h2 {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  height: 40px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
-.cancel-button:hover {
+.prev-button {
   background-color: #e0e0e0;
+  color: #333;
+}
+
+.next-button,
+.submit-button {
+  background-color: #19ce60;
+  color: white;
+}
+
+.prev-button:hover {
+  background-color: #d1d1d1;
 }
 
 .next-button:hover,
@@ -994,48 +1027,14 @@ h2 {
   gap: 1rem;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .navigation-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   flex: 1;
   justify-content: flex-end;
-}
-
-.cancel-button {
-  width: 100%;
-  margin-bottom: 0.5rem;
-}
-
-.prev-button,
-.next-button,
-.submit-button {
-  flex: 1;
-  padding: 0.7rem 1rem;
-  font-size: 0.9rem;
-}
-
-.step-1,
-.step-2,
-.step-3 {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.cancel-button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  background-color: #f1f1f1;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
 .prev-button,
@@ -1048,6 +1047,10 @@ h2 {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 100px;
+  height: 40px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 .prev-button {
@@ -1061,10 +1064,6 @@ h2 {
   color: white;
 }
 
-.cancel-button:hover {
-  background-color: #e0e0e0;
-}
-
 .prev-button:hover {
   background-color: #d1d1d1;
 }
@@ -1076,93 +1075,25 @@ h2 {
 }
 
 @media (max-width: 768px) {
-  .step-indicators::after {
-    top: 16px;
-    left: 15%;
-    width: 70%;
-  }
-  
   .button-row {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     width: 100%;
-  }
-  
-  .cancel-button {
-    width: 100%;
-    margin-bottom: 0.5rem;
   }
   
   .navigation-buttons {
+    display: flex;
     width: 100%;
     justify-content: space-between;
+    margin-top: 0.75rem;
   }
   
   .prev-button,
   .next-button,
   .submit-button {
-    padding: 0.7rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  /* Restore other mobile styles */
-  .hero {
-    padding: 3rem 1rem;
-    min-height: 90vh;
-  }
-  
-  .english-title {
-    font-size: 1.5rem;
-  }
-  
-  .intro-text {
-    font-size: 0.95rem;
-    padding: 1.2rem;
-  }
-  
-  h1 {
-    font-size: 2.5rem;
-  }
-  
-  h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .promotion {
-    padding: 1rem;
-    margin: 1.5rem auto;
-  }
-  
-  .cta-button {
-    font-size: 1.25rem;
-    padding: 0.75rem 2rem;
-    width: 100%;
-    max-width: 300px;
-    margin: 0.5rem auto;
-  }
-  
-  .modal-content {
-    padding: 1.5rem;
-    max-width: 95%;
-  }
-  
-  .step-indicators {
-    margin-bottom: 1rem;
-  }
-  
-  .step-number {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
-  
-  .step-label {
-    font-size: 0.7rem;
-  }
-  
-  .step-count {
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
+    flex: 1;
+    min-width: 0;
+    padding: 0.7rem 0.5rem;
   }
 }
 
