@@ -294,6 +294,17 @@ function prevStep() {
   }
 }
 
+function showDiscountCouponAlert() {
+  // Track button click for analytics
+  trackButtonClick('purchase_button');
+  
+  // Show alert about the discount coupon
+  alert('스마트스토어에서 [할인쿠폰 70%]를 받고 결제하셔야 5000원 미만 가격으로 설정됩니다!');
+  
+  // Navigate to Naver store after user acknowledges the alert
+  window.open('https://smartstore.naver.com/tangible/products/11422139807', '_blank');
+}
+
 onMounted(() => {
   fetchProfiles();
   
@@ -320,7 +331,7 @@ onMounted(() => {
       <div class="intro-text">
         <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 인연 어디있는지 모르겠고..</p>
         <p>- 시험공부도/취업준비도 기도만 열심히하고 현실적으로 준비 안하면 결과가 나오는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 기도 응답을 받기 어렵다고 생각합니다.</p>
-        <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜨 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
+        <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜩 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
       </div>
       
       <div class="promotion">
@@ -363,10 +374,9 @@ onMounted(() => {
         </div>
       </div>
       <!-- 네이버 스마트 스토어로 연결 -->
-      <a href="https://smartstore.naver.com/tangible/products/11422139807" 
-         target="_blank" 
+      <a href="javascript:void(0)" 
          class="cta-button naver-button"
-         @click="trackButtonClick('purchase_button')"
+         @click="showDiscountCouponAlert"
       >
         <svg class="naver-icon" width="24" height="24" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M11 4H10.2V12H11V4Z" fill="currentColor"/>
