@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import supabase from '../supabase';
+import { trackButtonClick, trackFormStep, trackFormSubmission } from '../analytics';
 
 const profiles = ref([]);
 const loading = ref(true);
@@ -192,12 +193,16 @@ async function submitApplication() {
     resetForm();
     showApplicationForm.value = false;
     console.log('Form reset and modal closed');
+    // Track successful form submission
+    trackFormSubmission(true);
     alert('신청이 완료되었습니다!');
   } catch (err) {
     console.error('Application submission error details:', err);
     console.error('Error type:', typeof err);
     console.error('Error message:', err.message);
     console.error('Error stack:', err.stack);
+    // Track failed form submission
+    trackFormSubmission(false);
     alert('신청 중 오류가 발생했습니다. 다시 시도해주세요.');
   }
 }
@@ -221,7 +226,7 @@ function resetForm() {
 }
 
 // Navigation functions for multi-step form
-function nextStep() {
+async function nextStep() {
   // Validate current step before proceeding
   if (currentStep.value === 1) {
     // Validate step 1 fields
@@ -248,6 +253,9 @@ function nextStep() {
     if (Object.keys(formErrors.value).length > 0) {
       return; // Don't proceed if validation fails
     }
+    
+    // Track completion of step 1
+    trackFormStep(1, true);
   } else if (currentStep.value === 2) {
     // Validate step 2 fields
     formErrors.value = {};
@@ -267,11 +275,16 @@ function nextStep() {
     if (Object.keys(formErrors.value).length > 0) {
       return; // Don't proceed if validation fails
     }
+    
+    // Track completion of step 2
+    trackFormStep(2, true);
   }
   
   // If validation passes, move to next step
   if (currentStep.value < totalSteps) {
     currentStep.value++;
+    // Track start of next step
+    trackFormStep(currentStep.value, false);
   }
 }
 
@@ -350,7 +363,11 @@ onMounted(() => {
         </div>
       </div>
       <!-- 네이버 스마트 스토어로 연결 -->
-      <a href="https://smartstore.naver.com/tangible/products/11422139807" target="_blank" class="cta-button naver-button">
+      <a href="https://smartstore.naver.com/tangible/products/11422139807" 
+         target="_blank" 
+         class="cta-button naver-button"
+         @click="trackButtonClick('purchase_button')"
+      >
         <svg class="naver-icon" width="24" height="24" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M11 4H10.2V12H11V4Z" fill="currentColor"/>
           <path d="M5 4H4V12H5L9 7V12H10V4H9L5 9V4Z" fill="currentColor"/>
@@ -359,7 +376,7 @@ onMounted(() => {
       </a>
       
       <!-- 참가신청 폼 버튼 -->
-      <button @click="showApplicationForm = true" class="cta-button application-button">
+      <button @click="showApplicationForm = true; trackButtonClick('application_form_button')" class="cta-button application-button">
         참가신청 폼 입력하기
       </button>
     </div>
@@ -540,7 +557,7 @@ onMounted(() => {
             <div class="navigation-buttons">
               <button v-if="currentStep > 1" type="button" @click="prevStep" class="prev-button">이전</button>
               <button v-if="currentStep < totalSteps" type="button" @click="nextStep" class="next-button">다음</button>
-              <button v-if="currentStep === totalSteps" type="submit" class="submit-button">신청하기</button>
+              <button v-if="currentStep === totalSteps" type="submit" class="submit-button" @click="trackFormStep(3, true)">제출하기</button>
             </div>
           </div>
         </div>

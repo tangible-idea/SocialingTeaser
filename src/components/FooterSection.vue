@@ -1,10 +1,36 @@
 <script setup>
-// Footer component
+import { ref, onMounted } from 'vue';
+import { trackSectionView } from '../analytics';
+
 const currentYear = new Date().getFullYear();
+const footerSectionRef = ref(null);
+
+onMounted(() => {
+  // Create IntersectionObserver to track when Footer section is viewed
+  if (footerSectionRef.value) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          // If section becomes visible
+          if (entry.isIntersecting) {
+            // Track the section view event
+            trackSectionView('footer_section');
+            // Disconnect observer after first view to avoid multiple events
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 } // Fire when at least 30% of the section is visible
+    );
+    
+    // Start observing the section
+    observer.observe(footerSectionRef.value);
+  }
+});
 </script>
 
 <template>
-  <footer class="footer">
+  <footer class="footer" ref="footerSectionRef">
     <div class="footer-content">
       <div class="footer-section">
         <h3>매칭 데이팅 이벤트</h3>
@@ -18,7 +44,7 @@ const currentYear = new Date().getFullYear();
         <p>이메일: <a href="mailto:mark.choi@tangibleidea.net">mark.choi@tangibleidea.net</a></p>
       </div>
       
-      <div class="footer-section social-links">
+      <!-- <div class="footer-section social-links">
         <h3>소셜 미디어</h3>
         <div class="social-icons">
           <a href="#" class="social-icon">📲</a>
@@ -26,7 +52,7 @@ const currentYear = new Date().getFullYear();
           <a href="#" class="social-icon">📧</a>
           <a href="#" class="social-icon">📸</a>
         </div>
-      </div>
+      </div> -->
     </div>
     
     <div class="copyright">

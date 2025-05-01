@@ -1,9 +1,37 @@
 <script setup>
+import { ref, onMounted } from 'vue';
+import { trackSectionView } from '../analytics';
+
 // Features section component for dating event
+
+const featuresSectionRef = ref(null);
+
+onMounted(() => {
+  // Create IntersectionObserver to track when Features section is viewed
+  if (featuresSectionRef.value) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          // If section becomes visible
+          if (entry.isIntersecting) {
+            // Track the section view event
+            trackSectionView('features_section');
+            // Disconnect observer after first view to avoid multiple events
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 } // Fire when at least 30% of the section is visible
+    );
+    
+    // Start observing the section
+    observer.observe(featuresSectionRef.value);
+  }
+});
 </script>
 
 <template>
-  <section class="features">
+  <section class="features" ref="featuresSectionRef">
     <h2 class="section-title">어떻게 진행되나요?</h2>
     <p class="section-intro">교회 청년들의 만남이 어떻게 진행되는지 플로우를 설명해드릴게요!</p>
     
