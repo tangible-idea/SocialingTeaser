@@ -22,7 +22,6 @@ const formData = ref({
   location: '',
   height: '',
   field: '',
-  company_name: '',
   mbti: '제공하지않음',
   hobby: ''
 });
@@ -141,10 +140,9 @@ async function submitApplication() {
       location: formData.value.location,
       height: formData.value.height,
       field: formData.value.field,
-      company_name: formData.value.company_name || null,
       mbti: formData.value.mbti,
-      hobby: formData.value.hobby,
-      created_at: new Date().toISOString()
+      hobby: formData.value.hobby
+      // Let the database handle created_at with its default NOW() value
     };
     
     console.log('Data being submitted to Supabase:', submissionData);
@@ -215,7 +213,6 @@ function resetForm() {
     location: '',
     height: '',
     field: '',
-    company_name: '',
     mbti: '제공하지않음',
     hobby: ''
   };
@@ -308,7 +305,7 @@ onMounted(() => {
       <h2>교회 청년들 모두 다 짝 찾아주자 이벤트</h2>
       
       <div class="intro-text">
-        <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 준비하신 인연 어디있는지 모르겠고..</p>
+        <p>- 저는 대형교회 다니는 평범한 30대 개발자입니다. 주변에 소개시켜달라는 형제,자매분들 많은데 같은 교회에서는 서로 눈치보면서 못만나고, 소개팅은 부담스럽고, 나의 인연 어디있는지 모르겠고..</p>
         <p>- 시험공부도/취업준비도 기도만 열심히하고 현실적으로 준비 안하면 결과가 나오는게 아니듯이, 배우자기도도 기도만하고 만날 노력을 하지않으면 기도 응답을 받기 어렵다고 생각합니다.</p>
         <p>- 이런 친구들이 주변에 많아서 한번 만들어봤습니다. 문뜨 이런 교회 친구들을 전부 모아서 연결해주면 어떨까 생각해봤습니다.</p>
       </div>
@@ -383,7 +380,7 @@ onMounted(() => {
           <div v-for="step in totalSteps" :key="step" class="step-indicator" :class="{ 'active': currentStep === step, 'completed': currentStep > step }">
             <div class="step-number">{{ step }}</div>
             <div class="step-label">
-              {{ step === 1 ? '기본 정보' : step === 2 ? '교회/직업 정보' : 'MBTI' }}
+              {{ step === 1 ? '기본 정보' : step === 2 ? '교회/직업 정보' : '성격 유형' }}
             </div>
           </div>
         </div>
