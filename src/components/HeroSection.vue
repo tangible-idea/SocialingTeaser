@@ -165,7 +165,7 @@ async function submitApplication() {
     // Send SMS confirmation to the user
     try {
       console.log('Sending SMS confirmation...');
-      const smsMessage = `${formData.value.name} 님 참가신청해주셔서 감사합니다! 아래 네이버 구매링크로 구매하시면 휴대폰번호가 매칭되어서 자동으로 리스트에 올라갑니다. 저희가 5월 중에 매칭결과가 나오면 다시 알려드릴께요!`;
+      const smsMessage = `${formData.value.name} 님 참가신청해주셔서 감사합니다! 아래 네이버 구매링크로 구매하시면 휴대폰번호가 매칭되어서 자동으로 리스트에 올라갑니다. 매칭결과가 나오면 다시 알려드릴께요!`;
       
       const smsResponse = await fetch('http://api.tangibly.link/sendsms', {
         method: 'POST',
@@ -389,6 +389,11 @@ onMounted(() => {
       <button @click="showApplicationForm = true; trackButtonClick('application_form_button')" class="cta-button application-button">
         참가신청 폼 입력하기
       </button>
+      
+      <!-- 프로필 테스트 링크 -->
+      <router-link to="/profile/1b3d9e1b-5b67-48e0-a838-08f50e7a7512" class="cta-button profile-button">
+        프로필 테스트 보기
+      </router-link>
     </div>
   </section>
   
@@ -810,6 +815,18 @@ h2 {
 
 .application-button:hover {
   background-color: #7a5a3a;
+}
+
+.profile-button {
+  background-color: var(--secondary-brown);
+  color: white;
+  margin-top: 0.5rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.profile-button:hover {
+  background-color: var(--accent);
 }
 
 .naver-icon {

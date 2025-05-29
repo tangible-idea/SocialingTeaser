@@ -1,29 +1,10 @@
 <script setup>
-import { onMounted } from 'vue';
-import HeroSection from './components/HeroSection.vue';
-import FeaturesSection from './components/FeaturesSection.vue';
-import TestimonialsSection from './components/TestimonialsSection.vue';
-import RegistrationForm from './components/RegistrationForm.vue';
-import FooterSection from './components/FooterSection.vue';
-import DatingProfiles from './components/DatingProfiles.vue';
-import VisitorCounter from './components/VisitorCounter.vue';
-import { trackPageView } from './analytics';
-
-onMounted(() => {
-  // Track initial page view when app loads
-  trackPageView('homepage');
-});
+// App.vue now just serves as a container for the router view
 </script>
 
 <template>
   <div class="app">
-    <HeroSection />
-    <FeaturesSection />
-    <!-- <DatingProfiles /> -->
-    <!-- <TestimonialsSection /> -->
-    <!-- <RegistrationForm /> -->
-    <FooterSection />
-    <VisitorCounter />
+    <router-view />
   </div>
 </template>
 
