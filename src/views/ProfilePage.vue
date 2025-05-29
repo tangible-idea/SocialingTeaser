@@ -64,18 +64,34 @@ function toggleEdit() {
 async function saveProfile() {
   try {
     loading.value = true;
+    console.log('Saving profile with ID:', profileId);
+    console.log('Data to update:', editedProfile.value);
     
-    const { error: updateError } = await supabase
+    // Create a clean update object (remove created_at and other fields that might cause issues)
+    const updateData = { ...editedProfile.value };
+    delete updateData.created_at; // Remove timestamp that might cause conflicts
+    delete updateData.id; // Remove id as it's used in the query condition
+    
+    console.log('Cleaned update data:', updateData);
+    
+    const { data, error: updateError } = await supabase
       .from('dating')
-      .update(editedProfile.value)
-      .eq('id', profileId);
+      .update(updateData)
+      .eq('id', profileId)
+      .select();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error('Supabase update error details:', updateError);
+      throw updateError;
+    }
+    
+    console.log('Update successful, response:', data);
     
     // Update local profile data with edited data
     profile.value = { ...editedProfile.value };
     isEditing.value = false;
     error.value = null;
+    alert('프로필이 성공적으로 저장되었습니다.');
   } catch (err) {
     error.value = '프로필 저장 중 오류가 발생했습니다.';
     console.error('Error updating profile:', err);
@@ -92,7 +108,7 @@ onMounted(() => {
 
 <template>
   <div class="profile-page container">
-    <h1 class="page-title">프로필 페이지</h1>
+    <h2 class="page-title">프로필 페이지</h2>
     
     <div v-if="loading" class="loading">
       <p>로딩 중...</p>
@@ -106,11 +122,11 @@ onMounted(() => {
     <div v-else>
       <!-- Phone Verification Section -->
       <div v-if="!isVerified" class="verification-section">
-        <h2>본인 확인</h2>
-        <p>프로필을 보기 위해 본인의 휴대폰 번호를 입력해주세요.</p>
+        <!-- <h2>본인 확인</h2> -->
+        <!-- <p>휴대폰 번호 입력</p> -->
         
         <div class="form-group">
-          <label for="phone">휴대폰 번호:</label>
+          <label for="phone">본인 확인을 위한 휴대폰 번호 입력!</label>
           <input 
             type="text" 
             id="phone" 
@@ -254,9 +270,9 @@ onMounted(() => {
       </div>
     </div>
     
-    <div class="back-link">
+    <!-- <div class="back-link">
       <router-link to="/" class="btn">홈으로 돌아가기</router-link>
-    </div>
+    </div> -->
   </div>
 </template>
 
