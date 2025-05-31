@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import supabase from '../supabase';
 import { trackPageView } from '../analytics';
+// Import Font Awesome for icons
+import '@fortawesome/fontawesome-free/css/all.css';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,6 +16,7 @@ const isEditing = ref(false);
 const phoneVerification = ref('');
 const isVerified = ref(false);
 const editedProfile = ref({});
+const visiblePhonePart = ref('');
 
 // Fetch profile data from Supabase
 async function fetchProfile() {
@@ -28,6 +31,11 @@ async function fetchProfile() {
     if (fetchError) throw fetchError;
     profile.value = data;
     editedProfile.value = { ...data };
+    
+    // Extract visible part of phone number (first 7 digits)
+    if (data.phone && data.phone.length >= 7) {
+      visiblePhonePart.value = data.phone.substring(0, 7);
+    }
   } catch (err) {
     error.value = '프로필을 불러오는 중 오류가 발생했습니다.';
     console.error('Error fetching profile:', err);
@@ -39,16 +47,22 @@ async function fetchProfile() {
 // Verify phone number
 function verifyPhone() {
   if (!phoneVerification.value) {
-    error.value = '휴대폰 번호를 입력해주세요.';
+    error.value = '마지막 4자리를 입력해주세요.';
     return;
   }
   
-  // Check if phone matches the profile's phone
-  if (profile.value && phoneVerification.value === profile.value.phone) {
-    isVerified.value = true;
-    error.value = null;
+  // Check if the last 4 digits match with the profile's phone
+  if (profile.value && profile.value.phone) {
+    const lastFourDigits = profile.value.phone.slice(-4);
+    
+    if (phoneVerification.value === lastFourDigits) {
+      isVerified.value = true;
+      error.value = null;
+    } else {
+      error.value = '전화번호 마지막 4자리가 일치하지 않습니다.';
+    }
   } else {
-    error.value = '휴대폰 번호가 일치하지 않습니다.';
+    error.value = '전화번호 정보가 없습니다.';
   }
 }
 
@@ -125,15 +139,30 @@ onMounted(() => {
         <!-- <h2>본인 확인</h2> -->
         <!-- <p>휴대폰 번호 입력</p> -->
         
-        <div class="form-group">
-          <label for="phone">본인 확인을 위한 휴대폰 번호 입력!</label>
-          <input 
-            type="text" 
-            id="phone" 
-            v-model="phoneVerification" 
-            placeholder="01012345678"
-            class="form-input"
-          />
+        <div class="form-group phone-verification-section">
+          <label for="phone">본인 확인을 위한 휴대폰 번호 확인</label>
+          <p class="verification-instruction">등록된 휴대폰 번호의 마지막 <span class="highlight">4자리</span>를 입력해주세요</p>
+          
+          <div class="phone-verification-container">
+            <div class="phone-display">
+              <span class="visible-phone-part">{{ visiblePhonePart }}</span>
+              <span class="phone-separator">-</span>
+              <span class="hidden-part">****</span>
+            </div>
+            <div class="input-container">
+              <input 
+                type="text" 
+                id="phone" 
+                v-model="phoneVerification" 
+                placeholder="0000"
+                class="form-input last-four-digits"
+                maxlength="4"
+              />
+              <div class="input-icon">
+                <i class="fas fa-lock"></i>
+              </div>
+            </div>
+          </div>
         </div>
         
         <button @click="verifyPhone" class="btn primary-btn">확인</button>
@@ -281,6 +310,88 @@ onMounted(() => {
   padding: 2rem 0;
   max-width: 800px;
   margin: 0 auto;
+}
+
+.phone-verification-section {
+  background-color: #f9f6f1;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border-left: 4px solid var(--primary-brown);
+  margin-bottom: 1.5rem;
+}
+
+.verification-instruction {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.highlight {
+  color: var(--primary-brown);
+  font-weight: bold;
+}
+
+.phone-verification-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.phone-display {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.visible-phone-part {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.phone-separator {
+  margin: 0 4px;
+  color: #ccc;
+}
+
+.hidden-part {
+  color: var(--text-light);
+  letter-spacing: 2px;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.last-four-digits {
+  width: 100% !important;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  text-align: center;
+  font-weight: 500;
+  border: 2px solid var(--cream);
+  transition: all 0.3s ease;
+}
+
+.last-four-digits:focus {
+  border-color: var(--primary-brown);
+  box-shadow: 0 0 0 3px rgba(169, 132, 103, 0.2);
+}
+
+.input-icon {
+  position: absolute;
+  right: 12px;
+  color: var(--primary-brown);
+  opacity: 0.7;
 }
 
 .page-title {
