@@ -314,15 +314,12 @@ onMounted(() => {
           
           <div class="form-group">
             <label for="edit-gender">성별:</label>
-            <select id="edit-gender" v-model="editedProfile.gender" class="form-input">
-              <option value="남자">남자</option>
-              <option value="여자">여자</option>
-            </select>
+            <div class="form-static-value">{{ editedProfile.gender }}</div>
           </div>
           
           <div class="form-group">
             <label for="edit-birth-year">출생년도:</label>
-            <input type="number" id="edit-birth-year" v-model="editedProfile.birth_year" class="form-input" />
+            <div class="form-static-value">{{ editedProfile.birth_year }}</div>
           </div>
           
           <div class="form-group">
@@ -651,6 +648,15 @@ onMounted(() => {
 
 .form-group {
   margin-bottom: 1rem;
+}
+
+.form-static-value {
+  padding: 0.75rem;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  font-weight: 500;
 }
 
 label {
