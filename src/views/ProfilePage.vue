@@ -17,6 +17,8 @@ const phoneVerification = ref('');
 const isVerified = ref(false);
 const editedProfile = ref({});
 const visiblePhonePart = ref('');
+const isPhoneInvalid = ref(false);
+const phoneErrorMessage = ref('');
 
 // Fetch profile data from Supabase
 async function fetchProfile() {
@@ -46,8 +48,13 @@ async function fetchProfile() {
 
 // Verify phone number
 function verifyPhone() {
+  // Reset validation state
+  isPhoneInvalid.value = false;
+  phoneErrorMessage.value = '';
+  
   if (!phoneVerification.value) {
-    error.value = '마지막 4자리를 입력해주세요.';
+    isPhoneInvalid.value = true;
+    phoneErrorMessage.value = '마지막 4자리를 입력해주세요.';
     return;
   }
   
@@ -59,10 +66,12 @@ function verifyPhone() {
       isVerified.value = true;
       error.value = null;
     } else {
-      error.value = '전화번호 마지막 4자리가 일치하지 않습니다.';
+      isPhoneInvalid.value = true;
+      phoneErrorMessage.value = '전화번호 마지막 4자리가 일치하지 않습니다.';
     }
   } else {
-    error.value = '전화번호 정보가 없습니다.';
+    isPhoneInvalid.value = true;
+    phoneErrorMessage.value = '전화번호 정보가 없습니다.';
   }
 }
 
@@ -128,7 +137,7 @@ onMounted(() => {
       <p>로딩 중...</p>
     </div>
     
-    <div v-else-if="error" class="error">
+    <div v-else-if="error && !isPhoneInvalid" class="error">
       <p>{{ error }}</p>
       <button @click="fetchProfile" class="btn">다시 시도</button>
     </div>
@@ -155,12 +164,13 @@ onMounted(() => {
                 id="phone" 
                 v-model="phoneVerification" 
                 placeholder="0000"
-                class="form-input last-four-digits"
+                :class="['form-input last-four-digits', { 'input-error': isPhoneInvalid }]"
                 maxlength="4"
               />
               <div class="input-icon">
-                <i class="fas fa-lock"></i>
+                <i class="fas fa-lock" :class="{ 'error-icon': isPhoneInvalid }"></i>
               </div>
+              <div v-if="isPhoneInvalid" class="error-message">{{ phoneErrorMessage }}</div>
             </div>
           </div>
         </div>
@@ -392,6 +402,32 @@ onMounted(() => {
   right: 12px;
   color: var(--primary-brown);
   opacity: 0.7;
+  transition: color 0.3s ease;
+}
+
+.error-icon {
+  color: #e74c3c !important;
+}
+
+.input-error {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.2);
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.error-message {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 0.8rem;
+  color: #e74c3c;
+  margin-top: 5px;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
 }
 
 .page-title {
