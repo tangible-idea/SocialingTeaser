@@ -19,6 +19,34 @@ const editedProfile = ref({});
 const visiblePhonePart = ref('');
 const isPhoneInvalid = ref(false);
 const phoneErrorMessage = ref('');
+const priorityValues = ref(['중요', '약간', '약간', '중요', '약간']);
+
+// Priority helper functions
+function getPriorityLabel(index) {
+  const labels = ['성격', '외모', '능력', '신앙', '가치관'];
+  return labels[index] || '';
+}
+
+function getPriorityDescription(index) {
+  const descriptions = [
+    '성격 – 상대방의 성품과 태도, 대인관계에서의 조화',
+    '외모 – 개인적인 호감과 매력(키, 얼굴 등)',
+    '능력 – 경제력, 직업, 미래 설계 능력',
+    '신앙 – 신앙심과 신앙 생활의 중요성',
+    '가치관 – 삶에 대한 태도, 목표, 결혼관, 가족관'
+  ];
+  return descriptions[index] || '';
+}
+
+function getPriorityClass(priority) {
+  switch (priority) {
+    case '무관': return 'priority-none';
+    case '약간': return 'priority-low';
+    case '중요': return 'priority-medium';
+    case '매우중요': return 'priority-high';
+    default: return 'priority-low';
+  }
+}
 
 // Fetch profile data from Supabase
 async function fetchProfile() {
@@ -80,6 +108,14 @@ function toggleEdit() {
   isEditing.value = !isEditing.value;
   if (isEditing.value) {
     editedProfile.value = { ...profile.value };
+    
+    // Initialize priority values from profile data if available
+    if (profile.value && profile.value.ideal_type_priorities && Array.isArray(profile.value.ideal_type_priorities)) {
+      priorityValues.value = [...profile.value.ideal_type_priorities];
+    } else {
+      // Default values if not set
+      priorityValues.value = ['중요', '약간', '약간', '중요', '약간'];
+    }
   }
 }
 
@@ -94,6 +130,9 @@ async function saveProfile() {
     const updateData = { ...editedProfile.value };
     delete updateData.created_at; // Remove timestamp that might cause conflicts
     delete updateData.id; // Remove id as it's used in the query condition
+    
+    // Add priority values to update data
+    updateData.ideal_type_priorities = priorityValues.value;
     
     console.log('Cleaned update data:', updateData);
     
@@ -131,13 +170,16 @@ onMounted(() => {
 
 <template>
   <div class="profile-page container">
-    <h2 class="page-title">프로필 페이지</h2>
-    
-    <div v-if="loading" class="loading">
-      <p>로딩 중...</p>
+    <!-- Loading Overlay -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="spinner">
+        <div class="spinner-inner"></div>
+      </div>
     </div>
     
-    <div v-else-if="error && !isPhoneInvalid" class="error">
+    <h2 class="page-title">프로필 페이지</h2>
+    
+    <div v-if="error && !isPhoneInvalid" class="error">
       <p>{{ error }}</p>
       <button @click="fetchProfile" class="btn">다시 시도</button>
     </div>
@@ -223,6 +265,10 @@ onMounted(() => {
             <span class="label">거주지:</span>
             <span class="value">{{ profile.location }}</span>
           </div>
+          <div class="profile-row" v-if="profile.education">
+            <span class="label">최종학력:</span>
+            <span class="value">{{ profile.education }}</span>
+          </div>
           <div class="profile-row" v-if="profile.mbti">
             <span class="label">MBTI:</span>
             <span class="value">{{ profile.mbti }}</span>
@@ -231,10 +277,28 @@ onMounted(() => {
             <span class="label">취미:</span>
             <span class="value">{{ profile.hobby }}</span>
           </div>
+          <div class="profile-row" v-if="profile.first_church_attendance">
+            <span class="label">교회 첫 방문:</span>
+            <span class="value">{{ profile.first_church_attendance }}</span>
+          </div>
           <div class="profile-row" v-if="profile.charm_points">
-            <span class="label">매력 포인트:</span>
+            <span class="label">내 매력포인트:</span>
             <span class="value">{{ profile.charm_points }}</span>
           </div>
+          <div class="profile-row" v-if="profile.ideal_type_priorities && profile.ideal_type_priorities.length > 0">
+            <span class="label">이성 볼 때 우선순위:</span>
+            <div class="value priorities-display">
+              <div class="priority-item" v-for="(priority, index) in profile.ideal_type_priorities" :key="index">
+                <div class="priority-label">{{ getPriorityLabel(index) }}</div>
+                <div class="priority-bar-container">
+                  <div class="priority-bar" :class="getPriorityClass(priority)"></div>
+                </div>
+                <div class="priority-value">{{ priority }}</div>
+                <div class="priority-description">{{ getPriorityDescription(index) }}</div>
+              </div>
+            </div>
+          </div>
+          
           <div class="profile-row" v-if="profile.ideal_type">
             <span class="label">이상형:</span>
             <span class="value">{{ profile.ideal_type }}</span>
@@ -287,6 +351,19 @@ onMounted(() => {
           </div>
           
           <div class="form-group">
+            <label for="edit-education">최종학력:</label>
+            <select id="edit-education" v-model="editedProfile.education" class="form-input form-select">
+              <option value="">선택하세요</option>
+              <option value="고등학교 졸업">고등학교 졸업</option>
+              <option value="대학교 재학">대학교 재학</option>
+              <option value="대학교 졸업">대학교 졸업</option>
+              <option value="대학원 재학">대학원 재학</option>
+              <option value="대학원 졸업">대학원 졸업</option>
+              <option value="기타 (또는 밝히지 않음)">기타 (또는 밝히지 않음)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
             <label for="edit-mbti">MBTI:</label>
             <input type="text" id="edit-mbti" v-model="editedProfile.mbti" class="form-input" />
           </div>
@@ -297,12 +374,50 @@ onMounted(() => {
           </div>
           
           <div class="form-group">
-            <label for="edit-charm">매력 포인트:</label>
-            <textarea id="edit-charm" v-model="editedProfile.charm_points" class="form-textarea"></textarea>
+            <label for="edit-first-church">교회 첫 방문:</label>
+            <input type="text" id="edit-first-church" v-model="editedProfile.first_church_attendance" class="form-input" placeholder="예: 1년, 2년, 대학생때 부터, 모태신앙..." />
           </div>
           
           <div class="form-group">
-            <label for="edit-ideal">이상형:</label>
+            <label for="edit-charm">내 매력포인트 3가지:</label>
+            <textarea id="edit-charm" v-model="editedProfile.charm_points" class="form-textarea" placeholder="예: 1. 성실함 2. 유머감각 3. 요리"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>이성을 볼 때 우선순위:</label>
+            <div class="priorities-edit">
+              <table class="priorities-table">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>무관</th>
+                    <th>약간</th>
+                    <th>중요</th>
+                    <th>매우중요</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(_, index) in 5" :key="index">
+                    <td class="priority-category">{{ getPriorityLabel(index) }}</td>
+                    <td><input type="radio" :name="'priority-' + index" v-model="priorityValues[index]" value="무관" /></td>
+                    <td><input type="radio" :name="'priority-' + index" v-model="priorityValues[index]" value="약간" /></td>
+                    <td><input type="radio" :name="'priority-' + index" v-model="priorityValues[index]" value="중요" /></td>
+                    <td><input type="radio" :name="'priority-' + index" v-model="priorityValues[index]" value="매우중요" /></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="priorities-info">
+                <p>성격 – 상대방의 성품과 태도, 대인관계에서의 조화</p>
+                <p>외모 – 개인적인 호감과 매력(키, 얼굴 등)</p>
+                <p>능력 – 경제력, 직업, 미래 설계 능력</p>
+                <p>신앙 – 신앙심과 신앙 생활의 중요성</p>
+                <p>가치관 – 삶에 대한 태도, 목표, 결혼관, 가족관</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-ideal">이상형 (자유양식):</label>
             <textarea id="edit-ideal" v-model="editedProfile.ideal_type" class="form-textarea"></textarea>
           </div>
         </div>
@@ -436,9 +551,57 @@ onMounted(() => {
   color: var(--dark-brown);
 }
 
-.loading, .error {
+.error {
   text-align: center;
   padding: 2rem;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.spinner {
+  display: inline-block;
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+
+.spinner-inner {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  margin: 8px;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  border-top-color: var(--primary-brown);
+  border-bottom-color: var(--secondary-brown);
+  animation: spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .verification-section {
@@ -505,6 +668,16 @@ label {
   font-size: 1rem;
 }
 
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a98467' d='M6 8.825L1.588 4.413 2.775 3.226 6 6.451 9.225 3.226 10.412 4.413z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
 .form-textarea {
   min-height: 100px;
   resize: vertical;
@@ -552,6 +725,118 @@ label {
   display: flex;
 }
 
+.priorities-display {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.priority-label {
+  width: 80px;
+  font-weight: 500;
+}
+
+.priority-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 100px;
+}
+
+.priority-bar {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.priority-value {
+  width: 70px;
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--dark-brown);
+}
+
+.priority-description {
+  width: 100%;
+  margin-top: 5px;
+  font-size: 0.8em;
+  color: #666;
+  padding-left: 90px;
+}
+
+.priority-none {
+  width: 25%;
+  background-color: #e0e0e0;
+}
+
+.priority-low {
+  width: 50%;
+  background-color: var(--primary-brown);
+  opacity: 0.5;
+}
+
+.priority-medium {
+  width: 75%;
+  background-color: var(--primary-brown);
+  opacity: 0.8;
+}
+
+.priority-high {
+  width: 100%;
+  background-color: var(--primary-brown);
+}
+
+.priorities-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.priorities-table th,
+.priorities-table td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.priorities-table th {
+  background-color: var(--cream);
+  font-weight: 500;
+  color: var(--dark-brown);
+}
+
+.priority-category {
+  text-align: left;
+  font-weight: 500;
+  color: var(--dark-brown);
+  padding-left: 15px;
+}
+
+.priorities-info {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.priorities-info p {
+  margin: 5px 0;
+}
+
 @media (max-width: 768px) {
   .profile-page {
     padding: 1rem;
@@ -567,6 +852,23 @@ label {
   
   .label {
     margin-bottom: 0.25rem;
+  }
+  
+  .priority-item {
+    margin-bottom: 15px;
+  }
+  
+  .priority-description {
+    padding-left: 0;
+  }
+  
+  .priorities-table {
+    font-size: 0.9em;
+  }
+  
+  .priorities-table th,
+  .priorities-table td {
+    padding: 8px 5px;
   }
 }
 </style>
