@@ -389,11 +389,6 @@ onMounted(() => {
       <button @click="showApplicationForm = true; trackButtonClick('application_form_button')" class="cta-button application-button">
         참가신청 폼 입력하기
       </button>
-      
-      <!-- 프로필 테스트 링크 -->
-      <router-link to="/profile/1b3d9e1b-5b67-48e0-a838-08f50e7a7512" class="cta-button profile-button">
-        프로필 테스트 보기
-      </router-link>
     </div>
   </section>
   
