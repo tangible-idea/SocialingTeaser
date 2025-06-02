@@ -20,7 +20,7 @@
                 :disabled="loading">
                 <option value="" disabled>사용자를 선택하세요</option>
                 <option v-for="user in userList" :key="user.id" :value="user.id">
-                  {{ user.name }} ({{ user.gender === 'male' ? '남성' : '여성' }})
+                  {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
                 </option>
               </select>
             </div>
@@ -35,7 +35,7 @@
                 :disabled="loading || !selectedUserA">
                 <option value="" disabled>매칭 대상을 선택하세요</option>
                 <option v-for="user in filteredUserList" :key="user.id" :value="user.id">
-                  {{ user.name }} ({{ user.gender === 'male' ? '남성' : '여성' }})
+                  {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
                 </option>
               </select>
             </div>
@@ -46,22 +46,32 @@
               <div class="user-profile-card" v-if="userA">
                 <h3>사용자 A: {{ userA.name }}</h3>
                 <div class="profile-details">
-                  <p><strong>나이:</strong> {{ userA.age }}세</p>
-                  <p><strong>성별:</strong> {{ userA.gender === 'male' ? '남성' : '여성' }}</p>
+                  <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
+                  <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
                   <p><strong>직업:</strong> {{ userA.field }}</p>
-                  <p v-if="userA.biblicalCharacter"><strong>성경 인물:</strong> {{ userA.biblicalCharacter }}</p>
-                  <p v-if="userA.interests"><strong>관심사:</strong> {{ userA.interests }}</p>
+                  <p><strong>회사:</strong> {{ userA.company_name || '정보 없음' }}</p>
+                  <p><strong>지역:</strong> {{ userA.location || '정보 없음' }}</p>
+                  <p><strong>교회:</strong> {{ userA.church_name || '정보 없음' }}</p>
+                  <p><strong>취미:</strong> {{ userA.hobby || '정보 없음' }}</p>
+                  <p><strong>MBTI:</strong> {{ userA.mbti || '정보 없음' }}</p>
+                  <p><strong>학력:</strong> {{ userA.education || '정보 없음' }}</p>
+                  <p><strong>매력 포인트:</strong> {{ userA.charm_points || '정보 없음' }}</p>
                 </div>
               </div>
               
               <div class="user-profile-card" v-if="userB">
                 <h3>사용자 B: {{ userB.name }}</h3>
                 <div class="profile-details">
-                  <p><strong>나이:</strong> {{ userB.age }}세</p>
-                  <p><strong>성별:</strong> {{ userB.gender === 'male' ? '남성' : '여성' }}</p>
+                  <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
+                  <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
                   <p><strong>직업:</strong> {{ userB.field }}</p>
-                  <p v-if="userB.biblicalCharacter"><strong>성경 인물:</strong> {{ userB.biblicalCharacter }}</p>
-                  <p v-if="userB.interests"><strong>관심사:</strong> {{ userB.interests }}</p>
+                  <p><strong>회사:</strong> {{ userB.company_name || '정보 없음' }}</p>
+                  <p><strong>지역:</strong> {{ userB.location || '정보 없음' }}</p>
+                  <p><strong>교회:</strong> {{ userB.church_name || '정보 없음' }}</p>
+                  <p><strong>취미:</strong> {{ userB.hobby || '정보 없음' }}</p>
+                  <p><strong>MBTI:</strong> {{ userB.mbti || '정보 없음' }}</p>
+                  <p><strong>학력:</strong> {{ userB.education || '정보 없음' }}</p>
+                  <p><strong>매력 포인트:</strong> {{ userB.charm_points || '정보 없음' }}</p>
                 </div>
               </div>
             </div>
@@ -121,6 +131,14 @@ onMounted(async () => {
   await fetchUsers();
 });
 
+// 출생연도로부터 나이 계산
+function calculateAge(birthYear) {
+  if (!birthYear) return '정보 없음';
+  
+  const currentYear = new Date().getFullYear();
+  return currentYear - parseInt(birthYear);
+}
+
 // 사용자 목록 가져오기
 async function fetchUsers() {
   try {
@@ -129,7 +147,7 @@ async function fetchUsers() {
     
     const { data, error } = await supabase
       .from('dating')
-      .select('*')
+      .select('id, name, gender, birth_year, field, church_name, company_name, location, hobby, mbti, education, charm_points, ideal_type')
       .order('name');
       
     console.log('Supabase response data:', data);
@@ -185,23 +203,56 @@ async function loadUserDetails(userType) {
 
 // 기본 템플릿 삽입
 function insertDefaultTemplate() {
-  promptTemplate.value = `{userA.name}님과 {userB.name}님의 매칭 분석:
+  promptTemplate.value = `하나님의 인도하심 매칭 분석: ${userA.value.name} & ${userB.value.name}
 
-{userA.name}님({userA.age}세)은 {userA.field} 분야에서 활동하며, 성경 인물 중 {userA.biblicalCharacter}와 같은 특성을 가지고 있습니다.
-{userB.name}님({userB.age}세)은 {userB.field} 분야에서 활동하며, 성경 인물 중 {userB.biblicalCharacter}와 같은 특성을 가지고 있습니다.
+1. 기본 프로필
 
-두 분의 공통 관심사: 
-{commonInterests}
+${userA.value.name} 프로필:
+- 나이: ${calculateAge(userA.value.birth_year)}세
+- 성별: ${userA.value.gender === '남자' ? '남성' : '여성'}
+- 직업: ${userA.value.field || '정보 없음'}
+- 회사: ${userA.value.company_name || '정보 없음'}
+- 교회: ${userA.value.church_name || '정보 없음'}
+- MBTI: ${userA.value.mbti || '정보 없음'}
+- 지역: ${userA.value.location || '정보 없음'}
+- 특기사항: ${userA.value.charm_points || '정보 없음'}
 
-매칭 추천 이유:
-1. 
-2. 
-3. 
+${userB.value.name} 프로필:
+- 나이: ${calculateAge(userB.value.birth_year)}세
+- 성별: ${userB.value.gender === '남자' ? '남성' : '여성'}
+- 직업: ${userB.value.field || '정보 없음'}
+- 회사: ${userB.value.company_name || '정보 없음'}
+- 교회: ${userB.value.church_name || '정보 없음'}
+- MBTI: ${userB.value.mbti || '정보 없음'}
+- 지역: ${userB.value.location || '정보 없음'}
+- 특기사항: ${userB.value.charm_points || '정보 없음'}
 
-대화 주제 추천:
-1. 
-2. 
-3. `;
+2. 매칭 점수: ?/100
+
+3. 매칭 이유:
+- 
+- 
+- 
+
+4. 문화적 조화:
+- 
+- 
+
+5. 영적 조화:
+- 
+- 
+
+6. 대화 주제 추천:
+- 서로의 교회 경험과 신앙 여정
+- 미래에 대한 비전과 가족 계획
+- 함께 참여할 수 있는 봉사 활동
+
+7. 성경적 충고:
+"두 사람이 하나가 되는 것은 예수 그리스도와 교회의 관계와 같이 하나님의 지혜와 사랑을 나타내는 아름다운 연합입니다."
+
+8. 기도 포인트:
+- 
+- `;
 }
 
 // 템플릿 지우기
