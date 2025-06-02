@@ -62,9 +62,9 @@ async function fetchProfile() {
     profile.value = data;
     editedProfile.value = { ...data };
     
-    // Extract visible part of phone number (first 7 digits)
-    if (data.phone && data.phone.length >= 7) {
-      visiblePhonePart.value = data.phone.substring(0, 7);
+    // Extract visible part of phone number (hide last 4 digits)
+    if (data.phone && data.phone.length > 4) {
+      visiblePhonePart.value = data.phone.substring(0, data.phone.length - 4);
     }
   } catch (err) {
     error.value = '프로필을 불러오는 중 오류가 발생했습니다.';
