@@ -91,6 +91,9 @@
                 <div class="value">
                   <span>{{ mainUser.church_name || '?' }} / {{ match.user.church_name || '?' }}</span>
                 </div>
+              </div>
+            </div>
+            
             <div class="priorities-comparison">
               <h5>이상형 우선순위 비교</h5>
               <div class="priorities-grid">
@@ -438,7 +441,6 @@ ${match.matchUserInfo}
 .selection-wrapper {
   margin-bottom: 1.5rem;
 }
-{{ ... }}
 
 .user-select {
   width: 100%;
