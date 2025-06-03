@@ -1,0 +1,705 @@
+<template>
+  <div class="matching-algorithm">
+    <div class="main-user-selection">
+      <h3>매칭 대상자 선택</h3>
+      <div class="selection-wrapper">
+        <select 
+          v-model="selectedMainUser" 
+          class="user-select" 
+          @change="loadMainUserDetails"
+          :disabled="loading">
+          <option value="" disabled>주 사용자를 선택하세요</option>
+          <option v-for="user in userList" :key="user.id" :value="user.id">
+            {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
+          </option>
+        </select>
+      </div>
+      
+      <div class="user-profile-card main-user" v-if="mainUser">
+        <h3>{{ mainUser.name }} 님의 프로필</h3>
+        <div class="profile-details">
+          <p><strong>나이:</strong> {{ calculateAge(mainUser.birth_year) }}세</p>
+          <p><strong>성별:</strong> {{ mainUser.gender === '남자' ? '남성' : '여성' }}</p>
+          <p><strong>직업:</strong> {{ mainUser.field }}</p>
+          <p><strong>회사:</strong> {{ mainUser.company_name || '정보 없음' }}</p>
+          <p><strong>지역:</strong> {{ mainUser.location || '정보 없음' }}</p>
+          <p><strong>교회:</strong> {{ mainUser.church_name || '정보 없음' }}</p>
+          <p><strong>취미:</strong> {{ mainUser.hobby || '정보 없음' }}</p>
+          <p><strong>MBTI:</strong> {{ mainUser.mbti || '정보 없음' }}</p>
+          <p><strong>학력:</strong> {{ mainUser.education || '정보 없음' }}</p>
+          <p><strong>이상형 우선순위:</strong> {{ formatPriorities(mainUser.ideal_type_priorities) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="matching-results" v-if="mainUser && potentialMatches.length">
+      <h3>추천 매칭</h3>
+      <div class="filters">
+        <button @click="sortByAgeDiff()">나이 유사도순</button>
+        <button @click="sortByName()">이름순</button>
+      </div>
+      
+      <div class="matches-list">
+        <div v-for="match in sortedMatches" :key="match.user.id" class="match-card">
+          <div class="match-header">
+            <h4>{{ match.user.name }}</h4>
+            <!-- <div class="overall-score">
+              <span class="score-label">종합 점수:</span>
+              <span class="score-value">{{ Math.round(match.scores.overall * 100) }}%</span>
+            </div> -->
+          </div>
+          
+          <div class="match-details">
+            <div class="user-info">
+              <p>{{ calculateAge(match.user.birth_year) }}세, {{ match.user.gender === '남자' ? '남성' : '여성' }}</p>
+              <p>{{ match.user.field }} {{ match.user.company_name ? `at ${match.user.company_name}` : '' }}</p>
+              <p>{{ match.user.location || '지역 정보 없음' }}</p>
+              <p>{{ match.user.mbti || 'MBTI 정보 없음' }}</p>
+            </div>
+            
+            <div class="comparison">
+              <div class="comparison-item">
+                <span class="label">나이차</span>
+                <div class="value">
+                  <span>{{ Math.abs(calculateAge(mainUser.birth_year) - calculateAge(match.user.birth_year)) }}세</span>
+                </div>
+              </div>
+              
+              <div class="comparison-item">
+                <span class="label">지역</span>
+                <div class="value">
+                  <span>{{ mainUser.location || '?' }} / {{ match.user.location || '?' }}</span>
+                </div>
+              </div>
+              
+              <div class="comparison-item">
+                <span class="label">MBTI</span>
+                <div class="value">
+                  <span>{{ mainUser.mbti || '?' }} / {{ match.user.mbti || '?' }}</span>
+                </div>
+              </div>
+              
+              <div class="comparison-item">
+                <span class="label">직업</span>
+                <div class="value">
+                  <span>{{ mainUser.field || '?' }} / {{ match.user.field || '?' }}</span>
+                </div>
+              </div>
+              
+              <div class="comparison-item">
+                <span class="label">교회</span>
+                <div class="value">
+                  <span>{{ mainUser.church_name || '?' }} / {{ match.user.church_name || '?' }}</span>
+                </div>
+            <div class="priorities-comparison">
+              <h5>이상형 우선순위 비교</h5>
+              <div class="priorities-grid">
+                <div v-for="(priority, index) in mainUser.ideal_type_priorities" :key="index" class="priority-item">
+                  <div class="priority-label">
+                    {{ ['성격', '외모', '능력', '신앙', '가치관'][index] || `우선순위 ${index+1}` }}
+                  </div>
+                  <div class="priority-values">
+                    <div class="priority-user">
+                      <span class="priority-badge" :class="getPriorityClass(priority)">
+                        {{ priority }}
+                      </span>
+                    </div>
+                    <div class="priority-match">
+                      <span class="priority-badge" :class="getPriorityClass(match.user.ideal_type_priorities?.[index])">
+                        {{ match.user.ideal_type_priorities?.[index] }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="ai-analysis">
+              <h5>AI 매칭 분석</h5>
+              <div class="ai-analysis-content">
+                <p v-if="match.aiLoading">분석 중...</p>
+                <p v-else-if="match.aiError">오류: {{ match.aiError }}</p>
+                <p v-else-if="match.aiAnalysis">{{ match.aiAnalysis }}</p>
+                <p v-else>아직 분석 정보가 없습니다.</p>
+              </div>
+              <div class="match-actions">
+                <button 
+                  @click="requestAiAnalysis(match)" 
+                  class="ai-button"
+                  :disabled="match.aiLoading"
+                >
+                  {{ match.aiAnalysis ? 'AI 분석 다시 받기' : 'AI 분석 받기' }}
+                </button>
+                <button @click="selectMatch(match.user)" class="select-button">선택하기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="no-matches" v-else-if="mainUser">
+      <p>매칭 가능한 사용자가 없습니다.</p>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue';
+import supabase from '../supabase';
+import axios from 'axios';
+
+// Props
+const props = defineProps({
+  userList: {
+    type: Array,
+    required: true
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
+});
+
+// Emits
+const emit = defineEmits(['match-selected']);
+
+// State variables
+const selectedMainUser = ref('');
+const mainUser = ref(null);
+const potentialMatches = ref([]);
+const aiLoading = ref(false);
+const aiError = ref('');
+const aiAnalysisResults = ref({});
+
+// Watch for main user selection
+watch(selectedMainUser, async (newValue) => {
+  if (newValue) {
+    await loadMainUserDetails();
+  } else {
+    mainUser.value = null;
+    potentialMatches.value = [];
+  }
+});
+
+// Calculate age from birth year
+function calculateAge(birthYearData) {
+  if (!birthYearData) return '정보 없음';
+  
+  const currentYear = new Date().getFullYear();
+  
+  // Handle different date formats
+  if (typeof birthYearData === 'number') {
+    // If it's already a number, just use it directly
+    return currentYear - birthYearData;
+  } else if (typeof birthYearData === 'string') {
+    // Check if it's a full date format (YYYY-MM-DD)
+    if (birthYearData.includes('-')) {
+      // Extract just the year from the date string
+      const year = parseInt(birthYearData.split('-')[0], 10);
+      return !isNaN(year) ? currentYear - year : '정보 없음';
+    } else {
+      // Just a year as string
+      const year = parseInt(birthYearData, 10);
+      return !isNaN(year) ? currentYear - year : '정보 없음';
+    }
+  }
+  
+  return '정보 없음';
+}
+
+// Format user information as a string for AI analysis
+function formatUserInfoString(user) {
+  if (!user) return '';
+  
+  return `
+이름: ${user.name}
+
+나이: ${calculateAge(user.birth_year)}세
+
+성별: ${user.gender}
+
+직업: ${user.field || '정보 없음'}
+
+회사: ${user.company_name || '정보 없음'}
+
+지역: ${user.location || '정보 없음'}
+
+교회: ${user.church_name || '정보 없음'}
+
+취미: ${user.hobby || '정보 없음'}
+
+MBTI: ${user.mbti || '정보 없음'}
+
+학력: ${user.education || '정보 없음'}
+
+성경인물 유형: ${user.biblical_char || '정보 없음'}
+
+이상형 우선순위: ${formatPriorities(user.ideal_type_priorities) || '정보 없음'}
+`;
+}
+
+// Format priorities for display
+function formatPriorities(priorities) {
+  if (!priorities || !Array.isArray(priorities)) return '정보 없음';
+  const priorityLabels = ['성격', '외모', '능력', '신앙', '가치관'];
+  return priorities.join(', ');
+}
+
+// Get CSS class for priority badges
+function getPriorityClass(priority) {
+  if (priority === '상') return 'priority-high';
+  if (priority === '중') return 'priority-medium';
+  return 'priority-low';
+}
+
+// Load main user details
+async function loadMainUserDetails() {
+  if (!selectedMainUser.value) return;
+  
+  try {
+    // Find the user in the list
+    const user = props.userList.find(u => u.id === selectedMainUser.value);
+    if (user) {
+      mainUser.value = user;
+      // Find potential matches of the opposite gender
+      findPotentialMatches();
+      // Reset any existing AI analysis results when changing the main user
+      aiAnalysisResults.value = {};
+    }
+  } catch (err) {
+    console.error('Error loading main user details:', err);
+  }
+}
+
+// Find potential matches
+function findPotentialMatches() {
+  if (!mainUser.value) return;
+
+  potentialMatches.value = [];
+  const currentUser = mainUser.value;
+  
+  // 1. 현재 유저와 다른 성별의 사용자만 필터링
+  const candidates = props.userList.filter(user => {
+    return user.id !== currentUser.id && user.gender !== currentUser.gender;
+  });
+  
+  // 2. 각 후보에 대한 매칭 정보 계산
+  for (const user of candidates) {
+    // 나이 차이 계산
+    const age1 = calculateAge(currentUser.birth_year);
+    const age2 = calculateAge(user.birth_year);
+    const ageDiff = Math.abs(age1 - age2);
+    
+    // 사용자 정보 문자열 생성
+    const mainUserInfo = formatUserInfoString(currentUser);
+    const matchUserInfo = formatUserInfoString(user);
+    
+    // 매칭 객체 생성
+    potentialMatches.value.push({
+      user,
+      mainUserInfo,
+      matchUserInfo,
+      ageDiff,
+      aiAnalysis: null,
+      aiLoading: false,
+      aiError: ''
+    });
+  }
+  
+  // 나이 차이 기준으로 정렬
+  sortByAgeDiff();
+}
+
+// 나이 차이 순으로 정렬
+function sortByAgeDiff() {
+  potentialMatches.value = [...potentialMatches.value].sort((a, b) => {
+    return a.ageDiff - b.ageDiff;
+  });
+}
+
+// 이름순으로 정렬
+function sortByName() {
+  potentialMatches.value = [...potentialMatches.value].sort((a, b) => {
+    return a.user.name.localeCompare(b.user.name);
+  });
+}
+
+// Computed property for sorted matches
+const sortedMatches = computed(() => {
+  if (!potentialMatches.value.length) return [];
+  return potentialMatches.value;
+});
+
+// Select a match to view details
+function selectMatch(user) {
+  emit('match-selected', {
+    mainUser: mainUser.value,
+    matchUser: user
+  });
+}
+
+// Request AI analysis for a match
+async function requestAiAnalysis(match) {
+  if (match.aiLoading) return;
+  
+  match.aiLoading = true;
+  match.aiError = '';
+  
+  try {
+    console.log('AI 분석 요청 시작:', match.user.name);
+    const analysis = await getAiAnalysis(match);
+    match.aiAnalysis = analysis;
+    aiAnalysisResults.value[match.user.id] = analysis;
+    console.log('AI 분석 완료:', match.user.name);
+  } catch (error) {
+    console.error('AI 매칭 분석 오류:', error);
+    match.aiError = `AI 분석 중 오류가 발생했습니다: ${error.message}`;
+  } finally {
+    match.aiLoading = false;
+  }
+}
+
+// Perform AI analysis with external API
+async function getAiAnalysis(match) {
+  console.log('Starting AI analysis for match:', match.user.name);
+  const matchUserId = match.user.id;
+  if (aiAnalysisResults.value[matchUserId]) {
+    return aiAnalysisResults.value[matchUserId];
+  }
+  try {
+    aiLoading.value = true;
+    aiError.value = '';
+    const apiKey = import.meta.env.VITE_POE_API_KEY;
+    if (!apiKey) throw new Error('API 키를 찾을 수 없습니다. 환경 변수를 확인하세요.');
+    const prompt = `
+기독교 데이팅 서비스에서 두 사람 간의 영적 호환성을 분석해주세요. 이 분석은 성경적 가치관과 영성을 중심으로 하며, 두 사람이 서로에게 영적으로 어떻게 영향을 줄 수 있는지 고려하세요.
+
+### 사용자 A 정보:
+${match.mainUserInfo}
+
+### 사용자 B 정보:
+${match.matchUserInfo}
+
+## 요청사항:
+1. 두 사람의 성격, 성경인물 유형, 가치관 등을 고려하여 영적 호환성을 분석해주세요.
+2. 서로 보완할 수 있는 영역과 함께 성장할 수 있는 부분을 제안해주세요.
+3. 성경적 관점에서 두 사람이 어떤 관계를 만들어갈 수 있을지 조언해주세요.
+4. 부부가 되었을 때 서로에게 어떤 영향을 미칠지 예측해주세요.
+5. 기독교인으로서 영적 성장을 위해 어떤 활동을 함께 할 수 있을지 제안해주세요.
+
+좋은 데이팅 관계를 위한 영적 호환성 분석을 한국어로 제공해주세요.`;
+    const response = await axios.post('https://ai.tangibly.link/call/gpt-4o-mini', {
+      apikey: apiKey,
+      request: prompt
+    });
+    if (response.data) {
+      let analysisText = '';
+      if (response.data.response) {
+        analysisText = response.data.response;
+      } else if (typeof response.data === 'string') {
+        analysisText = response.data;
+      } else if (response.data.text) {
+        analysisText = response.data.text;
+      } else if (response.data.result) {
+        analysisText = response.data.result;
+      } else {
+        throw new Error('API 응답 구조가 예상과 다릅니다.');
+      }
+      aiAnalysisResults.value[matchUserId] = analysisText;
+      return analysisText;
+    } else {
+      throw new Error('AI API에서 응답이 없습니다.');
+    }
+  } catch (error) {
+    console.error('AI 분석 중 오류 발생:', error);
+    aiError.value = error.message || '알 수 없는 오류가 발생했습니다.';
+    throw error;
+  } finally {
+    aiLoading.value = false;
+  }
+}
+</script>
+
+<style scoped>
+.matching-algorithm {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.main-user-selection {
+  background-color: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selection-wrapper {
+  margin-bottom: 1.5rem;
+}
+{{ ... }}
+
+.user-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  background-color: #fff;
+}
+
+.main-user {
+  background-color: #f0f8ff;
+  border-left: 4px solid #2980b9;
+}
+
+.matching-results {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filters button {
+  padding: 0.5rem 1rem;
+  background-color: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.filters button.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #2980b9;
+}
+
+.matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.match-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.match-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.match-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.match-details {
+  padding: 1rem;
+}
+
+.user-info {
+  margin-bottom: 1.5rem;
+}
+
+.user-info p {
+  margin: 0.3rem 0;
+  color: #444;
+}
+
+.comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-item {
+  display: flex;
+  align-items: center;
+}
+
+.comparison-item .label {
+  flex: 0 0 90px;
+  font-weight: 600;
+  color: #555;
+}
+
+.comparison-item .value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priorities-comparison {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.priorities-comparison h5 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.priorities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.priority-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.priority-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.priority-values {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.priority-user, .priority-match {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priority-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.priority-high {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.priority-medium {
+  background-color: #f39c12;
+  color: white;
+}
+
+.priority-low {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.match-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ai-button {
+  padding: 0.5rem 1rem;
+  background-color: #8e44ad;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.ai-button:hover {
+  background-color: #7d3c98;
+}
+
+.ai-analysis {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  border-left: 4px solid #8e44ad;
+}
+
+.ai-analysis h5 {
+  margin-top: 0;
+  color: #333;
+  margin-bottom: 0.75rem;
+}
+
+.ai-analysis-content {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #444;
+  white-space: pre-line;
+}
+
+.select-button {
+  padding: 0.5rem 1rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.select-button:hover {
+  background-color: #2980b9;
+}
+
+.no-matches {
+  padding: 2rem;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  color: #777;
+}
+
+@media (max-width: 768px) {
+  .priorities-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .comparison-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .comparison-item .label {
+    flex: none;
+  }
+}
+</style>

@@ -4,9 +4,26 @@
       <h1>관리자 페이지</h1>
     </div>
 
+    <div class="admin-tabs">
+      <button 
+        class="tab-button" 
+        :class="{ active: activeTab === 'manual' }" 
+        @click="activeTab = 'manual'"
+      >
+        수동 매칭
+      </button>
+      <button 
+        class="tab-button" 
+        :class="{ active: activeTab === 'algorithm' }" 
+        @click="activeTab = 'algorithm'"
+      >
+        자동 매칭 알고리즘
+      </button>
+    </div>
+
     <div class="admin-content">
-      <div class="admin-panel">
-        <h2>매칭 관리</h2>
+      <div class="admin-panel" v-if="activeTab === 'manual'">
+        <h2>수동 매칭 관리</h2>
         
         <div class="matching-section">
           <div class="selection-row">
@@ -101,6 +118,19 @@
           </div>
         </div>
       </div>
+
+      <div class="admin-panel" v-if="activeTab === 'algorithm'">
+        <h2>자동 매칭 알고리즘</h2>
+        <p class="algorithm-description">
+          사용자를 선택하면 잠재적 매칭 대상들과의 호환성을 분석하여 보여줍니다.
+          나이차, 지역 거리, MBTI 궁합, 직업 유사도, 이상형 우선순위 등을 비교하여 최적의 매칭을 찾아보세요.
+        </p>
+        <MatchingAlgorithm 
+          :userList="userList" 
+          :loading="loading"
+          @match-selected="handleMatchSelected"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -108,12 +138,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import supabase from '../supabase';
+import MatchingAlgorithm from '../components/MatchingAlgorithm.vue';
 
 // 상태 관리
 const loading = ref(false);
 const userList = ref([]);
 const selectedUserA = ref('');
 const selectedUserB = ref('');
+const activeTab = ref('manual'); // 기본값은 수동 매칭 탭
 const userA = ref(null);
 const userB = ref(null);
 const promptTemplate = ref('');
@@ -331,6 +363,18 @@ async function savePrompt() {
     loading.value = false;
   }
 }
+
+// 자동 매칭 알고리즘에서 매칭을 선택했을 때 처리
+function handleMatchSelected({ mainUser, matchUser }) {
+  // 수동 매칭 탭으로 전환하고 선택된 사용자 설정
+  activeTab.value = 'manual';
+  selectedUserA.value = mainUser.id;
+  selectedUserB.value = matchUser.id;
+  
+  // 사용자 상세 정보 로드
+  loadUserDetails('A');
+  loadUserDetails('B');
+}
 </script>
 
 <style scoped>
@@ -351,6 +395,34 @@ async function savePrompt() {
   font-size: 2rem;
   color: #333;
   font-weight: bold;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  color: #555;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  background-color: #3498db;
+  color: white;
+}
+
+.tab-button:hover:not(.active) {
+  background-color: #e0e0e0;
 }
 
 .admin-content {
@@ -425,6 +497,16 @@ async function savePrompt() {
 .profile-details p {
   margin-bottom: 0.5rem;
   font-size: 0.95rem;
+}
+
+.algorithm-description {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 4px solid #3498db;
+  color: #555;
+  line-height: 1.5;
 }
 
 .prompt-section {
