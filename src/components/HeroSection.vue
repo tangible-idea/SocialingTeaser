@@ -385,6 +385,18 @@ onMounted(() => {
         네이버에서 구매하기
       </a>
       
+      <!-- 프립으로 연결 -->
+      <a href="https://www.frip.co.kr/products/182899" 
+         class="cta-button frip-button"
+         target="_blank"
+         @click="trackButtonClick('frip_purchase_button')"
+      >
+        <svg class="frip-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 5C13.66 5 15 6.34 15 8C15 9.66 13.66 11 12 11C10.34 11 9 9.66 9 8C9 6.34 10.34 5 12 5ZM12 19.2C9.5 19.2 7.29 17.92 6 15.98C6.03 13.99 10 12.9 12 12.9C13.99 12.9 17.97 13.99 18 15.98C16.71 17.92 14.5 19.2 12 19.2Z" fill="currentColor"/>
+        </svg>
+        프립에서 구매하기
+      </a>
+      
       <!-- 참가신청 폼 버튼 -->
       <button @click="showApplicationForm = true; trackButtonClick('application_form_button')" class="cta-button application-button">
         참가신청 폼 입력하기
@@ -796,12 +808,28 @@ h2 {
 .cta-button:hover {
   transform: translateY(-3px);
   box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
-  background-color: #00b843;
 }
 
 .naver-button {
   background-color: #19ce60;
   margin-bottom: 1rem;
+}
+
+.naver-button:hover {
+  background-color: #00b843;
+}
+
+.frip-button {
+  background-color: #3498db;
+  margin-bottom: 1rem;
+}
+
+.frip-button:hover {
+  background-color: #2980b9;
+}
+
+.frip-icon {
+  margin-right: 8px;
 }
 
 .application-button {
