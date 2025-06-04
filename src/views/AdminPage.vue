@@ -1,7 +1,7 @@
 <template>
   <div class="admin-page">
     <div class="admin-header">
-      <h1>관리자 페이지</h1>
+      <h2>Admin Page</h2>
     </div>
 
     <div class="admin-tabs">
@@ -10,32 +10,32 @@
         :class="{ active: activeTab === 'manual' }" 
         @click="activeTab = 'manual'"
       >
-        수동 매칭
+        Manual Matching
       </button>
       <button 
         class="tab-button" 
         :class="{ active: activeTab === 'algorithm' }" 
         @click="activeTab = 'algorithm'"
       >
-        자동 매칭 알고리즘
+        Automatic Matching
       </button>
     </div>
 
     <div class="admin-content">
       <div class="admin-panel" v-if="activeTab === 'manual'">
-        <h2>수동 매칭 관리</h2>
+        <h2>Manual Matching</h2>
         
         <div class="matching-section">
           <div class="selection-row">
             <div class="user-selection">
-              <label for="user-a">사용자 선택:</label>
+              <label for="user-a">User Selection:</label>
               <select 
                 id="user-a" 
                 v-model="selectedUserA" 
                 class="user-select" 
                 @change="loadUserDetails('A')"
                 :disabled="loading">
-                <option value="" disabled>사용자를 선택하세요</option>
+                <option value="" disabled>Select User</option>
                 <option v-for="user in userList" :key="user.id" :value="user.id">
                   {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
                 </option>
@@ -43,14 +43,14 @@
             </div>
             
             <div class="user-selection">
-              <label for="user-b">매칭 대상:</label>
+              <label for="user-b">Matching Target:</label>
               <select 
                 id="user-b" 
                 v-model="selectedUserB" 
                 class="user-select" 
                 @change="loadUserDetails('B')"
                 :disabled="loading || !selectedUserA">
-                <option value="" disabled>매칭 대상을 선택하세요</option>
+                <option value="" disabled>Matching Target</option>
                 <option v-for="user in filteredUserList" :key="user.id" :value="user.id">
                   {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
                 </option>
@@ -61,7 +61,7 @@
           <div class="user-details" v-if="selectedUserA && selectedUserB">
             <div class="user-profiles">
               <div class="user-profile-card" v-if="userA">
-                <h3>사용자 A: {{ userA.name }}</h3>
+                <h3>User A: {{ userA.name }}</h3>
                 <div class="profile-details">
                   <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
                   <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
@@ -77,7 +77,7 @@
               </div>
               
               <div class="user-profile-card" v-if="userB">
-                <h3>사용자 B: {{ userB.name }}</h3>
+                <h3>User B: {{ userB.name }}</h3>
                 <div class="profile-details">
                   <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
                   <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
@@ -95,10 +95,10 @@
           </div>
 
           <div class="prompt-section" v-if="userA && userB">
-            <h3>매칭 프롬프트 생성</h3>
+            <h3>Matching Prompt Generation</h3>
             <div class="template-controls">
-              <button @click="insertDefaultTemplate" class="template-button">기본 템플릿 사용</button>
-              <button @click="clearTemplate" class="template-button">템플릿 지우기</button>
+              <button @click="insertDefaultTemplate" class="template-button">Default Template</button>
+              <button @click="clearTemplate" class="template-button">Clear Template</button>
             </div>
             <textarea 
               v-model="promptTemplate" 
@@ -120,7 +120,7 @@
       </div>
 
       <div class="admin-panel" v-if="activeTab === 'algorithm'">
-        <h2>자동 매칭 알고리즘</h2>
+        <h2>Automatic Matching Algorithm</h2>
         <p class="algorithm-description">
           사용자를 선택하면 잠재적 매칭 대상들과의 호환성을 분석하여 보여줍니다.
           나이차, 지역 거리, MBTI 궁합, 직업 유사도, 이상형 우선순위 등을 비교하여 최적의 매칭을 찾아보세요.
