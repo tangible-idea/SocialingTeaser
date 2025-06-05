@@ -59,7 +59,10 @@
                 <p>• {{ point.trim() }}</p>
               </div>
             </div>
-            <button @click="selectMatch(recommendation)" class="select-button">선택하기</button>
+            <div class="button-group">
+              <button @click="selectMatch(recommendation)" class="select-button">선택하기</button>
+              <button @click="matchUsers(mainUser, recommendation)" class="match-button">매칭하기</button>
+            </div>
           </div>
         </div>
       </div>
@@ -89,7 +92,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['match-selected']);
+const emit = defineEmits(['match-selected', 'create-match']);
 
 // State variables
 const selectedMainUser = ref('');
@@ -252,6 +255,25 @@ function selectMatch(user) {
     mainUser: mainUser.value,
     matchUser: user
   });
+}
+
+// Match two users together
+async function matchUsers(user1, user2) {
+  try {
+    if (!user1 || !user2) {
+      alert('매칭할 유저 정보가 없습니다.');
+      return;
+    }
+    
+    // 이미 매칭되었는지 확인하는 과정과 데이터베이스에 저장하는 작업은 부모 컴포넌트에서 처리합니다
+    emit('create-match', {
+      user1Id: user1.id,
+      user2Id: user2.id
+    });
+  } catch (error) {
+    console.error('매칭 작업 중 오류 발생:', error);
+    alert(`매칭 작업 중 오류가 발생했습니다: ${error.message}`);
+  }
 }
 
 // Request AI analysis for a match
@@ -588,6 +610,32 @@ ${match.matchUserInfo}
 
 .recommendation-details {
   padding: 1rem;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.select-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.match-button {
+  background-color: #2980b9;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .recommendation-reason {

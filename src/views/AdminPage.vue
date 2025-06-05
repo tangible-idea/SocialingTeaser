@@ -19,6 +19,13 @@
       >
         Automatic Matching
       </button>
+      <button 
+        class="tab-button" 
+        :class="{ active: activeTab === 'matchingList' }" 
+        @click="activeTab = 'matchingList'; fetchMatchedUsers()"
+      >
+        Matching List
+      </button>
     </div>
 
     <div class="admin-content">
@@ -126,10 +133,58 @@
           나이차, 지역 거리, MBTI 궁합, 직업 유사도, 이상형 우선순위 등을 비교하여 최적의 매칭을 찾아보세요.
         </p>
         <MatchingAlgorithm 
-          :userList="userList" 
-          :loading="loading"
-          @match-selected="handleMatchSelected"
-        />
+              :userList="userList" 
+              :selectedMainUser="selectedUserA"
+              @match-selected="handleMatchSelect" 
+              @create-match="createMatch"
+            />
+      </div>
+      
+      <div class="admin-panel" v-if="activeTab === 'matchingList'">
+        <h2>Matching List</h2>
+        <p class="algorithm-description">
+          현재까지 매칭된 사용자 목록입니다. 각 매칭에 대한 상태를 확인하고 관리할 수 있습니다.
+        </p>
+        
+        <div class="matched-users-container">
+          <div v-if="loadingMatchedUsers" class="loading-indicator">매칭 목록을 불러오는 중...</div>
+          
+          <div v-else-if="matchedUsersList.length === 0" class="no-matches">
+            <p>매칭된 사용자가 없습니다.</p>
+          </div>
+          
+          <div v-else class="matched-users-list">
+            <div v-for="match in matchedUsersList" :key="match.id" class="match-item">
+              <div class="match-users">
+                <div class="match-user">
+                  <h4>{{ match.user1.name }}</h4>
+                  <p>{{ calculateAge(match.user1.birth_year) }}세, {{ match.user1.gender === '남자' ? '남성' : '여성' }}</p>
+                  <p>{{ match.user1.field || '직업 정보 없음' }}</p>
+                </div>
+                
+                <div class="match-separator">—</div>
+                
+                <div class="match-user">
+                  <h4>{{ match.user2.name }}</h4>
+                  <p>{{ calculateAge(match.user2.birth_year) }}세, {{ match.user2.gender === '남자' ? '남성' : '여성' }}</p>
+                  <p>{{ match.user2.field || '직업 정보 없음' }}</p>
+                </div>
+              </div>
+              
+              <div class="match-info">
+                <p class="match-date">매칭일: {{ new Date(match.matched_at).toLocaleDateString() }}</p>
+                <p class="match-status" :class="{'status-active': match.status === 'active', 'status-inactive': match.status !== 'active'}">상태: {{ match.status === 'active' ? '활성' : '비활성' }}</p>
+              </div>
+              
+              <div class="match-actions">
+                <button @click="toggleMatchStatus(match)" class="status-toggle-button">
+                  {{ match.status === 'active' ? '비활성화' : '활성화' }}
+                </button>
+                <button @click="deleteMatch(match)" class="delete-button">삭제</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -148,6 +203,10 @@ const selectedUserB = ref('');
 const activeTab = ref('manual'); // 기본값은 수동 매칭 탭
 const userA = ref(null);
 const userB = ref(null);
+
+// 매칭 목록 관련 상태
+const loadingMatchedUsers = ref(false);
+const matchedUsersList = ref([]);
 const promptTemplate = ref('');
 const savedPrompts = ref([]);
 const notificationMessage = ref('');
@@ -361,6 +420,155 @@ async function savePrompt() {
     alert('프롬프트 저장에 실패했습니다.');
   } finally {
     loading.value = false;
+  }
+}
+
+// 매치 선택 처리
+function handleMatchSelect(match) {
+  selectedUserB.value = match.matchUser.id;
+  loadUserDetails('B');
+}
+
+// 두 유저를 매칭하고 dating_matched 테이블에 저장
+async function createMatch({ user1Id, user2Id }) {
+  try {
+    if (!user1Id || !user2Id) {
+      alert('매칭할 유저 정보가 없습니다.');
+      return;
+    }
+    
+    // 이미 매칭된 사용자인지 확인
+    const { data: existingMatch } = await supabase
+      .from('dating_matched')
+      .select('*')
+      .or(`user1_id.eq.${user1Id},user1_id.eq.${user2Id},user2_id.eq.${user1Id},user2_id.eq.${user2Id}`);
+    
+    if (existingMatch && existingMatch.length > 0) {
+      alert('이미 매칭된 사용자입니다.');
+      return;
+    }
+    
+    // 매칭 정보 저장
+    const { data, error } = await supabase
+      .from('dating_matched')
+      .insert([
+        {
+          user1_id: user1Id,
+          user2_id: user2Id,
+          matched_at: new Date().toISOString(),
+          status: 'active'
+        }
+      ]);
+      
+    if (error) {
+      throw error;
+    }
+    
+    alert('매칭이 성공적으로 저장되었습니다!');
+    
+    // 매칭 리스트 탭을 보고 있다면 새로고침
+    if (activeTab.value === 'matchingList') {
+      fetchMatchedUsers();
+    }
+    
+  } catch (error) {
+    console.error('매칭 중 오류 발생:', error);
+    alert(`매칭 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
+
+// 매칭된 사용자 목록 가져오기
+async function fetchMatchedUsers() {
+  try {
+    loadingMatchedUsers.value = true;
+    
+    // 매칭 정보 가져오기
+    const { data: matchesData, error: matchesError } = await supabase
+      .from('dating_matched')
+      .select('*')
+      .order('matched_at', { ascending: false });
+      
+    if (matchesError) throw matchesError;
+    
+    // 사용자 ID 목록 추출
+    const userIds = new Set();
+    matchesData.forEach(match => {
+      userIds.add(match.user1_id);
+      userIds.add(match.user2_id);
+    });
+    
+    // 모든 관련 사용자 정보 가져오기
+    const { data: usersData, error: usersError } = await supabase
+      .from('dating')
+      .select('*')
+      .in('id', Array.from(userIds));
+      
+    if (usersError) throw usersError;
+    
+    // 사용자 정보 매핑
+    const usersMap = {};
+    usersData.forEach(user => {
+      usersMap[user.id] = user;
+    });
+    
+    // 매칭 정보와 사용자 정보 결합
+    matchedUsersList.value = matchesData.map(match => ({
+      ...match,
+      user1: usersMap[match.user1_id],
+      user2: usersMap[match.user2_id]
+    }));
+    
+  } catch (error) {
+    console.error('매칭 목록 가져오기 중 오류:', error);
+    alert(`매칭 목록을 가져오는 중 오류가 발생했습니다: ${error.message}`);
+  } finally {
+    loadingMatchedUsers.value = false;
+  }
+}
+
+// 매칭 상태 변경(활성/비활성)
+async function toggleMatchStatus(match) {
+  try {
+    const newStatus = match.status === 'active' ? 'inactive' : 'active';
+    
+    const { error } = await supabase
+      .from('dating_matched')
+      .update({ status: newStatus })
+      .eq('id', match.id);
+      
+    if (error) throw error;
+    
+    // 화면에서 상태 변경
+    match.status = newStatus;
+    
+    alert(`매칭 상태가 '${newStatus === 'active' ? '활성' : '비활성'}'으로 변경되었습니다.`);
+    
+  } catch (error) {
+    console.error('매칭 상태 변경 중 오류:', error);
+    alert(`매칭 상태를 변경하는 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
+
+// 매칭 삭제
+async function deleteMatch(match) {
+  if (!confirm('정말로 이 매칭을 삭제하시겠습니까?')) return;
+  
+  try {
+    const { error } = await supabase
+      .from('dating_matched')
+      .delete()
+      .eq('id', match.id);
+      
+    if (error) throw error;
+    
+    // 목록에서 삭제된 매칭 제거
+    matchedUsersList.value = matchedUsersList.value.filter(item => item.id !== match.id);
+    
+    alert('매칭이 성공적으로 삭제되었습니다.');
+    
+  } catch (error) {
+    console.error('매칭 삭제 중 오류:', error);
+    alert(`매칭을 삭제하는 중 오류가 발생했습니다: ${error.message}`);
   }
 }
 
@@ -618,9 +826,128 @@ function handleMatchSelected({ mainUser, matchUser }) {
   color: #f5f5f5;
 }
 
+/* 매칭 목록 스타일 */
+.matched-users-container {
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  font-style: italic;
+  color: #666;
+}
+
+.no-matches {
+  text-align: center;
+  padding: 30px;
+  color: #666;
+  border: 1px dashed #ddd;
+  border-radius: 6px;
+}
+
+.match-item {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #fafafa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.match-users {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.match-user {
+  flex: 1;
+  padding: 10px;
+}
+
+.match-user h4 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.match-user p {
+  margin: 3px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.match-separator {
+  color: #ccc;
+  margin: 0 15px;
+  font-size: 18px;
+}
+
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 5px;
+  font-size: 14px;
+  color: #666;
+}
+
+.match-date {
+  font-style: italic;
+}
+
+.match-status {
+  font-weight: bold;
+}
+
+.status-active {
+  color: #4CAF50;
+}
+
+.status-inactive {
+  color: #f44336;
+}
+
+.match-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.status-toggle-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .selection-row, .user-profiles {
     flex-direction: column;
+  }
+  
+  .match-separator {
+    margin: 0 10px;
   }
 }
 </style>
