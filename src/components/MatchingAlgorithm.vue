@@ -141,27 +141,15 @@ function formatUserInfoString(user) {
   
   return `
 이름: ${user.name}
-
 나이: ${calculateAge(user.birth_year)}세
-
 성별: ${user.gender}
-
 직업: ${user.field || '정보 없음'}
-
 회사: ${user.company_name || '정보 없음'}
-
 지역: ${user.location || '정보 없음'}
-
 교회: ${user.church_name || '정보 없음'}
-
 취미: ${user.hobby || '정보 없음'}
-
 MBTI: ${user.mbti || '정보 없음'}
-
 학력: ${user.education || '정보 없음'}
-
-성경인물 유형: ${user.biblical_char || '정보 없음'}
-
 이상형 우선순위: ${formatPriorities(user.ideal_type_priorities) || '정보 없음'}
 `;
 }
@@ -171,13 +159,6 @@ function formatPriorities(priorities) {
   if (!priorities || !Array.isArray(priorities)) return '정보 없음';
   const priorityLabels = ['성격', '외모', '능력', '신앙', '가치관'];
   return priorities.join(', ');
-}
-
-// Get CSS class for priority badges
-function getPriorityClass(priority) {
-  if (priority === '상') return 'priority-high';
-  if (priority === '중') return 'priority-medium';
-  return 'priority-low';
 }
 
 // Load main user details
@@ -339,7 +320,12 @@ ${allCandidates}
 
 ## 요청사항:
 1. 선택한 사용자와 가장 잘 어울릴 것 같은 TOP 3 매칭 대상자를 선택해주세요.
-2. 각 추천 대상자에 대해 왜 이 사용자를 추천하는지 간략한 이유를 1-2문장으로 설명해주세요.
+2. 각 추천 대상자에 대해 왜 이 사용자를 추천하는지 이유를 3-4개로 bullet points로 정리해서 설명해주세요.
+- MBTI에서 가장 중요한 건, S-N가 동일한지를 볼 것, 그 다음으로 T-F가 동일한지를 볼 것, 나머지는 크게 볼 필요 없음
+- 사는 곳의 거리가 비슷한지 볼 것.
+- 업무의 성격이 비슷하거나 호환이 좋은지 볼 것.
+- 서로 작성한 이상형이 비슷한지 볼 것.
+- 이성을 볼 때 우선순위가 비슷한지 볼 것.
 3. 응답은 아래 JSON 형식으로 정확히 제공해주세요. 다른 설명은 추가하지 마세요:
 
 {
