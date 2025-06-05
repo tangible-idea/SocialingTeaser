@@ -16,7 +16,13 @@
       </div>
       
       <div class="user-profile-card main-user" v-if="mainUser">
-        <h3>{{ mainUser.name }} 님의 프로필</h3>
+        <div class="profile-header">
+          <h3>{{ mainUser.name }} 님의 프로필</h3>
+          <button @click="requestRecommendation" class="recommendation-button" :disabled="recommendationLoading">
+            <span v-if="!recommendationLoading">추천알고리즘</span>
+            <span v-else>추천 중...</span>
+          </button>
+        </div>
         <div class="profile-details">
           <p><strong>나이:</strong> {{ calculateAge(mainUser.birth_year) }}세</p>
           <p><strong>성별:</strong> {{ mainUser.gender === '남자' ? '남성' : '여성' }}</p>
@@ -32,6 +38,31 @@
       </div>
     </div>
 
+    <div class="recommended-matches" v-if="mainUser && topRecommendations.length">
+      <h3>AI 추천 매칭 (TOP 3)</h3>
+      <div class="recommended-list">
+        <div v-for="(recommendation, index) in topRecommendations" :key="index" class="recommendation-card">
+          <div class="recommendation-header">
+            <h4>{{ recommendation.name }}</h4>
+            <div class="recommendation-rank">{{ index + 1 }}위</div>
+          </div>
+          <div class="recommendation-details">
+            <div class="user-info">
+              <p>{{ calculateAge(recommendation.birth_year) }}세, {{ recommendation.gender === '남자' ? '남성' : '여성' }}</p>
+              <p>{{ recommendation.field }} {{ recommendation.company_name ? `at ${recommendation.company_name}` : '' }}</p>
+              <p>{{ recommendation.location || '지역 정보 없음' }}</p>
+              <p>{{ recommendation.mbti || 'MBTI 정보 없음' }}</p>
+            </div>
+            <div class="recommendation-reason">
+              <h5>추천 이유</h5>
+              <p>{{ recommendation.reason }}</p>
+            </div>
+            <button @click="selectMatch(recommendation)" class="select-button">선택하기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <div class="matching-results" v-if="mainUser && potentialMatches.length">
       <h3>추천 매칭</h3>
       <div class="filters">
@@ -174,6 +205,8 @@ const potentialMatches = ref([]);
 const aiLoading = ref(false);
 const aiError = ref('');
 const aiAnalysisResults = ref({});
+const recommendationLoading = ref(false);
+const topRecommendations = ref([]);
 
 // Watch for main user selection
 watch(selectedMainUser, async (newValue) => {
@@ -364,6 +397,143 @@ async function requestAiAnalysis(match) {
 }
 
 // Perform AI analysis with external API
+// Request AI-powered recommendations for the current user
+async function requestRecommendation() {
+  if (recommendationLoading.value || !mainUser.value) return;
+  
+  try {
+    recommendationLoading.value = true;
+    topRecommendations.value = [];
+    
+    const currentUser = mainUser.value;
+    console.log('AI 추천 알고리즘 시작:', currentUser.name);
+    
+    // 1. 현재 유저와 다른 성별의 사용자만 필터링
+    const oppositeGenderUsers = props.userList.filter(user => {
+      return user.id !== currentUser.id && user.gender !== currentUser.gender;
+    });
+    
+    if (oppositeGenderUsers.length === 0) {
+      console.log('추천 가능한 대상이 없습니다.');
+      return;
+    }
+    
+    // 환경 변수 디버깅
+    console.log('환경 변수 확인:', import.meta.env);
+    // 환경 변수를 직접 참조하거나 vite.config.js에서 정의한 변수 사용
+    const apiKey = import.meta.env.VITE_POE_API_KEY || import.meta.env.POE_API_KEY || 'oqblhi8pIB7QFd1aNeRYHh7xQfdEHGW9yu3G6EHLiQE';
+    console.log('API 키:', apiKey);
+    if (!apiKey) throw new Error('API 키를 찾을 수 없습니다. 환경 변수를 확인하세요.');
+    
+    // 2. Format the data for the API call
+    const selectedUser = formatUserInfoString(currentUser);
+    
+    // Format all potential match users together
+    let allCandidates = '\n=== 가능한 매칭 대상자 목록 ===\n';
+    oppositeGenderUsers.forEach((user, index) => {
+      allCandidates += `\n===== 후보 ${index + 1} =====\n`;
+      allCandidates += formatUserInfoString(user);
+      allCandidates += `사용자ID: ${user.id}\n`;
+    });
+    
+    // 3. Prepare the prompt and make the API call
+    const prompt = `
+기독교 데이팅 서비스에서 특정 사용자에게 가장 적합한 매칭 대상자 TOP 3를 추천해주세요.
+
+### 선택한 사용자 정보:
+${selectedUser}
+
+### 가능한 매칭 대상자 목록:
+${allCandidates}
+
+## 요청사항:
+1. 선택한 사용자와 가장 잘 어울릴 것 같은 TOP 3 매칭 대상자를 선택해주세요.
+2. 각 추천 대상자에 대해 왜 이 사용자를 추천하는지 간략한 이유를 1-2문장으로 설명해주세요.
+3. 응답은 아래 JSON 형식으로 정확히 제공해주세요. 다른 설명은 추가하지 마세요:
+
+{
+  "recommendations": [
+    {
+      "id": "추천대상자ID",
+      "reason": "추천 이유 설명"
+    },
+    {
+      "id": "추천대상자ID",
+      "reason": "추천 이유 설명"
+    },
+    {
+      "id": "추천대상자ID",
+      "reason": "추천 이유 설명"
+    }
+  ]
+}`;
+    
+    console.log('AI 추천 알고리즘 요청 전송');
+    const response = await axios.post('https://ai.tangibly.link/call/gpt-4o-mini', {
+      apikey: apiKey,
+      request: prompt
+    });
+    
+    if (!response.data) {
+      throw new Error('API에서 유효한 응답을 받지 못했습니다.');
+    }
+    var parsedJsonStr = response.data.replace('```json', '');
+    parsedJsonStr = parsedJsonStr.replace('```', '');
+    
+    // Parse the API response
+    const result = extractJsonFromText(parsedJsonStr);
+    if (!result || !result.recommendations) {
+      throw new Error('API 응답에서 추천 정보를 찾을 수 없습니다.');
+    }
+    
+    // Process recommendations
+    const recommendations = result.recommendations;
+    if (recommendations.length === 0) {
+      throw new Error('추천 목록이 비어있습니다.');
+    }
+    
+    // Map recommendation IDs to full user objects and add reasons
+    const processedRecommendations = recommendations.map(rec => {
+      const user = oppositeGenderUsers.find(u => u.id === rec.id);
+      if (!user) return null;
+      
+      return {
+        ...user,
+        reason: rec.reason || '적합한 매치로 판단됨'
+      };
+    }).filter(rec => rec !== null);
+    
+    // Update state with the recommendations
+    topRecommendations.value = processedRecommendations;
+    console.log('AI 추천 알고리즘 완료, 결과:', processedRecommendations);
+    
+  } catch (error) {
+    console.error('AI 추천 알고리즘 오류:', error);
+    alert(`추천 알고리즘 오류: ${error.message}`);
+  } finally {
+    recommendationLoading.value = false;
+  }
+}
+
+// Helper function to extract JSON from text response
+function extractJsonFromText(text) {
+  try {
+    // Try to parse the entire text as JSON
+    return JSON.parse(text);
+  } catch (e) {
+    try {
+      // Look for JSON object in the text with regex
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+    } catch (e2) {
+      console.error('JSON 추출 오류:', e2);
+    }
+    return null;
+  }
+}
+
 async function getAiAnalysis(match) {
   console.log('Starting AI analysis for match:', match.user.name);
   const matchUserId = match.user.id;
@@ -373,7 +543,8 @@ async function getAiAnalysis(match) {
   try {
     aiLoading.value = true;
     aiError.value = '';
-    const apiKey = import.meta.env.VITE_POE_API_KEY;
+    // 환경 변수를 직접 참조하거나 vite.config.js에서 정의한 변수 사용
+    const apiKey = import.meta.env.VITE_POE_API_KEY || import.meta.env.POE_API_KEY || 'oqblhi8pIB7QFd1aNeRYHh7xQfdEHGW9yu3G6EHLiQE'; 
     if (!apiKey) throw new Error('API 키를 찾을 수 없습니다. 환경 변수를 확인하세요.');
     const prompt = `
 기독교 데이팅 서비스에서 두 사람 간의 영적 호환성을 분석해주세요. 이 분석은 성경적 가치관과 영성을 중심으로 하며, 두 사람이 서로에게 영적으로 어떻게 영향을 줄 수 있는지 고려하세요.
@@ -454,6 +625,103 @@ ${match.matchUserInfo}
 .main-user {
   background-color: #f0f8ff;
   border-left: 4px solid #2980b9;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.recommendation-button {
+  padding: 0.6rem 1.2rem;
+  background-color: #8e44ad;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.recommendation-button:hover {
+  background-color: #7d3c98;
+}
+
+.recommendation-button:disabled {
+  background-color: #bbb;
+  cursor: not-allowed;
+}
+
+.recommended-matches {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #8e44ad;
+}
+
+.recommended-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.recommendation-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.recommendation-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.recommendation-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.recommendation-rank {
+  background-color: #8e44ad;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.recommendation-details {
+  padding: 1rem;
+}
+
+.recommendation-reason {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.recommendation-reason h5 {
+  margin-top: 0;
+  margin-bottom: 0.6rem;
+  color: #333;
 }
 
 .matching-results {
