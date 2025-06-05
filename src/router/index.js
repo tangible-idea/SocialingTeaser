@@ -16,6 +16,11 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: () => import('../views/AdminPage.vue')
+  },
+  {
+    path: '/matching/:uuid',
+    name: 'MatchingDetail',
+    component: () => import('../views/MatchingDetailPage.vue')
   }
 ]
 
