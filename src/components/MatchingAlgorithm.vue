@@ -160,7 +160,12 @@ MBTI: ${user.mbti || '정보 없음'}
 function formatPriorities(priorities) {
   if (!priorities || !Array.isArray(priorities)) return '정보 없음';
   const priorityLabels = ['성격', '외모', '능력', '신앙', '가치관'];
-  return priorities.join(', ');
+  
+  // 각 우선순위 항목과 값을 매핑하여 결합
+  return priorities.map((priority, index) => {
+    const label = priorityLabels[index] || `항목${index+1}`;
+    return `${label}: ${priority}`;
+  }).join(', ');
 }
 
 // Load main user details
