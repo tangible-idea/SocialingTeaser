@@ -55,7 +55,9 @@
             </div>
             <div class="recommendation-reason">
               <h5>추천 이유</h5>
-              <p>{{ recommendation.reason }}</p>
+              <div v-for="(point, i) in recommendation.reason.split('•').filter(p => p.trim())" :key="i" class="reason-point">
+                <p>• {{ point.trim() }}</p>
+              </div>
             </div>
             <button @click="selectMatch(recommendation)" class="select-button">선택하기</button>
           </div>
@@ -320,8 +322,8 @@ ${allCandidates}
 
 ## 요청사항:
 1. 선택한 사용자와 가장 잘 어울릴 것 같은 TOP 3 매칭 대상자를 선택해주세요.
-2. 각 추천 대상자에 대해 왜 이 사용자를 추천하는지 이유를 3-4개로 bullet points로 정리해서 설명해주세요.
-- MBTI에서 가장 중요한 건, S-N가 동일한지를 볼 것, 그 다음으로 T-F가 동일한지를 볼 것, 나머지는 크게 볼 필요 없음
+2. 각 추천 대상자에 대해 왜 이 사용자를 추천하는지 이유를 3-4개로 앞에 •를 붙여서 정리해서 설명해주세요.
+- MBTI에서 가장 중요한 건, S,N가 동일한지를 볼 것, 그 다음으로 T,F가 동일한지를 볼 것, 나머지는 크게 볼 필요 없음
 - 사는 곳의 거리가 비슷한지 볼 것.
 - 업무의 성격이 비슷하거나 호환이 좋은지 볼 것.
 - 서로 작성한 이상형이 비슷한지 볼 것.
@@ -588,11 +590,20 @@ ${match.matchUserInfo}
 }
 
 .recommendation-reason {
-  margin-top: 1.5rem;
+  margin-top: 15px;
   padding: 1rem;
   background-color: #f9f9f9;
   border-radius: 8px;
   margin-bottom: 1rem;
+}
+
+.reason-point {
+  margin-bottom: 8px;
+}
+
+.reason-point p {
+  margin: 0;
+  line-height: 1.4;
 }
 
 .recommendation-reason h5 {
