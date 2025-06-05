@@ -1,9 +1,4 @@
 <template>
-  <div class="matching-detail-page">
-    <div class="page-header">
-      <h1>매칭 상세 정보</h1>
-    </div>
-    
     <div class="loading-container" v-if="loading">
       <p class="loading-text">매칭 정보를 불러오는 중...</p>
     </div>
@@ -33,7 +28,8 @@
           </div>
           <div class="partner-details">
             <h3>{{ partnerInfo.name }}</h3>
-            <p>{{ calculateAge(partnerInfo.birth_year) }}세, {{ partnerInfo.field || '정보 없음' }}</p>
+            <p>{{ formatBirthYear(partnerInfo.birth_year) }}, {{ partnerInfo.field || '정보 없음' }}</p>
+            <p>키: {{ partnerInfo.height || '정보 없음' }}cm, MBTI: {{ partnerInfo.mbti || '정보 없음' }}</p>
           </div>
         </div>
         
@@ -45,6 +41,23 @@
           <div class="info-row">
             <span class="info-label">장소:</span>
             <span class="info-value">{{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
+          </div>
+          
+          <div class="meeting-actions">
+            <button class="action-button accept-button" @click="acceptSchedule">
+              일정 수락
+            </button>
+            
+            <div class="change-date-container">
+              <input 
+                type="text" 
+                v-model="newDate" 
+                placeholder="변경할 일정 입력"
+                class="date-input">
+              <button class="action-button change-button" @click="requestChange">
+                일정 변경
+              </button>
+            </div>
           </div>
         </div>
         
@@ -68,21 +81,6 @@
           </div>
           
           <div class="chat-actions">
-            <button class="action-button accept-button" @click="acceptSchedule">
-              일정 수락
-            </button>
-            
-            <div class="change-date-container">
-              <input 
-                type="text" 
-                v-model="newDate" 
-                placeholder="변경할 일정 입력"
-                class="date-input">
-              <button class="action-button change-button" @click="requestChange">
-                일정 변경
-              </button>
-            </div>
-            
             <button class="action-button question-button" @click="showQuestionModal = true">
               질문 보내기
             </button>
@@ -106,7 +104,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -254,29 +251,26 @@ async function sendQuestion() {
   // TODO: 서버에 질문 저장 로직 추가
 }
 
-function calculateAge(birthYear) {
-  if (!birthYear) return '알 수 없음';
-  const currentYear = new Date().getFullYear();
-  return currentYear - birthYear;
+// 출생년도 포맷팅 함수 - 다양한 형식 지원
+function formatBirthYear(birthYear) {
+  if (!birthYear) return '정보 없음';
+  
+  // 문자열로 변환
+  const birthYearStr = String(birthYear);
+  
+  // YYYY-MM-DD 형식인 경우 첫 4자리만 추출
+  if (birthYearStr.includes('-')) {
+    const year = birthYearStr.split('-')[0];
+    return year.slice(-2) + '년생';
+  }
+  
+  // 숫자만 있는 경우
+  return birthYearStr.slice(-2) + '년생';
 }
 </script>
 
 <style scoped>
-.matching-detail-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-}
 
-.page-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.page-header h1 {
-  font-size: 1.8rem;
-  color: #333;
-}
 
 .loading-container, .error-container, .no-match-container {
   display: flex;
@@ -307,9 +301,10 @@ function calculateAge(birthYear) {
 
 .match-info-card {
   background-color: white;
-  border-radius: 10px;
+  border-radius: 0;
   padding: 1.5rem;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  height: 100vh;
 }
 
 .match-info-card h2 {
@@ -359,9 +354,22 @@ function calculateAge(birthYear) {
 /* 미팅 정보 스타일 */
 .meeting-info {
   margin-bottom: 1.5rem;
-  background-color: #f8f9fa;
+  background-color: white;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* 미팅 액션 스타일 */
+.meeting-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.meeting-actions .action-button {
+  flex: 1;
 }
 
 .info-row {
@@ -380,18 +388,33 @@ function calculateAge(birthYear) {
 }
 
 /* 채팅 컨테이너 스타일 */
-.chat-container {
+.match-detail-container {
   display: flex;
   flex-direction: column;
-  height: 400px;
+  height: 100vh;
+  background-color: white;
+  padding: 0;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 0;
+  padding: 1rem;
+  box-shadow: none;
+  margin-top: 0;
+  overflow: hidden;
+  border-top: 1px solid #eee;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  background-color: #f0f2f5;
-  border-radius: 8px;
+  background-color: white;
+  border-radius: 0;
   margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
@@ -401,7 +424,7 @@ function calculateAge(birthYear) {
 .system-message {
   align-self: center;
   padding: 0.5rem 1rem;
-  background-color: #e2e3e5;
+  background-color: #f8f9fa;
   border-radius: 15px;
   margin-bottom: 0.8rem;
   max-width: 90%;
@@ -445,16 +468,17 @@ function calculateAge(birthYear) {
 
 .change-date-container {
   display: flex;
-  flex: 2;
+  flex-direction: row;
   gap: 0.5rem;
+  flex: 2;
 }
 
 .date-input {
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 0.95rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .change-button {
