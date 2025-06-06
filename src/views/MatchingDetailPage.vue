@@ -44,17 +44,20 @@
           </div>
           
           <div class="meeting-actions">
-            <button class="action-button accept-button" @click="acceptSchedule">
-              일정 수락
-            </button>
+            <!-- 현재 사용자가 수락했는지 확인 -->
+            <div v-if="matchData.user1_id === userUuid ? matchData.user1_accepted : matchData.user2_accepted">
+              <button class="action-button cancel-button" @click="cancelSchedule">
+                일정 수락 취소
+              </button>
+            </div>
+            <div v-else>
+              <button class="action-button accept-button" @click="acceptSchedule">
+                일정 수락
+              </button>
+            </div>
             
             <div class="change-date-container">
-              <input 
-                type="text" 
-                v-model="newDate" 
-                placeholder="변경할 일정 입력"
-                class="date-input">
-              <button class="action-button change-button" @click="requestChange">
+              <button class="action-button change-button" @click="openDatePicker">
                 일정 변경
               </button>
             </div>
@@ -63,20 +66,22 @@
         
         <div class="chat-container">
           <div class="chat-messages">
-            <div class="system-message">
+            <!-- <div class="system-message">
               <p>{{ currentDate }} 매칭이 성사되었습니다.</p>
-            </div>
+            </div> -->
             
-            <div v-if="matchData.meeting_date" class="system-message">
+            <!-- <div v-if="matchData.meeting_date" class="system-message">
               <p>관리자가 미팅 일정을 {{ matchData.meeting_date }}로 설정했습니다.</p>
             </div>
             
             <div v-if="matchData.meeting_place" class="system-message">
               <p>미팅 장소가 {{ matchData.meeting_place }}로 설정되었습니다.</p>
-            </div>
+            </div> -->
             
-            <div v-for="(message, index) in actionMessages" :key="index" class="action-message">
-              <p>{{ message }}</p>
+            <div v-for="message in chatMessages" :key="message.id" 
+                :class="message.message_type === 'system' ? 'system-message' : 'action-message'">
+              <p>{{ message.message }}</p>
+              <span v-if="message.message_type !== 'system'" class="message-time">{{ formatTime(message.created_at) }}</span>
             </div>
           </div>
           
@@ -103,11 +108,40 @@
           </div>
         </div>
       </div>
+      
+      <!-- 날짜 선택 모달 -->
+      <div class="modal date-modal" v-if="showDatePicker">
+        <div class="modal-content calendar-content">
+          <h3>일정 변경하기</h3>
+          <div class="datepicker-wrapper">
+            <Datepicker 
+              v-model="selectedDateTime" 
+              :enable-time-picker="true"
+              :is24="true"
+              :min-time="minTime"
+              :minutes-increment="15"
+              :text-input="false"
+              :auto-apply="true"
+              :preview-format="'yyyy년 MM월 dd일 HH:mm'"
+              placeholder="날짜와 시간을 선택해주세요"
+              locale="ko"
+              model-type="timestamp"
+              class="mobile-datepicker"
+            />
+          </div>
+          <div class="modal-actions">
+            <button class="cancel-button" @click="showDatePicker = false">취소</button>
+            <button class="send-button" @click="submitDateChange">확인</button>
+          </div>
+        </div>
+      </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 import { useRoute } from 'vue-router';
 import supabase from '../supabase';
 
@@ -119,8 +153,12 @@ const error = ref(null);
 const matchData = ref(null);
 const partnerInfo = ref({});
 const currentUserInfo = ref({});
-const actionMessages = ref([]);
-const newDate = ref('');
+// Used to store messages from the chat table
+const chatMessages = ref([]);
+let subscription = null; // Supabase Realtime subscription
+const showDatePicker = ref(false);
+const selectedDateTime = ref(null);
+const minTime = { hours: 0, minutes: 0 };
 const showQuestionModal = ref(false);
 const questionText = ref('');
 
@@ -137,6 +175,13 @@ const currentDate = computed(() => {
 onMounted(async () => {
   await fetchUserData();
   await fetchMatchingData();
+});
+
+onUnmounted(() => {
+  // 구독 취소 처리
+  if (subscription) {
+    subscription.unsubscribe();
+  }
 });
 
 async function fetchUserData() {
@@ -184,6 +229,9 @@ async function fetchMatchingData() {
     // 매칭 데이터가 있으면 저장
     matchData.value = matchingData;
     
+    // 채팅 메시지 로드
+    await fetchChatMessages();
+    
     // 파트너 ID 확인 (현재 사용자가 아닌 사람)
     const partnerId = matchingData.user1_id === userUuid 
       ? matchingData.user2_id 
@@ -208,6 +256,129 @@ async function fetchMatchingData() {
   }
 }
 
+// 채팅 메시지를 데이터베이스에서 로드하고 Realtime 구독을 설정하는 함수
+async function fetchChatMessages() {
+  try {
+    // 기존 구독 취소 (재연결 시)
+    if (subscription) {
+      subscription.unsubscribe();
+    }
+    
+    // 이전 메시지 로드
+    const { data, error } = await supabase
+      .from('dating_chat')
+      .select('*')
+      .eq('matching_id', matchData.value.id)
+      .order('created_at', { ascending: true });
+      
+    if (error) {
+      console.error('메시지 로드 중 오류 발생:', error);
+      throw error;
+    }
+    
+    chatMessages.value = data || [];
+    
+    // 매칭 생성 시스템 메시지 추가
+    if (chatMessages.value.length === 0) {
+      // 매칭이 생성된 시스템 메시지 추가
+      await addSystemMessage(`매칭이 성사되었습니다.`);
+      
+      // 미팅 일정이 있으면 시스템 메시지 추가
+      if (matchData.value.meeting_date) {
+        // 반드시 포맷팅해서 표시
+        const dateObj = new Date(matchData.value.meeting_date);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const hour = String(dateObj.getHours()).padStart(2, '0');
+        const minute = String(dateObj.getMinutes()).padStart(2, '0');
+        const formattedDate = `${year}년 ${month}월 ${day}일 ${hour}:${minute}`;
+        
+        await addSystemMessage(`관리자가 미팅 일정을 ${formattedDate}로 설정했습니다.`);
+      }
+      
+      // 미팅 장소가 있으면 시스템 메시지 추가
+      if (matchData.value.meeting_place) {
+        await addSystemMessage(`미팅 장소가 ${matchData.value.meeting_place}로 설정되었습니다.`);
+      }
+    }
+    
+    // Realtime 구독 설정
+    setupRealtimeSubscription();
+    
+  } catch (err) {
+    console.error('채팅 메시지 로드 중 오류 발생:', err);
+    alert('채팅 메시지를 불러올 수 없습니다.');
+  }
+}
+
+// Supabase Realtime 구독 설정
+function setupRealtimeSubscription() {
+  if (!matchData.value || !matchData.value.id) return;
+  
+  subscription = supabase
+    .channel(`public:dating_chat:matching_id=eq.${matchData.value.id}`)
+    .on('postgres_changes', 
+      { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'dating_chat',
+        filter: `matching_id=eq.${matchData.value.id}`
+      }, 
+      (payload) => {
+        // 새로운 메시지가 삽입되면 메시지 목록에 추가
+        const newMessage = payload.new;
+        if (newMessage && !chatMessages.value.some(msg => msg.id === newMessage.id)) {
+          chatMessages.value.push(newMessage);
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (status !== 'SUBSCRIBED') {
+        console.log('Realtime 구독 상태:', status);
+      }
+    });
+}
+
+// 새 채팅 메시지 저장 함수
+async function addChatMessage(text, messageType = 'user') {
+  try {
+    const newMessage = {
+      matching_id: matchData.value.id,
+      sender_id: userUuid,
+      message: text,
+      message_type: messageType
+    };
+    
+    const { data, error } = await supabase
+      .from('dating_chat')
+      .insert(newMessage)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('메시지 저장 중 오류 발생:', error);
+      throw error;
+    }
+    
+    // 성공적으로 저장되면 배열에 추가
+    if (data) {
+      chatMessages.value.push(data);
+    }
+    
+    return data;
+  } catch (err) {
+    console.error('채팅 메시지 저장 중 오류 발생:', err);
+    alert('메시지를 저장할 수 없습니다. 다시 시도해주세요.');
+    return null;
+  }
+}
+
+// 시스템 메시지 추가 함수
+async function addSystemMessage(text) {
+  return await addChatMessage(text, 'system');
+}
+
 // 일정 수락 함수
 async function acceptSchedule() {
   if (!matchData.value || !matchData.value.meeting_date) {
@@ -215,24 +386,110 @@ async function acceptSchedule() {
     return;
   }
   
-  const message = `${currentUserInfo.value.name}님이 일정을 수락하셨습니다.`;
-  actionMessages.value.push(message);
-  
-  // TODO: 서버에 수락 상태 저장 로직 추가
+  try {
+    // 현재 사용자가 user1인지 user2인지 확인
+    const isUser1 = matchData.value.user1_id === userUuid;
+    
+    // 매칭 데이터 업데이트
+    const updateField = isUser1 ? { user1_accepted: true } : { user2_accepted: true };
+    const { error } = await supabase
+      .from('dating_matched')
+      .update(updateField)
+      .eq('id', matchData.value.id);
+      
+    if (error) throw error;
+    
+    // 현재 화면에 반영
+    if (isUser1) {
+      matchData.value.user1_accepted = true;
+    } else {
+      matchData.value.user2_accepted = true;
+    }
+    
+    // 시스템 메시지 추가
+    await addSystemMessage(`${currentUserInfo.value.name}님이 일정을 수락하셨습니다.`);
+    
+  } catch (err) {
+    console.error('일정 수락 중 오류 발생:', err);
+    alert('일정 수락을 처리할 수 없습니다. 다시 시도해주세요.');
+  }
 }
 
-// 일정 변경 요청 함수
-async function requestChange() {
-  if (!newDate.value) {
-    alert('변경할 일정을 입력해주세요.');
+// 일정 취소 함수
+async function cancelSchedule() {
+  if (!matchData.value || !matchData.value.meeting_date) {
+    alert('취소할 일정이 없습니다.');
     return;
   }
   
-  const message = `${currentUserInfo.value.name}님이 ${newDate.value}로 일정변경을 요청하셨습니다.`;
-  actionMessages.value.push(message);
-  newDate.value = '';
+  try {
+    // 현재 사용자가 user1인지 user2인지 확인
+    const isUser1 = matchData.value.user1_id === userUuid;
+    
+    // 매칭 데이터 업데이트
+    const updateField = isUser1 ? { user1_accepted: false } : { user2_accepted: false };
+    const { error } = await supabase
+      .from('dating_matched')
+      .update(updateField)
+      .eq('id', matchData.value.id);
+      
+    if (error) throw error;
+    
+    // 현재 화면에 반영
+    if (isUser1) {
+      matchData.value.user1_accepted = false;
+    } else {
+      matchData.value.user2_accepted = false;
+    }
+    
+    // 시스템 메시지 추가
+    await addSystemMessage(`${currentUserInfo.value.name}님이 일정 수락을 취소하셨습니다.`);
+    
+  } catch (err) {
+    console.error('일정 취소 중 오류 발생:', err);
+    alert('일정 취소를 처리할 수 없습니다. 다시 시도해주세요.');
+  }
+}
+
+// 날짜 선택기 열기 함수
+function openDatePicker() {
+  // 현재 미팅 일정이 있는 경우 그 일정을 초기값으로 설정
+  if (matchData.value && matchData.value.meeting_date) {
+    selectedDateTime.value = new Date(matchData.value.meeting_date).getTime();
+  } else {
+    // 미팅 일정이 없으면 현재 날짜로 초기화
+    selectedDateTime.value = new Date().getTime();
+  }
   
-  // TODO: 서버에 변경 요청 저장 로직 추가
+  // 날짜 선택기 모달 열기
+  showDatePicker.value = true;
+}
+
+// 일정 변경 요청 제출 함수
+async function submitDateChange() {
+  if (!selectedDateTime.value) {
+    alert('날짜와 시간을 선택해주세요.');
+    return;
+  }
+  
+  // 일정 포맷팅
+  const dateObj = new Date(selectedDateTime.value);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const hour = String(dateObj.getHours()).padStart(2, '0');
+  const minute = String(dateObj.getMinutes()).padStart(2, '0');
+  
+  const formattedDate = `${year}년 ${month}월 ${day}일 ${hour}:${minute}`;
+  
+  // 시스템 메시지 추가
+  await addSystemMessage(`${currentUserInfo.value.name}님이 ${formattedDate}로 일정변경을 요청하셨습니다.`);
+  
+  // 모달 닫기
+  showDatePicker.value = false;
+  
+  // 값 초기화
+  selectedDateTime.value = null;
 }
 
 // 질문 보내기 함수
@@ -242,13 +499,11 @@ async function sendQuestion() {
     return;
   }
   
-  const message = `${currentUserInfo.value.name}님: ${questionText.value}`;
-  actionMessages.value.push(message);
+  // 사용자 메시지 추가
+  await addChatMessage(questionText.value);
   
   showQuestionModal.value = false;
   questionText.value = '';
-  
-  // TODO: 서버에 질문 저장 로직 추가
 }
 
 // 출생년도 포맷팅 함수 - 다양한 형식 지원
@@ -266,6 +521,35 @@ function formatBirthYear(birthYear) {
   
   // 숫자만 있는 경우
   return birthYearStr.slice(-2) + '년생';
+}
+
+// 시간 포맷팅 함수 - 메시지 작성 시간 표시
+function formatTime(timestamp) {
+  if (!timestamp) return '';
+  
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  
+  // 오늘 날짜인지 확인
+  const today = new Date();
+  const isToday = date.getDate() === today.getDate() && 
+                date.getMonth() === today.getMonth() && 
+                date.getFullYear() === today.getFullYear();
+  
+  // 시간 포맷팅
+  if (isToday) {
+    // 오늘이면 시간만 표시: 오후 3:42
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
+  } else {
+    // 다른 날짜는 날짜와 시간 표시: 6월 5일 오후 3:42
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${month}월 ${day}일 ${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
+  }
 }
 </script>
 
@@ -449,8 +733,16 @@ function formatBirthYear(birthYear) {
 
 .action-message p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #333;
+}
+
+.message-time {
+  display: block;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 3px;
+  text-align: right;
 }
 
 /* 채팅 액션 버튼 스타일 */
@@ -461,7 +753,13 @@ function formatBirthYear(birthYear) {
 }
 
 .accept-button {
-  background-color: #2ecc71;
+  background-color: #4CAF50;
+  color: white;
+  flex: 1;
+}
+
+.cancel-button {
+  background-color: #f44336;
   color: white;
   flex: 1;
 }
@@ -522,11 +820,70 @@ function formatBirthYear(birthYear) {
 
 .modal-content {
   background-color: white;
-  padding: 2rem;
-  border-radius: 10px;
-  width: 100%;
+  padding: 1.5rem;
+  border-radius: 15px;
+  width: 90%;
   max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.datepicker-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.mobile-datepicker {
+  width: 100%;
+  --dp-font-family: inherit;
+  --dp-border-radius: 8px;
+  --dp-cell-border-radius: 4px;
+  --dp-common-transition: all ease 0.2s;
+  --dp-menu-padding: 6px 8px;
+  --dp-animation-duration: 0.2s;
+  --dp-background-color: #fff;
+  --dp-border-color: #ddd;
+  --dp-border-color-hover: #aaaeb7;
+  --dp-text-color: #212121;
+  --dp-disabled-color: #c0c4cc;
+  --dp-hover-color: #f5f5f5;
+  --dp-btn-hover-bg-color: #f8f8f8;
+  --dp-primary-color: #1976d2;
+}
+
+/* Fix mobile display */
+.dp__main {
+  width: 100% !important;
+  font-family: inherit;
+}
+
+/* Mobile styling */
+@media (max-width: 480px) {
+  .dp__menu {
+    width: 100% !important;
+    min-width: 280px;
+    max-width: 100% !important;
+  }
+  
+  .dp__action_row {
+    padding: 12px !important;
+  }
+}
+
+/* Dark mode support */
+.dark-mode .mobile-datepicker {
+  --dp-background-color: #2d2d2d;
+  --dp-text-color: #fff;
+  --dp-hover-color: #444;
+  --dp-primary-color: #0096c7;
+  --dp-border-color: #444;
 }
 
 .modal-content h3 {
