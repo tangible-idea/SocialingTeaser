@@ -180,6 +180,37 @@
                 <p class="match-status" :class="{'status-active': match.status === 'active', 'status-inactive': match.status !== 'active'}">상태: {{ match.status === 'active' ? '활성' : '비활성' }}</p>
               </div>
               
+              <!-- 미팅 일정과 장소 정보 -->
+              <div class="meeting-info">
+                <div class="meeting-item">
+                  <span class="meeting-label">미팅 일정:</span>
+                  <span v-if="!isEditingDate(match.id)" class="meeting-value">
+                    {{ match.meeting_date ? formatDateTime(match.meeting_date) : '설정되지 않음' }}
+                    <button @click="startEditDate(match)" class="edit-button">변경</button>
+                  </span>
+                </div>
+                
+                <div class="meeting-item">
+                  <span class="meeting-label">미팅 장소:</span>
+                  <span v-if="!isEditingLocation(match.id)" class="meeting-value">
+                    {{ match.meeting_place || '설정되지 않음' }}
+                    <button @click="startEditLocation(match)" class="edit-button">변경</button>
+                  </span>
+                  <span v-else class="meeting-value-edit">
+                    <input 
+                      v-model="newLocation" 
+                      @keyup.enter="saveLocation(match)"
+                      class="location-input"
+                      placeholder="미팅 장소를 입력하세요"
+                    />
+                    <div class="edit-actions">
+                      <button @click="saveLocation(match)" class="save-location-button">저장</button>
+                      <button @click="cancelEditLocation()" class="cancel-button">취소</button>
+                    </div>
+                  </span>
+                </div>
+              </div>
+              
               <div class="match-actions">
                 <button @click="toggleMatchStatus(match)" class="status-toggle-button">
                   {{ match.status === 'active' ? '비활성화' : '활성화' }}
@@ -192,12 +223,39 @@
       </div>
     </div>
   </div>
+  <!-- 날짜 선택 모달 -->
+  <div class="modal date-modal" v-if="showDatePicker">
+    <div class="modal-content calendar-content">
+      <h3>미팅 일정 설정</h3>
+      <div class="datepicker-wrapper">
+        <Datepicker 
+          v-model="selectedDateTime" 
+          :enable-time-picker="true"
+          :is24="true"
+          :minutes-increment="15"
+          :text-input="false"
+          :auto-apply="true"
+          :preview-format="'yyyy년 MM월 dd일 HH:mm'"
+          placeholder="날짜와 시간을 선택해주세요"
+          locale="ko"
+          model-type="timestamp"
+          class="mobile-datepicker"
+        />
+      </div>
+      <div class="modal-actions">
+        <button class="cancel-button" @click="cancelEditDate()">취소</button>
+        <button class="save-button" @click="saveDate()">저장</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import supabase from '../supabase';
 import MatchingAlgorithm from '../components/MatchingAlgorithm.vue';
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 // 상태 관리
 const loading = ref(false);
@@ -214,6 +272,14 @@ const matchedUsersList = ref([]);
 const promptTemplate = ref('');
 const savedPrompts = ref([]);
 const notificationMessage = ref('');
+
+// 일정 및 장소 편집 관련 상태
+const editingMatchId = ref(null);
+const showDatePicker = ref(false);
+const selectedDateTime = ref(null);
+const editingLocation = ref(false);
+const newLocation = ref('');
+const currentEditMatch = ref(null);
 
 // 필터링된 사용자 목록 (이미 선택된 사용자 A를 제외)
 const filteredUserList = computed(() => {
@@ -479,6 +545,131 @@ async function createMatch({ user1Id, user2Id }) {
     console.error('매칭 중 오류 발생:', error);
     alert(`매칭 중 오류가 발생했습니다: ${error.message}`);
   }
+}
+
+// 날짜/시간 포맷팅 함수
+function formatDateTime(dateString) {
+  if (!dateString) return '설정되지 않음';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '유효하지 않은 날짜';
+  
+  // 한국어 요일 배열
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekday = weekdays[date.getDay()];
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}년 ${month}월 ${day}일 ${weekday}요일 ${hour}시 ${minute}분`;
+}
+
+// 일정 수정 시작
+function startEditDate(match) {
+  currentEditMatch.value = match;
+  editingMatchId.value = match.id;
+  
+  // 기존 날짜가 있으면 설정, 없으면 현재 시간으로 설정
+  if (match.meeting_date) {
+    selectedDateTime.value = new Date(match.meeting_date).getTime();
+  } else {
+    selectedDateTime.value = new Date().getTime();
+  }
+  
+  showDatePicker.value = true;
+}
+
+// 일정 수정 취소
+function cancelEditDate() {
+  showDatePicker.value = false;
+  editingMatchId.value = null;
+  currentEditMatch.value = null;
+  selectedDateTime.value = null;
+}
+
+// 일정 저장
+async function saveDate() {
+  if (!currentEditMatch.value || !selectedDateTime.value) {
+    alert('날짜와 시간을 선택해주세요.');
+    return;
+  }
+  
+  try {
+    // timestamptz로 저장하기 위해 ISO 형식으로 변환
+    const isoDate = new Date(selectedDateTime.value).toISOString();
+    
+    const { error } = await supabase
+      .from('dating_matched')
+      .update({ meeting_date: isoDate })
+      .eq('id', currentEditMatch.value.id);
+      
+    if (error) throw error;
+    
+    // 현재 편집 중인 객체에 새 날짜 설정
+    currentEditMatch.value.meeting_date = isoDate;
+    
+    alert('미팅 일정이 업데이트되었습니다.');
+    showDatePicker.value = false;
+    editingMatchId.value = null;
+    currentEditMatch.value = null;
+  } catch (err) {
+    console.error('일정 수정 중 오류:', err);
+    alert('일정 수정에 실패했습니다.');
+  }
+}
+
+// 장소 수정 시작
+function startEditLocation(match) {
+  editingMatchId.value = match.id;
+  editingLocation.value = true;
+  newLocation.value = match.meeting_place || '';
+  currentEditMatch.value = match;
+}
+
+// 장소 수정 취소
+function cancelEditLocation() {
+  editingLocation.value = false;
+  editingMatchId.value = null;
+  newLocation.value = '';
+  currentEditMatch.value = null;
+}
+
+// 장소 저장
+async function saveLocation(match) {
+  try {
+    const { error } = await supabase
+      .from('dating_matched')
+      .update({ meeting_place: newLocation.value })
+      .eq('id', match.id);
+      
+    if (error) throw error;
+    
+    // 현재 편집 중인 객체에 새 장소 설정
+    match.meeting_place = newLocation.value;
+    
+    editingLocation.value = false;
+    editingMatchId.value = null;
+    newLocation.value = '';
+    currentEditMatch.value = null;
+    
+    alert('미팅 장소가 업데이트되었습니다.');
+  } catch (err) {
+    console.error('장소 수정 중 오류:', err);
+    alert('장소 수정에 실패했습니다.');
+  }
+}
+
+// 현재 수정 중인 일정인지 확인
+function isEditingDate(matchId) {
+  return editingMatchId.value === matchId && showDatePicker.value;
+}
+
+// 현재 수정 중인 장소인지 확인
+function isEditingLocation(matchId) {
+  return editingMatchId.value === matchId && editingLocation.value;
 }
 
 // 매칭된 사용자 목록 가져오기
@@ -914,6 +1105,162 @@ function handleMatchSelected({ mainUser, matchUser }) {
   color: #ccc;
   margin: 0 15px;
   font-size: 18px;
+}
+
+/* Meeting info styles */
+.meeting-info {
+  margin: 15px 0;
+  padding: 15px;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.meeting-item {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.meeting-label {
+  font-weight: bold;
+  min-width: 100px;
+  color: #555;
+}
+
+.meeting-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #333;
+}
+
+.meeting-value-edit {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-left: 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.location-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.save-location-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+
+/* Date picker modal styles */
+.modal {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.datepicker-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+.mobile-datepicker {
+  width: 100%;
+  --dp-font-family: inherit;
+  --dp-border-radius: 8px;
+  --dp-cell-border-radius: 4px;
+  --dp-common-transition: all ease 0.2s;
+  --dp-menu-padding: 6px 8px;
+  --dp-animation-duration: 0.2s;
+  --dp-background-color: #fff;
+  --dp-border-color: #ddd;
+  --dp-border-color-hover: #aaaeb7;
+  --dp-text-color: #212121;
+  --dp-disabled-color: #c0c4cc;
+  --dp-hover-color: #f5f5f5;
+  --dp-btn-hover-bg-color: #f8f8f8;
+  --dp-primary-color: #1976d2;
+}
+
+/* Fix mobile display */
+.dp__main {
+  width: 100% !important;
+  font-family: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.save-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .match-info {

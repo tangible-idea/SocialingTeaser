@@ -36,7 +36,7 @@
         <div class="meeting-info">
           <div class="info-row">
             <span class="info-label">일정:</span>
-            <span class="info-value">{{ matchData.meeting_date || '아직 정해지지 않았습니다' }}</span>
+            <span class="info-value">{{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">장소:</span>
@@ -285,14 +285,8 @@ async function fetchChatMessages() {
       
       // 미팅 일정이 있으면 시스템 메시지 추가
       if (matchData.value.meeting_date) {
-        // 반드시 포맷팅해서 표시
-        const dateObj = new Date(matchData.value.meeting_date);
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(dateObj.getDate()).padStart(2, '0');
-        const hour = String(dateObj.getHours()).padStart(2, '0');
-        const minute = String(dateObj.getMinutes()).padStart(2, '0');
-        const formattedDate = `${year}년 ${month}월 ${day}일 ${hour}:${minute}`;
+        // 포맷팅 함수를 사용하여 요일까지 포함한 날짜 표시
+        const formattedDate = formatMeetingDate(matchData.value.meeting_date);
         
         await addSystemMessage(`관리자가 미팅 일정을 ${formattedDate}로 설정했습니다.`);
       }
@@ -472,15 +466,11 @@ async function submitDateChange() {
     return;
   }
   
-  // 일정 포맷팅
+  // timestamptz 형식으로 처리하기 위해 날짜 객체 생성
   const dateObj = new Date(selectedDateTime.value);
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  const hour = String(dateObj.getHours()).padStart(2, '0');
-  const minute = String(dateObj.getMinutes()).padStart(2, '0');
   
-  const formattedDate = `${year}년 ${month}월 ${day}일 ${hour}:${minute}`;
+  // 포맷팅된 날짜를 생성하여 사용
+  const formattedDate = formatMeetingDate(dateObj);
   
   // 시스템 메시지 추가
   await addSystemMessage(`${currentUserInfo.value.name}님이 ${formattedDate}로 일정변경을 요청하셨습니다.`);
@@ -521,6 +511,26 @@ function formatBirthYear(birthYear) {
   
   // 숫자만 있는 경우
   return birthYearStr.slice(-2) + '년생';
+}
+
+// 미팅 일정 포맷팅 함수
+function formatMeetingDate(dateString) {
+  if (!dateString) return '설정되지 않음';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '유효하지 않은 날짜';
+  
+  // 한국어 요일 배열
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekday = weekdays[date.getDay()];
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}년 ${month}월 ${day}일 ${weekday}요일 ${hour}시 ${minute}분`;
 }
 
 // 시간 포맷팅 함수 - 메시지 작성 시간 표시
