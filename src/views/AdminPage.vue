@@ -160,6 +160,8 @@
                   <h4>{{ match.user1.name }}</h4>
                   <p>{{ calculateAge(match.user1.birth_year) }}세, {{ match.user1.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user1.field || '직업 정보 없음' }}</p>
+                  <p class="user-uuid">UUID: {{ match.user1.id }}</p>
+                  <a :href="`/matching/${match.user1.id}`" class="view-link">여기서 보기</a>
                 </div>
                 
                 <div class="match-separator">—</div>
@@ -168,6 +170,8 @@
                   <h4>{{ match.user2.name }}</h4>
                   <p>{{ calculateAge(match.user2.birth_year) }}세, {{ match.user2.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user2.field || '직업 정보 없음' }}</p>
+                  <p class="user-uuid">UUID: {{ match.user2.id }}</p>
+                  <a :href="`/matching/${match.user2.id}`" class="view-link">여기서 보기</a>
                 </div>
               </div>
               
@@ -882,6 +886,28 @@ function handleMatchSelected({ mainUser, matchUser }) {
   margin: 3px 0;
   color: #666;
   font-size: 14px;
+}
+
+.user-uuid {
+  font-size: 12px;
+  color: #888;
+  font-family: monospace;
+}
+
+.view-link {
+  display: inline-block;
+  margin-top: 5px;
+  padding: 4px 8px;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.view-link:hover {
+  background-color: #2980b9;
 }
 
 .match-separator {
