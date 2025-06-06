@@ -453,7 +453,6 @@ async function getAiAnalysis(match) {
     const apiKey = import.meta.env.VITE_POE_API_KEY || import.meta.env.POE_API_KEY || 'oqblhi8pIB7QFd1aNeRYHh7xQfdEHGW9yu3G6EHLiQE'; 
     if (!apiKey) throw new Error('API 키를 찾을 수 없습니다. 환경 변수를 확인하세요.');
     const prompt = `
-기독교 데이팅 서비스에서 두 사람 간의 영적 호환성을 분석해주세요. 이 분석은 성경적 가치관과 영성을 중심으로 하며, 두 사람이 서로에게 영적으로 어떻게 영향을 줄 수 있는지 고려하세요.
 
 ### 사용자 A 정보:
 ${match.mainUserInfo}
@@ -462,13 +461,13 @@ ${match.mainUserInfo}
 ${match.matchUserInfo}
 
 ## 요청사항:
-1. 두 사람의 성격, 성경인물 유형, 가치관 등을 고려하여 영적 호환성을 분석해주세요.
-2. 서로 보완할 수 있는 영역과 함께 성장할 수 있는 부분을 제안해주세요.
-3. 성경적 관점에서 두 사람이 어떤 관계를 만들어갈 수 있을지 조언해주세요.
-4. 부부가 되었을 때 서로에게 어떤 영향을 미칠지 예측해주세요.
-5. 기독교인으로서 영적 성장을 위해 어떤 활동을 함께 할 수 있을지 제안해주세요.
-
-좋은 데이팅 관계를 위한 영적 호환성 분석을 한국어로 제공해주세요.`;
+1. MBTI를 기반 매칭평가, S와 N이 가장 중요. F와 T가 그 다음으로 중요. 나머지는 중요하지 않음.
+2. 이상형 우선순위 평가. 서로 상대방의 이상형이 일치하는지 평가.
+3. 이성을 볼 때 우선순위 평가. 서로 이성을 볼 때 보는 부분이 일치하는지 평가.
+4. 거리가 비슷한지 평가.
+5. 직업이 궁합이 맞는지 평가. 혹은 비슷한 직업인지?
+6. 나이가 적당한 차이가 있는지? 여성이 더 어린지?
+두 사용자의 궁합 분석을 한국어로 제공해주세요.`;
     const response = await axios.post('https://ai.tangibly.link/call/gpt-4o-mini', {
       apikey: apiKey,
       request: prompt
