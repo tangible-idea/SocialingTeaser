@@ -20,16 +20,44 @@
     
     <div class="match-detail-container" v-else>
       <div class="match-info-card">
-        <h2>매칭 정보</h2>
-        
-        <div class="partner-info">
-          <div class="partner-avatar">
-            <img src="/profile-placeholder.png" alt="프로필" onerror="this.src='https://via.placeholder.com/80'" />
+        <div class="profiles-container">
+          <!-- 상대방 정보 -->
+          <div class="profile-card partner-card">
+            <div class="profile-header">
+              <h4>상대방 정보</h4>
+            </div>
+            <div class="profile-content">
+              <div class="profile-avatar">
+                <img src="/profile-placeholder.png" alt="상대방 프로필" onerror="this.src='https://via.placeholder.com/80'" />
+              </div>
+              <div class="profile-details">
+                <div class="profile-name">{{ partnerInfo.name }}</div>
+                <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}, {{ partnerInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">키: {{ partnerInfo.height || '정보 없음' }}cm</div>
+                <div class="profile-info">MBTI: {{ partnerInfo.mbti || '정보 없음' }}</div>
+              </div>
+            </div>
           </div>
-          <div class="partner-details">
-            <h3>{{ partnerInfo.name }}</h3>
-            <p>{{ formatBirthYear(partnerInfo.birth_year) }}, {{ partnerInfo.field || '정보 없음' }}</p>
-            <p>키: {{ partnerInfo.height || '정보 없음' }}cm, MBTI: {{ partnerInfo.mbti || '정보 없음' }}</p>
+          
+          <!-- 내 정보 -->
+          <div class="profile-card my-card">
+            <div class="profile-header">
+              <h4>내 정보</h4>
+              <button class="edit-button" @click="openProfileEditor">
+                <span class="edit-icon">✏️</span> 수정
+              </button>
+            </div>
+            <div class="profile-content">
+              <div class="profile-avatar">
+                <img src="/profile-placeholder.png" alt="내 프로필" onerror="this.src='https://via.placeholder.com/80'" />
+              </div>
+              <div class="profile-details">
+                <div class="profile-name">{{ currentUserInfo.name }}</div>
+                <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}, {{ currentUserInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">키: {{ currentUserInfo.height || '정보 없음' }}cm</div> 
+                <div class="profile-info">MBTI: {{ currentUserInfo.mbti || '정보 없음' }}</div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -109,8 +137,55 @@
         </div>
       </div>
       
+      <!-- 프로필 수정 모달 -->
+      <div class="modal profile-edit-modal" v-if="showProfileEditor">
+        <div class="modal-content">
+          <h3>내 정보 수정</h3>
+          <form @submit.prevent="saveProfileChanges">
+            <div class="form-group">
+              <label for="name">이름</label>
+              <input type="text" id="name" v-model="editedProfile.name" />
+            </div>
+            <div class="form-group">
+              <label for="field">직업/분야</label>
+              <input type="text" id="field" v-model="editedProfile.field" />
+            </div>
+            <div class="form-group">
+              <label for="height">키 (cm)</label>
+              <input type="number" id="height" v-model="editedProfile.height" />
+            </div>
+            <div class="form-group">
+              <label for="mbti">MBTI</label>
+              <select id="mbti" v-model="editedProfile.mbti">
+                <option value="">선택안함</option>
+                <option value="ISTJ">ISTJ</option>
+                <option value="ISFJ">ISFJ</option>
+                <option value="INFJ">INFJ</option>
+                <option value="INTJ">INTJ</option>
+                <option value="ISTP">ISTP</option>
+                <option value="ISFP">ISFP</option>
+                <option value="INFP">INFP</option>
+                <option value="INTP">INTP</option>
+                <option value="ESTP">ESTP</option>
+                <option value="ESFP">ESFP</option>
+                <option value="ENFP">ENFP</option>
+                <option value="ENTP">ENTP</option>
+                <option value="ESTJ">ESTJ</option>
+                <option value="ESFJ">ESFJ</option>
+                <option value="ENFJ">ENFJ</option>
+                <option value="ENTJ">ENTJ</option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="cancel-button" @click="showProfileEditor = false">취소</button>
+              <button type="submit" class="send-button">저장</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
       <!-- 날짜 선택 모달 -->
-      <div class="modal date-modal" v-if="showDatePicker">
+      <div v-if="showDatePicker" class="modal date-modal">
         <div class="modal-content calendar-content">
           <h3>일정 변경하기</h3>
           <div class="datepicker-wrapper">
@@ -161,6 +236,17 @@ const selectedDateTime = ref(null);
 const minTime = { hours: 0, minutes: 0 };
 const showQuestionModal = ref(false);
 const questionText = ref('');
+
+// 프로필 수정 관련 변수
+// 프로필 수정 모달 표시 상태
+const showProfileEditor = ref(false);
+// 수정중인 프로필 데이터
+const editedProfile = ref({
+  name: '',
+  field: '',
+  height: null,
+  mbti: ''
+});
 
 // 현재 날짜 포맷
 const currentDate = computed(() => {
@@ -373,6 +459,11 @@ async function addSystemMessage(text) {
   return await addChatMessage(text, 'system');
 }
 
+// 시스템 상태에 따른 상대방 정보 표시
+function getPartnerDisplayName() {
+  return partnerInfo.value && partnerInfo.value.name ? partnerInfo.value.name : '상대방';
+}
+
 // 일정 수락 함수
 async function acceptSchedule() {
   if (!matchData.value || !matchData.value.meeting_date) {
@@ -484,16 +575,58 @@ async function submitDateChange() {
 
 // 질문 보내기 함수
 async function sendQuestion() {
-  if (!questionText.value.trim()) {
-    alert('질문 내용을 입력해주세요.');
-    return;
-  }
+  if (questionText.value.trim() === '') return;
   
-  // 사용자 메시지 추가
   await addChatMessage(questionText.value);
-  
   showQuestionModal.value = false;
   questionText.value = '';
+}
+
+// 프로필 수정 모달 열기
+function openProfileEditor() {
+  // 현재 유저 정보를 수정할 프로필 값으로 복사
+  editedProfile.value = {
+    name: currentUserInfo.value?.name || '',
+    field: currentUserInfo.value?.field || '',
+    height: currentUserInfo.value?.height || null,
+    mbti: currentUserInfo.value?.mbti || ''
+  };
+  
+  // 모달 열기
+  showProfileEditor.value = true;
+}
+
+// 프로필 변경사항 저장
+async function saveProfileChanges() {
+  try {
+    // Supabase에 프로필 업데이트
+    const { data, error } = await supabase
+      .from('dating')
+      .update({
+        name: editedProfile.value.name,
+        field: editedProfile.value.field,
+        height: editedProfile.value.height,
+        mbti: editedProfile.value.mbti
+      })
+      .eq('id', userUuid)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    // 현재 프로필 정보 갱신
+    currentUserInfo.value = data;
+    
+    // 변경 사항 알림 메시지 추가
+    await addSystemMessage(`${currentUserInfo.value.name}\ub2d8\uc774 \uc790\uc2e0\uc758 \ud504\ub85c\ud544 \uc815\ubcf4\ub97c \uc5c5\ub370\uc774\ud2b8\ud558\uc600\uc2b5\ub2c8\ub2e4.`);
+    
+    // 모달 닫기
+    showProfileEditor.value = false;
+    
+  } catch (err) {
+    console.error('프로필 업데이트 오류:', err);
+    alert('프로필 업데이트 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
 }
 
 // 출생년도 포맷팅 함수 - 다양한 형식 지원
@@ -561,11 +694,10 @@ function formatTime(timestamp) {
     return `${month}월 ${day}일 ${hours < 12 ? '오전' : '오후'} ${hours % 12 || 12}:${minutes}`;
   }
 }
+
 </script>
 
 <style scoped>
-
-
 .loading-container, .error-container, .no-match-container {
   display: flex;
   justify-content: center;
@@ -593,56 +725,118 @@ function formatTime(timestamp) {
   color: #95a5a6;
 }
 
+/* 매칭 정보 카드 스타일 */
 .match-info-card {
   background-color: white;
   border-radius: 0;
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: none;
   height: 100vh;
+  overflow-y: auto;
 }
 
 .match-info-card h2 {
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   color: #333;
   font-size: 1.5rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.75rem;
 }
 
-/* 파트너 정보 스타일 */
-.partner-info {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.partner-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 1rem;
-  flex-shrink: 0;
-}
-
-.partner-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.partner-details h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.3rem;
+/* 프로필 섹션 스타일 */
+.profiles-title {
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
   color: #333;
 }
 
-.partner-details p {
+.profiles-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* 프로필 카드 스타일 */
+.profile-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
+}
+
+.profile-header h4 {
   margin: 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.edit-button {
+  background-color: transparent;
+  border: none;
+  color: #1976d2;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.edit-button:hover {
+  background-color: rgba(25, 118, 210, 0.1);
+}
+
+.edit-icon {
+  margin-right: 3px;
+  font-size: 0.75rem;
+}
+
+.profile-content {
+  display: flex;
+  padding: 0.75rem;
+}
+
+.profile-avatar {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  margin-right: 1rem;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #eee;
+}
+
+.profile-details {
+  flex: 1;
+}
+
+.profile-name {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.profile-info {
+  font-size: 0.85rem;
   color: #666;
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
 }
 
 /* 미팅 정보 스타일 */
@@ -781,14 +975,6 @@ function formatTime(timestamp) {
   flex: 2;
 }
 
-.date-input {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
 .change-button {
   background-color: #3498db;
   color: white;
@@ -837,6 +1023,36 @@ function formatTime(timestamp) {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
+.question-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  resize: vertical;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  color: #555;
+}
+
+.form-group input, 
+.form-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
 .calendar-content {
   display: flex;
   flex-direction: column;
@@ -852,69 +1068,53 @@ function formatTime(timestamp) {
 
 .mobile-datepicker {
   width: 100%;
-  --dp-font-family: inherit;
-  --dp-border-radius: 8px;
-  --dp-cell-border-radius: 4px;
-  --dp-common-transition: all ease 0.2s;
-  --dp-menu-padding: 6px 8px;
-  --dp-animation-duration: 0.2s;
-  --dp-background-color: #fff;
-  --dp-border-color: #ddd;
-  --dp-border-color-hover: #aaaeb7;
-  --dp-text-color: #212121;
-  --dp-disabled-color: #c0c4cc;
-  --dp-hover-color: #f5f5f5;
-  --dp-btn-hover-bg-color: #f8f8f8;
-  --dp-primary-color: #1976d2;
 }
 
-/* Fix mobile display */
-.dp__main {
-  width: 100% !important;
-  font-family: inherit;
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-/* Mobile styling */
-@media (max-width: 480px) {
-  .dp__menu {
-    width: 100% !important;
-    min-width: 280px;
-    max-width: 100% !important;
+.modal-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-actions .cancel-button {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.modal-actions .send-button {
+  background-color: #1976d2;
+  color: white;
+}
+
+/* 반응형 스타일 */
+@media (min-width: 768px) {
+  .profiles-container {
+    flex-direction: row;
   }
   
-  .dp__action_row {
-    padding: 12px !important;
+  .profile-card {
+    flex: 1;
   }
-}
-
-/* Dark mode support */
-.dark-mode .mobile-datepicker {
-  --dp-background-color: #2d2d2d;
-  --dp-text-color: #fff;
-  --dp-hover-color: #444;
-  --dp-primary-color: #0096c7;
-  --dp-border-color: #444;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
 }
 
 .question-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
-  margin-bottom: 1rem;
   resize: vertical;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .cancel-button {
