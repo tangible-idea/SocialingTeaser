@@ -217,10 +217,11 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import supabase from '../supabase';
 
 const route = useRoute();
+const router = useRouter();
 const userUuid = route.params.uuid;
 
 const loading = ref(true);
@@ -582,18 +583,10 @@ async function sendQuestion() {
   questionText.value = '';
 }
 
-// 프로필 수정 모달 열기
+// 프로필 수정 페이지로 이동
 function openProfileEditor() {
-  // 현재 유저 정보를 수정할 프로필 값으로 복사
-  editedProfile.value = {
-    name: currentUserInfo.value?.name || '',
-    field: currentUserInfo.value?.field || '',
-    height: currentUserInfo.value?.height || null,
-    mbti: currentUserInfo.value?.mbti || ''
-  };
-  
-  // 모달 열기
-  showProfileEditor.value = true;
+  // 유저 ID를 가지고 프로필 페이지로 이동
+  router.push(`/profile/${userUuid}`);
 }
 
 // 프로필 변경사항 저장
