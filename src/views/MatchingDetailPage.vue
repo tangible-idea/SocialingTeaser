@@ -1101,6 +1101,7 @@ function formatTime(timestamp) {
 .meeting-card {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  flex: 0 0 auto; /* Prevent this specific card type from growing as a flex item */
 }
 
 .meeting-content {
