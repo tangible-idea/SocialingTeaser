@@ -68,6 +68,10 @@
               <div v-if="message.message_type === 'system'" class="system-message">
                 <p>{{ message.message }}</p>
                 <span class="message-time">{{ formatTime(message.created_at) }}</span>
+                <!-- 일정 변경 요청에 대한 수락 버튼 (요청을 받은 사람만 볼 수 있음) -->
+                <div v-if="isDateChangeRequest(message) && message.sender_id !== userUuid && !message.accepted" class="date-change-actions">
+                  <button @click="acceptDateChange(message)" class="accept-button">일정 수락하기</button>
+                </div>
               </div>
               
               <!-- 질문카드 메시지 -->
@@ -182,7 +186,7 @@
           
           <div class="question-card-info">
             <ul>
-              <li>질문카드에 적힌 글자만큼 글자수가 차감됩니다.</li>
+              <li>질문카드에 적힌 답변한 글자수가 차감됩니다.</li>
               <li>하루(24시간)에 각 1번만 질문을 보낼 수 있습니다.</li>
               <li>정해진 글자 수로 상대방을 최대한 알아보는 게임이에요.</li>
               <li>긴 이야기는 서로 만나서 재밌게 이야기해봐요.</li>
@@ -541,6 +545,49 @@ async function addSystemMessage(text) {
   return await addChatMessage(text, 'system');
 }
 
+// 일정 변경 요청 메시지인지 확인하는 함수
+function isDateChangeRequest(message) {
+  return message.message_type === 'system' && 
+         message.requested_time && 
+         message.message.includes('일정변경을 요청');
+}
+
+// 일정 변경 요청 수락 함수
+async function acceptDateChange(message) {
+  try {
+    if (!message.requested_time) {
+      alert('날짜 정보가 없습니다. 다시 시도해주세요.');
+      return;
+    }
+    
+    // requested_time을 사용하여 meeting_date 업데이트
+    const { error: updateError } = await supabase
+      .from('dating_matched')
+      .update({ meeting_date: message.requested_time })
+      .eq('id', matchData.value.id);
+      
+    if (updateError) {
+      console.error('일정 수락 중 오류 발생:', updateError);
+      throw updateError;
+    }
+    
+    // 현재 메시지를 수락됨으로 표시 (UI에서 수락 버튼을 숨기기 위함)
+    message.accepted = true;
+    
+    // 일정 수락 시스템 메시지 추가
+    await addSystemMessage(`${currentUserInfo.value.name}님이 일정 변경 요청을 수락하셨습니다.`);
+    
+    // 매칭 데이터 다시 로드하여 일정 카드 업데이트
+    await fetchMatchingDetails();
+    
+    // 성공 메시지
+    alert('일정 변경이 수락되었습니다.');
+  } catch (err) {
+    console.error('일정 수락 중 오류 발생:', err);
+    alert('일정 수락을 처리할 수 없습니다. 다시 시도해주세요.');
+  }
+}
+
 // 시스템 상태에 따른 상대방 정보 표시
 function getPartnerDisplayName() {
   return partnerInfo.value && partnerInfo.value.name ? partnerInfo.value.name : '상대방';
@@ -721,14 +768,41 @@ async function submitDateChange() {
   // 포맷팅된 날짜를 생성하여 사용
   const formattedDate = formatMeetingDate(dateObj);
   
-  // 시스템 메시지 추가
-  await addSystemMessage(`${currentUserInfo.value.name}님이 ${formattedDate}로 일정변경을 요청하셨습니다.`);
-  
-  // 모달 닫기
-  showDatePicker.value = false;
-  
-  // 값 초기화
-  selectedDateTime.value = null;
+  try {
+    // 일정 변경 요청 메시지 추가 (requested_time 포함)
+    const newMessage = {
+      matching_id: matchData.value.id,
+      sender_id: userUuid,
+      message: `${currentUserInfo.value.name}님이 ${formattedDate}로 일정변경을 요청하셨습니다.`,
+      message_type: 'system',
+      requested_time: dateObj.toISOString() // timestamptz 형식으로 저장
+    };
+    
+    const { data, error } = await supabase
+      .from('dating_chat')
+      .insert(newMessage)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('일정 변경 요청 저장 중 오류 발생:', error);
+      throw error;
+    }
+    
+    // 성공적으로 저장되면 채팅 메시지 배열에 추가
+    if (data) {
+      chatMessages.value.push(data);
+    }
+    
+    // 모달 닫기
+    showDatePicker.value = false;
+    
+    // 값 초기화
+    selectedDateTime.value = null;
+  } catch (err) {
+    console.error('일정 변경 요청 중 오류 발생:', err);
+    alert('일정 변경 요청을 처리할 수 없습니다. 다시 시도해주세요.');
+  }
 }
 
 // 질문 보내기 함수
@@ -1223,6 +1297,12 @@ function formatTime(timestamp) {
   border-radius: 15px;
   margin-bottom: 0.8rem;
   max-width: 90%;
+}
+
+.date-change-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
 }
 
 .system-message p {
