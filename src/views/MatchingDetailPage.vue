@@ -1012,8 +1012,9 @@ function formatTime(timestamp) {
 .profiles-container {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
   width: 100%;
   align-items: stretch;
 }
@@ -1038,7 +1039,7 @@ function formatTime(timestamp) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem;
   background-color: #f9f9f9;
   border-bottom: 1px solid #eee;
 }
@@ -1071,7 +1072,7 @@ function formatTime(timestamp) {
 
 .profile-content {
   display: flex;
-  padding: 1rem;
+  padding: 0.75rem;
   flex: 1;
 }
 
@@ -1098,18 +1099,19 @@ function formatTime(timestamp) {
 
 /* 미팅 정보 스타일 */
 .meeting-card {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .meeting-content {
-  padding: 1rem 2rem;
+  padding: 0.5rem 1rem;
 }
 
 .meeting-info-row {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
   width: 100%;
 }
 
@@ -1175,11 +1177,11 @@ function formatTime(timestamp) {
   flex-direction: column;
   background-color: white;
   border-radius: 0;
-  padding: 1rem;
   box-shadow: none;
-  margin-top: 0;
+  margin: 0;
+  padding: 0;
   border-top: 1px solid #eee;
-  height: calc(100vh - 60px); /* 히드파이흰 위에 남는 전체 공간에서 헤더 눆기 */
+  height: 100vh; /* 전체 뷰포트 높이로 설정 */
   overflow: hidden; /* 전체 컨테이너는 스크롤 없음 */
 }
 
@@ -1188,6 +1190,7 @@ function formatTime(timestamp) {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  padding: 0.5rem;
 }
 
 .chat-container {
@@ -1196,7 +1199,7 @@ function formatTime(timestamp) {
   flex-direction: column;
   background-color: white;
   border-radius: 8px;
-  margin: 1rem 0;
+  margin: 0.25rem 0;
   overflow: hidden;
   border: 1px solid #eee;
 }
