@@ -60,31 +60,40 @@
           </div>
         </div>
         
-        <div class="meeting-info">
-          <div class="info-row">
-            <span class="info-label">일정:</span>
-            <span class="info-value">{{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
+        <div class="profile-card meeting-card">
+          <div class="profile-header">
+            <h4>만남 일정</h4>
           </div>
-          <div class="info-row">
-            <span class="info-label">장소:</span>
-            <span class="info-value">{{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
+          <div class="profile-content meeting-content">
+            <div class="profile-details">
+              <div class="meeting-info-row">
+                <span class="meeting-info-label">일정</span>
+                <span class="meeting-info-value">{{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
+              </div>
+              <div class="meeting-info-row">
+                <span class="meeting-info-label">장소</span>
+                <span class="meeting-info-value">{{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
+              </div>
+            </div>
           </div>
           
           <div class="meeting-actions">
-            <!-- 현재 사용자가 수락했는지 확인 -->
-            <div v-if="matchData.user1_id === userUuid ? matchData.user1_accepted : matchData.user2_accepted">
-              <button class="action-button cancel-button" @click="cancelSchedule">
+            <div class="meeting-actions-row">
+              <!-- 현재 사용자가 수락했는지 확인 -->
+              <button 
+                v-if="matchData.user1_id === userUuid ? matchData.user1_accepted : matchData.user2_accepted"
+                class="card-action-btn cancel-button half-width" 
+                @click="cancelSchedule">
                 일정 수락 취소
               </button>
-            </div>
-            <div v-else>
-              <button class="action-button accept-button" @click="acceptSchedule">
+              <button 
+                v-else 
+                class="card-action-btn accept-button half-width" 
+                @click="acceptSchedule">
                 일정 수락
               </button>
-            </div>
-            
-            <div class="change-date-container">
-              <button class="action-button change-button" @click="openDatePicker">
+              
+              <button class="card-action-btn change-button half-width" @click="openDatePicker">
                 일정 변경
               </button>
             </div>
@@ -1092,39 +1101,76 @@ function formatTime(timestamp) {
 }
 
 /* 미팅 정보 스타일 */
-.meeting-info {
-  margin-bottom: 1.5rem;
-  background-color: white;
-  padding: 1rem;
-  border-radius: 0;
-  border-bottom: 1px solid #eee;
+.meeting-card {
+  margin-top: 1rem;
+}
+
+.meeting-content {
+  padding: 1rem 2rem;
+}
+
+.meeting-info-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  width: 100%;
+}
+
+.meeting-info-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 0.3rem;
+}
+
+.meeting-info-value {
+  font-size: 1rem;
+  color: #333;
 }
 
 /* 미팅 액션 스타일 */
 .meeting-actions {
+  width: 100%;
+}
+
+.meeting-actions-row {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
+  flex-direction: row;
+  width: 100%;
+}
+
+.half-width {
+  flex: 1;
+}
+
+.accept-button {
+  background-color: #4CAF50;
+}
+
+.cancel-button {
+  background-color: #f44336;
+}
+
+.change-button {
+  background-color: #3498db;
+}
+
+.meeting-actions .card-action-btn {
+  margin-top: 0;
+  border-radius: 0;
+}
+
+.meeting-actions .half-width:first-child {
+  border-radius: 0 0 0 12px;
+}
+
+.meeting-actions .half-width:last-child {
+  border-radius: 0 0 12px 0;
 }
 
 .meeting-actions .action-button {
   flex: 1;
-}
-
-.info-row {
-  display: flex;
-  margin-bottom: 0.5rem;
-}
-
-.info-label {
-  font-weight: bold;
-  width: 80px;
-  color: #555;
-}
-
-.info-value {
-  color: #333;
 }
 
 /* 채팅 컨테이너 스타일 */
