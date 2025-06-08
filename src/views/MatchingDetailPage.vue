@@ -25,42 +25,38 @@
           <div class="profile-card partner-card">
             <div class="profile-header">
               <h4>상대방 정보</h4>
-              <button class="question-card-btn" @click="showQuestionCardModal = true">
-                <span class="question-icon">❓</span> 질문카드
-              </button>
             </div>
             <div class="profile-content">
-              <div class="profile-avatar">
-                <img src="/profile-placeholder.png" alt="상대방 프로필" onerror="this.src='https://via.placeholder.com/80'" />
-              </div>
               <div class="profile-details">
                 <div class="profile-name">{{ partnerInfo.name }}</div>
-                <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}, {{ partnerInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}</div>
+                <div class="profile-info">{{ partnerInfo.field || '정보 없음' }}</div>
                 <div class="profile-info">키: {{ partnerInfo.height || '정보 없음' }}cm</div>
                 <div class="profile-info">MBTI: {{ partnerInfo.mbti || '정보 없음' }}</div>
               </div>
             </div>
+            <button class="card-action-btn question-card-btn" @click="showQuestionCardModal = true">
+              <span class="question-icon">❓</span> 질문카드
+            </button>
           </div>
           
           <!-- 내 정보 -->
           <div class="profile-card my-card">
             <div class="profile-header">
               <h4>내 정보</h4>
-              <button class="edit-button" @click="openProfileEditor">
-                <span class="edit-icon">✏️</span> 수정
-              </button>
             </div>
             <div class="profile-content">
-              <div class="profile-avatar">
-                <img src="/profile-placeholder.png" alt="내 프로필" onerror="this.src='https://via.placeholder.com/80'" />
-              </div>
               <div class="profile-details">
                 <div class="profile-name">{{ currentUserInfo.name }}</div>
-                <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}, {{ currentUserInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}</div>
+                <div class="profile-info">{{ currentUserInfo.field || '정보 없음' }}</div>
                 <div class="profile-info">키: {{ currentUserInfo.height || '정보 없음' }}cm</div> 
                 <div class="profile-info">MBTI: {{ currentUserInfo.mbti || '정보 없음' }}</div>
               </div>
             </div>
+            <button class="card-action-btn edit-button" @click="openProfileEditor">
+              <span class="edit-icon">✏️</span> 수정
+            </button>
           </div>
         </div>
         
@@ -1010,24 +1006,34 @@ function formatTime(timestamp) {
 
 .profiles-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  align-items: stretch;
 }
+
+/* Keep horizontal layout on all devices */
 
 /* 프로필 카드 스타일 */
 .profile-card {
   border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 0; /* Prevent flex items from overflowing */
   overflow: hidden;
   background-color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
   background-color: #f9f9f9;
   border-bottom: 1px solid #eee;
 }
@@ -1056,31 +1062,20 @@ function formatTime(timestamp) {
 
 .edit-icon {
   margin-right: 3px;
-  font-size: 0.75rem;
 }
 
 .profile-content {
   display: flex;
-  padding: 0.75rem;
-}
-
-.profile-avatar {
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
-  margin-right: 1rem;
-}
-
-.profile-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid #eee;
+  padding: 1rem;
+  flex: 1;
 }
 
 .profile-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .profile-name {
@@ -1291,16 +1286,28 @@ function formatTime(timestamp) {
 }
 
 /* 질문카드 스타일 */
-.question-card-btn {
-  background-color: #007bff;
+.card-action-btn {
+  font-size: 1rem;
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
+  padding: 0.75rem;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  cursor: pointer;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  width: 100%;
+  border-radius: 0 0 12px 12px;
+  transition: background-color 0.2s;
+}
+
+.question-card-btn {
+  background-color: #3498db;
+}
+
+.edit-button {
+  background-color: #4CAF50;
 }
 
 .question-icon {
