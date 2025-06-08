@@ -146,8 +146,8 @@
             </div>
           </div>
           <div class="chat-actions">
-            <button class="action-button question-button" @click="showQuestionModal = true">
-              질문 보내기
+            <button class="action-button question-button" @click="showQuestionCardModal = true">
+              질문카드 보내기
             </button>
           </div>
         </div>
@@ -178,6 +178,15 @@
             남은 글자 수: <strong>{{ remainingCharacters }}</strong>/50<br>
             <span v-if="!canSendQuestionToday()" class="daily-limit-warning">❗ 오늘은 질문을 이미 보냈습니다</span>
           </p>
+          
+          <div class="question-card-info">
+            <ul>
+              <li>질문카드에 적힌 글자만큼 글자수가 차감됩니다.</li>
+              <li>하루(24시간)에 각 1번만 질문을 보낼 수 있습니다.</li>
+              <li>정해진 글자 수로 상대방을 최대한 알아보는 게임이에요.</li>
+              <li>긴 이야기는 서로 만나서 재밌게 이야기해봐요.</li>
+            </ul>
+          </div>
           <div class="question-cards-container">
             <div 
               v-for="(question, index) in predefinedQuestions" 
@@ -437,23 +446,23 @@ async function fetchChatMessages() {
     chatMessages.value = data || [];
     
     // 매칭 생성 시스템 메시지 추가
-    if (chatMessages.value.length === 0) {
-      // 매칭이 생성된 시스템 메시지 추가
-      await addSystemMessage(`매칭이 성사되었습니다.`);
+    // if (chatMessages.value.length === 0) {
+    //   // 매칭이 생성된 시스템 메시지 추가
+    //   await addSystemMessage(`매칭이 성사되었습니다.`);
       
-      // 미팅 일정이 있으면 시스템 메시지 추가
-      if (matchData.value.meeting_date) {
-        // 포맷팅 함수를 사용하여 요일까지 포함한 날짜 표시
-        const formattedDate = formatMeetingDate(matchData.value.meeting_date);
+    //   // 미팅 일정이 있으면 시스템 메시지 추가
+    //   if (matchData.value.meeting_date) {
+    //     // 포맷팅 함수를 사용하여 요일까지 포함한 날짜 표시
+    //     const formattedDate = formatMeetingDate(matchData.value.meeting_date);
         
-        await addSystemMessage(`관리자가 미팅 일정을 ${formattedDate}로 설정했습니다.`);
-      }
+    //     await addSystemMessage(`관리자가 미팅 일정을 ${formattedDate}로 설정했습니다.`);
+    //   }
       
-      // 미팅 장소가 있으면 시스템 메시지 추가
-      if (matchData.value.meeting_place) {
-        await addSystemMessage(`미팅 장소가 ${matchData.value.meeting_place}로 설정되었습니다.`);
-      }
-    }
+    //   // 미팅 장소가 있으면 시스템 메시지 추가
+    //   if (matchData.value.meeting_place) {
+    //     await addSystemMessage(`미팅 장소가 ${matchData.value.meeting_place}로 설정되었습니다.`);
+    //   }
+    // }
     
     // Realtime 구독 설정
     setupRealtimeSubscription();
@@ -1332,6 +1341,29 @@ function formatTime(timestamp) {
   color: #dc3545;
   display: block;
   margin-top: 0.3rem;
+}
+
+.question-card-info {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0 1rem;
+  border-left: 3px solid #6c757d;
+}
+
+.question-card-info ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.question-card-info li {
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.question-card-info li:last-child {
+  margin-bottom: 0;
 }
 
 /* 질문카드 채팅 메시지 스타일 */
