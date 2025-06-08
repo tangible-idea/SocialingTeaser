@@ -25,6 +25,9 @@
           <div class="profile-card partner-card">
             <div class="profile-header">
               <h4>상대방 정보</h4>
+              <button class="question-card-btn" @click="showQuestionCardModal = true">
+                <span class="question-icon">❓</span> 질문카드
+              </button>
             </div>
             <div class="profile-content">
               <div class="profile-avatar">
@@ -93,26 +96,55 @@
         </div>
         
         <div class="chat-container">
-          <div class="chat-messages">
-            <!-- <div class="system-message">
-              <p>{{ currentDate }} 매칭이 성사되었습니다.</p>
-            </div> -->
-            
-            <!-- <div v-if="matchData.meeting_date" class="system-message">
-              <p>관리자가 미팅 일정을 {{ matchData.meeting_date }}로 설정했습니다.</p>
-            </div>
-            
-            <div v-if="matchData.meeting_place" class="system-message">
-              <p>미팅 장소가 {{ matchData.meeting_place }}로 설정되었습니다.</p>
-            </div> -->
-            
-            <div v-for="message in chatMessages" :key="message.id" 
-                :class="message.message_type === 'system' ? 'system-message' : 'action-message'">
-              <p>{{ message.message }}</p>
-              <span v-if="message.message_type !== 'system'" class="message-time">{{ formatTime(message.created_at) }}</span>
+          <div class="chat-messages" ref="chatContainer">
+            <!-- 시스템 메시지 -->
+            <div v-for="(message, index) in chatMessages" :key="message.id" class="message-container">
+              <!-- 시스템 메시지 -->
+              <div v-if="message.message_type === 'system'" class="system-message">
+                <p>{{ message.message }}</p>
+                <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              </div>
+              
+              <!-- 질문카드 메시지 -->
+              <div v-else-if="message.message_type === 'question_card'" class="question-card-message">
+                <div class="question-card-header">
+                  {{ getQuestionCardHeader(message) }}
+                </div>
+                <div class="card-content">
+                  <p>{{ message.message }}</p>
+                  <span class="message-time">{{ formatTime(message.created_at) }}</span>
+                </div>
+                <!-- 답변 버튼은 상대방만 볼 수 있음 -->
+                <div v-if="isPartner && !message.answered" class="answer-actions">
+                  <input 
+                    v-model="message.answerText" 
+                    class="answer-input" 
+                    placeholder="10자 이내로 답변" 
+                    maxlength="10" />
+                  <button 
+                    @click="submitAnswer(message)" 
+                    class="answer-button"
+                    :disabled="!message.answerText || message.answerText.length > 10">
+                    답변하기
+                  </button>
+                </div>
+                <!-- 답변이 있으면 표시 -->
+                <div v-if="message.answer" class="answer-display">
+                  <span class="answer-label">답변:</span> {{ message.answer }}
+                </div>
+              </div>
+              
+              <!-- 일반 메시지 -->
+              <div 
+                v-else 
+                :class="[message.sender_id === userUuid ? 'user-message' : 'partner-message']"
+                class="action-message"
+              >
+                <p>{{ message.message }}</p>
+                <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              </div>
             </div>
           </div>
-          
           <div class="chat-actions">
             <button class="action-button question-button" @click="showQuestionModal = true">
               질문 보내기
@@ -122,17 +154,41 @@
       </div>
       
       <!-- 질문 모달 -->
-      <div class="modal" v-if="showQuestionModal">
+      <div v-if="showQuestionModal" class="modal">
         <div class="modal-content">
-          <h3>질문 보내기</h3>
-          <textarea 
-            v-model="questionText" 
-            placeholder="상대방에게 질문할 내용을 입력하세요"
+          <h3>질문하기</h3>
+          <textarea
+            v-model="questionText"
+            class="question-textarea"
             rows="4"
-            class="question-textarea"></textarea>
+            placeholder="상대방에게 궁금한 점을 물어보세요..."
+          ></textarea>
           <div class="modal-actions">
-            <button class="cancel-button" @click="showQuestionModal = false">취소</button>
-            <button class="send-button" @click="sendQuestion">보내기</button>
+            <button @click="showQuestionModal = false" class="cancel-button">취소</button>
+            <button @click="sendQuestion" class="send-button">보내기</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 질문카드 모달 -->
+      <div v-if="showQuestionCardModal" class="modal">
+        <div class="modal-content">
+          <h3>질문카드 보내기</h3>
+          <p class="character-counter">
+            남은 글자 수: <strong>{{ remainingCharacters }}</strong>/50<br>
+            <span v-if="!canSendQuestionToday()" class="daily-limit-warning">❗ 오늘은 질문을 이미 보냈습니다</span>
+          </p>
+          <div class="question-cards-container">
+            <div 
+              v-for="(question, index) in predefinedQuestions" 
+              :key="index"
+              class="question-card"
+              @click="sendQuestionCard(question)">
+              {{ question }}
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button @click="showQuestionCardModal = false" class="cancel-button">닫기</button>
           </div>
         </div>
       </div>
@@ -238,6 +294,18 @@ const minTime = { hours: 0, minutes: 0 };
 const showQuestionModal = ref(false);
 const questionText = ref('');
 
+// 질문카드 관련 변수
+const showQuestionCardModal = ref(false);
+const predefinedQuestions = [
+  "교회를 다니게 된 계기 알고 싶어요.",
+  "제일 좋아하는 취미는?",
+  "보통 주말 저녁에 하는 것?",
+  "형제남매는? 첫째? 둘째?"
+];
+const remainingCharacters = ref(50); // 기본 50자 제한
+const answerText = ref('');
+const selectedQuestionId = ref(null);
+
 // 프로필 수정 관련 변수
 // 프로필 수정 모달 표시 상태
 const showProfileEditor = ref(false);
@@ -315,6 +383,9 @@ async function fetchMatchingData() {
     
     // 매칭 데이터가 있으면 저장
     matchData.value = matchingData;
+    
+    // 남은 질문 글자수 설정
+    remainingCharacters.value = matchingData.message_ticket || 50;
     
     // 채팅 메시지 로드
     await fetchChatMessages();
@@ -465,6 +536,82 @@ function getPartnerDisplayName() {
   return partnerInfo.value && partnerInfo.value.name ? partnerInfo.value.name : '상대방';
 }
 
+// 현재 사용자의 이름 가져오기
+function getCurrentUserDisplayName() {
+  return currentUserInfo.value && currentUserInfo.value.name ? currentUserInfo.value.name : '나';
+}
+
+// 질문카드 헤더 가져오기 (누가 누구에게 질문했는지)
+function getQuestionCardHeader(message) {
+  // 질문을 보낸 사람이 나인지 확인
+  const isMyQuestion = message.sender_id === userUuid;
+  
+  if (isMyQuestion) {
+    return `${getCurrentUserDisplayName()}님이 → ${getPartnerDisplayName()}님에게 질문.`;
+  } else {
+    return `${getPartnerDisplayName()}님이 → ${getCurrentUserDisplayName()}님에게 질문.`;
+  }
+}
+
+// 현재 유저가 상대방인지 여부 확인 (답변 버튼 표시 용도)
+const isPartner = computed(() => {
+  if (!matchData.value || !userUuid) return false;
+  return matchData.value.user1_id === userUuid ? false : true;
+});
+
+// 사용자가 오늘 질문을 보낼 수 있는지 확인
+function canSendQuestionToday() {
+  if (!matchData.value) return false;
+  
+  const isUserOne = matchData.value.user1_id === userUuid;
+  const lastQuestionedDate = isUserOne ? 
+    matchData.value.user1_questioned :
+    matchData.value.user2_questioned;
+  
+  // 질문 기록이 없는 경우 가능
+  if (!lastQuestionedDate) return true;
+  
+  // 질문 기록이 오늘인지 확인
+  const lastDate = new Date(lastQuestionedDate);
+  const today = new Date();
+  
+  return lastDate.getDate() !== today.getDate() || 
+         lastDate.getMonth() !== today.getMonth() || 
+         lastDate.getFullYear() !== today.getFullYear();
+}
+
+// 질문 타임스태프 업데이트
+async function updateQuestionTimestamp() {
+  if (!matchData.value) return;
+  
+  const isUserOne = matchData.value.user1_id === userUuid;
+  const now = new Date().toISOString();
+  
+  const updateData = isUserOne ? 
+    { user1_questioned: now } :
+    { user2_questioned: now };
+  
+  try {
+    // 매칭 테이블 업데이트
+    const { error } = await supabase
+      .from('dating_matched')
+      .update(updateData)
+      .eq('id', matchData.value.id);
+      
+    if (error) throw error;
+    
+    // 로컬 값도 업데이트
+    if (isUserOne) {
+      matchData.value.user1_questioned = now;
+    } else {
+      matchData.value.user2_questioned = now;
+    }
+    
+  } catch (err) {
+    console.error('질문 타임스태프 업데이트 중 오류:', err);
+  }
+}
+
 // 일정 수락 함수
 async function acceptSchedule() {
   if (!matchData.value || !matchData.value.meeting_date) {
@@ -581,6 +728,114 @@ async function sendQuestion() {
   await addChatMessage(questionText.value);
   showQuestionModal.value = false;
   questionText.value = '';
+}
+
+// 질문카드 보내기 함수
+async function sendQuestionCard(question) {
+  try {
+    if (remainingCharacters.value <= 0) {
+      alert('질문 글자수가 모두 소진되었습니다.');
+      return;
+    }
+    
+    // 일일 질문 제한 확인
+    if (!canSendQuestionToday()) {
+      alert('오늘 이미 질문을 보냈습니다. 내일 다시 시도해주세요.');
+      return;
+    }
+    
+    // 질문카드 메시지 타입으로 저장
+    const newMessage = {
+      matching_id: matchData.value.id,
+      sender_id: userUuid,
+      message: question,
+      message_type: 'question_card'
+    };
+    
+    const { data, error } = await supabase
+      .from('dating_chat')
+      .insert(newMessage)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('질문카드 저장 중 오류 발생:', error);
+      throw error;
+    }
+    
+    // 마지막 질문 시간 업데이트
+    await updateQuestionTimestamp();
+    
+    // 성공적으로 저장되면 배열에 추가
+    if (data) {
+      // 대화창에 표시될 때 추가 속성 설정
+      data.answerText = '';
+      data.answered = false;
+      chatMessages.value.push(data);
+      
+      // 모달 닫기
+      showQuestionCardModal.value = false;
+    }
+  } catch (err) {
+    console.error('질문카드 보내기 중 오류 발생:', err);
+    alert('질문카드를 보낼 수 없습니다. 다시 시도해주세요.');
+  }
+}
+
+// 질문카드 답변 제출 함수
+async function submitAnswer(message) {
+  if (!message.answerText || message.answerText.trim() === '') return;
+  if (message.answerText.length > 10) {
+    alert('답변은 10자 이내로 입력해주세요.');
+    return;
+  }
+  
+  try {
+    // 사용한 글자수 계산 및 남은 글자수 업데이트
+    const usedCharacters = message.answerText.length;
+    const newRemainingChars = remainingCharacters.value - usedCharacters;
+    
+    if (newRemainingChars < 0) {
+      alert(`글자수가 부족합니다. 현재 남은 글자수: ${remainingCharacters.value}`);
+      return;
+    }
+    
+    // 채팅 메시지 업데이트 (answer 필드 추가)
+    const { data: updateData, error: updateError } = await supabase
+      .from('dating_chat')
+      .update({
+        answer: message.answerText,
+        answered: true
+      })
+      .eq('id', message.id)
+      .select()
+      .single();
+      
+    if (updateError) throw updateError;
+    
+    // 매칭 테이블의 남은 글자수 업데이트
+    const { error: matchUpdateError } = await supabase
+      .from('dating_matched')
+      .update({
+        message_ticket: newRemainingChars
+      })
+      .eq('id', matchData.value.id);
+      
+    if (matchUpdateError) throw matchUpdateError;
+    
+    // 상태 업데이트
+    message.answer = message.answerText;
+    message.answered = true;
+    message.answerText = '';
+    remainingCharacters.value = newRemainingChars;
+    
+    // 시스템 메시지로 알림
+    await addSystemMessage(`${partnerInfo.value.name}님이 질문에 답변했습니다.`);
+    
+  } catch (err) {
+    console.error('답변 저장 중 오류 발생:', err);
+    alert('답변을 저장할 수 없습니다. 다시 시도해주세요.');
+  }
 }
 
 // 프로필 수정 페이지로 이동
@@ -1024,6 +1279,127 @@ function formatTime(timestamp) {
   font-size: 1rem;
   margin-bottom: 1rem;
   resize: vertical;
+}
+
+/* 질문카드 스타일 */
+.question-card-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.question-icon {
+  margin-right: 4px;
+}
+
+.question-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.question-card {
+  padding: 0.75rem 1rem;
+  background-color: #f0f7ff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.question-card:hover {
+  background-color: #d0e5ff;
+}
+
+.character-counter {
+  text-align: center;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.character-counter strong {
+  color: #007bff;
+}
+
+.daily-limit-warning {
+  font-size: 0.85rem;
+  color: #dc3545;
+  display: block;
+  margin-top: 0.3rem;
+}
+
+/* 질문카드 채팅 메시지 스타일 */
+.question-card-message {
+  align-self: center;
+  width: 90%;
+  padding: 0.75rem 1rem;
+  background-color: #f0f7ff;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.question-card-header {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6c757d;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.card-content p {
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 0.3rem;
+}
+
+.answer-actions {
+  display: flex;
+  margin-top: 0.75rem;
+  gap: 0.5rem;
+}
+
+.answer-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.answer-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.answer-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.answer-display {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed #ccc;
+  font-size: 0.95rem;
+}
+
+.answer-label {
+  font-weight: 600;
+  color: #28a745;
 }
 
 .form-group {
