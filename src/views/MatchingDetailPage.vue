@@ -484,6 +484,7 @@ function setupRealtimeSubscription() {
   
   subscription = supabase
     .channel(`public:dating_chat:matching_id=eq.${matchData.value.id}`)
+    // INSERT 이벤트 구독 (새 메시지)
     .on('postgres_changes', 
       { 
         event: 'INSERT', 
@@ -496,6 +497,25 @@ function setupRealtimeSubscription() {
         const newMessage = payload.new;
         if (newMessage && !chatMessages.value.some(msg => msg.id === newMessage.id)) {
           chatMessages.value.push(newMessage);
+        }
+      }
+    )
+    // UPDATE 이벤트 구독 (답변 업데이트 등)
+    .on('postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'dating_chat',
+        filter: `matching_id=eq.${matchData.value.id}`
+      },
+      (payload) => {
+        // 메시지가 업데이트되면 해당 메시지 찾아서 업데이트
+        const updatedMessage = payload.new;
+        const messageIndex = chatMessages.value.findIndex(msg => msg.id === updatedMessage.id);
+        
+        if (messageIndex !== -1) {
+          // 기존 메시지를 업데이트된 메시지로 교체
+          chatMessages.value[messageIndex] = updatedMessage;
         }
       }
     )
