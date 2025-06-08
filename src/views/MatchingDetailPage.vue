@@ -59,7 +59,7 @@
           </div>
         </div>
         
-        <!-- 2. 채팅 컨테이너 (가운데 배치 - 스크롤마루) -->
+        <!-- 2. 채팅 컨테이너 (가운데 배치 ) -->
         <div class="chat-container">
           <div class="chat-messages" ref="chatContainer">
             <!-- 시스템 메시지 -->
@@ -69,7 +69,7 @@
                 <p>{{ message.message }}</p>
                 <span class="message-time">{{ formatTime(message.created_at) }}</span>
                 <!-- 일정 변경 요청에 대한 수락 버튼 (요청을 받은 사람만 볼 수 있음) -->
-                <div v-if="isDateChangeRequest(message) && message.sender_id !== userUuid && !message.accepted" class="date-change-actions">
+                <div v-if="isDateChangeRequest(message) && message.sender_id !== userUuid && !message.answered" class="date-change-actions">
                   <button @click="acceptDateChange(message)" class="accept-button">일정 수락하기</button>
                 </div>
               </div>
@@ -571,20 +571,31 @@ async function acceptDateChange(message) {
       throw updateError;
     }
     
-    // 현재 메시지를 수락됨으로 표시 (UI에서 수락 버튼을 숨기기 위함)
-    message.accepted = true;
+    // 메시지를 수락됨으로 표시 (dating_chat 테이블에 answered 필드 업데이트)
+    const { error: messageUpdateError } = await supabase
+      .from('dating_chat')
+      .update({ answered: true })
+      .eq('id', message.id);
+      
+    if (messageUpdateError) {
+      console.error('메시지 업데이트 중 오류 발생:', messageUpdateError);
+      throw messageUpdateError;
+    }
+    
+    // 현재 화면에서 보이는 데이터도 업데이트
+    message.answered = true;
     
     // 일정 수락 시스템 메시지 추가
     await addSystemMessage(`${currentUserInfo.value.name}님이 일정 변경 요청을 수락하셨습니다.`);
     
     // 매칭 데이터 다시 로드하여 일정 카드 업데이트
-    await fetchMatchingDetails();
+    //await fetchMatchingDetails();
     
     // 성공 메시지
     alert('일정 변경이 수락되었습니다.');
   } catch (err) {
     console.error('일정 수락 중 오류 발생:', err);
-    alert('일정 수락을 처리할 수 없습니다. 다시 시도해주세요.');
+alert('일정 수락을 처리할 수 없습니다. 다시 시도해주세요.');
   }
 }
 
@@ -801,7 +812,7 @@ async function submitDateChange() {
     selectedDateTime.value = null;
   } catch (err) {
     console.error('일정 변경 요청 중 오류 발생:', err);
-    alert('일정 변경 요청을 처리할 수 없습니다. 다시 시도해주세요.');
+    //alert('일정 변경 요청을 처리할 수 없습니다. 다시 시도해주세요.');
   }
 }
 
