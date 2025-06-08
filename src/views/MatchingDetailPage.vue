@@ -20,46 +20,7 @@
     
     <div class="match-detail-container" v-else>
       <div class="match-info-card">
-        <div class="profiles-container">
-          <!-- 상대방 정보 -->
-          <div class="profile-card partner-card">
-            <div class="profile-header">
-              <h4>상대방 정보</h4>
-            </div>
-            <div class="profile-content">
-              <div class="profile-details">
-                <div class="profile-name">{{ partnerInfo.name }}</div>
-                <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}</div>
-                <div class="profile-info">{{ partnerInfo.field || '정보 없음' }}</div>
-                <div class="profile-info">키: {{ partnerInfo.height || '정보 없음' }}cm</div>
-                <div class="profile-info">MBTI: {{ partnerInfo.mbti || '정보 없음' }}</div>
-              </div>
-            </div>
-            <button class="card-action-btn question-card-btn" @click="showQuestionCardModal = true">
-              <span class="question-icon">❓</span> 질문카드
-            </button>
-          </div>
-          
-          <!-- 내 정보 -->
-          <div class="profile-card my-card">
-            <div class="profile-header">
-              <h4>내 정보</h4>
-            </div>
-            <div class="profile-content">
-              <div class="profile-details">
-                <div class="profile-name">{{ currentUserInfo.name }}</div>
-                <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}</div>
-                <div class="profile-info">{{ currentUserInfo.field || '정보 없음' }}</div>
-                <div class="profile-info">키: {{ currentUserInfo.height || '정보 없음' }}cm</div> 
-                <div class="profile-info">MBTI: {{ currentUserInfo.mbti || '정보 없음' }}</div>
-              </div>
-            </div>
-            <button class="card-action-btn edit-button" @click="openProfileEditor">
-              <span class="edit-icon">✏️</span> 수정
-            </button>
-          </div>
-        </div>
-        
+        <!-- 1. 만남 일정 카드 (맨 위에 배치) -->
         <div class="profile-card meeting-card">
           <div class="profile-header">
             <h4>만남 일정</h4>
@@ -67,12 +28,10 @@
           <div class="profile-content meeting-content">
             <div class="profile-details">
               <div class="meeting-info-row">
-                <span class="meeting-info-label">일정</span>
-                <span class="meeting-info-value">{{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
+                <span class="meeting-info-value">📅 {{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
               </div>
               <div class="meeting-info-row">
-                <span class="meeting-info-label">장소</span>
-                <span class="meeting-info-value">{{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
+                <span class="meeting-info-value">📍 {{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
               </div>
             </div>
           </div>
@@ -100,6 +59,7 @@
           </div>
         </div>
         
+        <!-- 2. 채팅 컨테이너 (가운데 배치 - 스크롤마루) -->
         <div class="chat-container">
           <div class="chat-messages" ref="chatContainer">
             <!-- 시스템 메시지 -->
@@ -150,9 +110,45 @@
               </div>
             </div>
           </div>
-          <div class="chat-actions">
-            <button class="action-button question-button" @click="showQuestionCardModal = true">
-              질문카드 보내기
+        </div>
+        
+        <!-- 3. 프로필 카드 (맨 아래에 배치) -->
+        <div class="profiles-container">
+          <!-- 상대방 정보 -->
+          <div class="profile-card partner-card">
+            <div class="profile-header">
+              <h4>상대방 정보</h4>
+            </div>
+            <div class="profile-content">
+              <div class="profile-details">
+                <div class="profile-name">{{ partnerInfo.name }}</div>
+                <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}</div>
+                <div class="profile-info">{{ partnerInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">키: {{ partnerInfo.height || '정보 없음' }}cm</div>
+                <div class="profile-info">MBTI: {{ partnerInfo.mbti || '정보 없음' }}</div>
+              </div>
+            </div>
+            <button class="card-action-btn question-card-btn" @click="showQuestionCardModal = true">
+              <span class="question-icon">❓</span> 질문카드 보내기
+            </button>
+          </div>
+          
+          <!-- 내 정보 -->
+          <div class="profile-card my-card">
+            <div class="profile-header">
+              <h4>내 정보</h4>
+            </div>
+            <div class="profile-content">
+              <div class="profile-details">
+                <div class="profile-name">{{ currentUserInfo.name }}</div>
+                <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}</div>
+                <div class="profile-info">{{ currentUserInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">키: {{ currentUserInfo.height || '정보 없음' }}cm</div> 
+                <div class="profile-info">MBTI: {{ currentUserInfo.mbti || '정보 없음' }}</div>
+              </div>
+            </div>
+            <button class="card-action-btn edit-button" @click="openProfileEditor">
+              <span class="edit-icon">✍️</span> 내 정보 수정하기
             </button>
           </div>
         </div>
@@ -1017,7 +1013,7 @@ function formatTime(timestamp) {
   display: flex;
   flex-direction: row;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
   width: 100%;
   align-items: stretch;
 }
@@ -1177,9 +1173,21 @@ function formatTime(timestamp) {
 .match-detail-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background-color: white;
-  padding: 0;
+  border-radius: 0;
+  padding: 1rem;
+  box-shadow: none;
+  margin-top: 0;
+  border-top: 1px solid #eee;
+  height: calc(100vh - 60px); /* 히드파이흰 위에 남는 전체 공간에서 헤더 눆기 */
+  overflow: hidden; /* 전체 컨테이너는 스크롤 없음 */
+}
+
+.match-info-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 .chat-container {
@@ -1187,21 +1195,18 @@ function formatTime(timestamp) {
   display: flex;
   flex-direction: column;
   background-color: white;
-  border-radius: 0;
-  padding: 1rem;
-  box-shadow: none;
-  margin-top: 0;
+  border-radius: 8px;
+  margin: 1rem 0;
   overflow: hidden;
-  border-top: 1px solid #eee;
+  border: 1px solid #eee;
 }
 
 .chat-messages {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* 채팅 메세지만 스크롤되도록 설정 */
   padding: 1rem;
-  background-color: white;
-  border-radius: 0;
-  margin-bottom: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
 }
