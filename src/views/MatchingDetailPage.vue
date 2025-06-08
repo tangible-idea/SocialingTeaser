@@ -83,8 +83,8 @@
                   <p>{{ message.message }}</p>
                   <span class="message-time">{{ formatTime(message.created_at) }}</span>
                 </div>
-                <!-- 답변 버튼은 상대방만 볼 수 있음 -->
-                <div v-if="isPartner && !message.answered" class="answer-actions">
+                <!-- 답변 버튼은 질문 받은 사람만 볼 수 있음 -->
+                <div v-if="message.sender_id !== userUuid && !message.answered" class="answer-actions">
                   <input 
                     v-model="message.answerText" 
                     class="answer-input" 
