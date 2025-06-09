@@ -948,7 +948,7 @@ async function submitAnswer(message) {
     remainingCharacters.value = newRemainingChars;
     
     // 시스템 메시지로 알림
-    await addSystemMessage(`${partnerInfo.value.name}님이 질문에 답변했습니다.`);
+    await addSystemMessage(`${currentUserInfo.value.name}님이 질문에 답변했습니다.`);
     
   } catch (err) {
     console.error('답변 저장 중 오류 발생:', err);
