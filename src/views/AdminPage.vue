@@ -908,7 +908,7 @@ function openSmsModal(user, partnerId) {
   }
   
   smsRecipient.value = user;
-  matchedUserId.value = partnerId;
+  matchedUserId.value = user.id; // 파트너 아이디가 아니라 SMS 받는 사람(user)의 id를 사용
   showSmsModal.value = true;
 }
 
