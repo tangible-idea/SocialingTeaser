@@ -217,6 +217,27 @@
                     </div>
                   </span>
                 </div>
+                
+                <!-- 매칭 코멘트 정보 -->
+                <div class="meeting-item">
+                  <span class="meeting-label">매칭 코멘트:</span>
+                  <span v-if="!isEditingComment(match.id)" class="meeting-value">
+                    {{ match.admin_comment || '설정되지 않음' }}
+                    <button @click="startEditComment(match)" class="edit-button">변경</button>
+                  </span>
+                  <span v-else class="meeting-value-edit">
+                    <textarea 
+                      v-model="newComment" 
+                      class="comment-input"
+                      placeholder="매칭에 대한 코멘트를 입력하세요"
+                      rows="3"
+                    ></textarea>
+                    <div class="edit-actions">
+                      <button @click="saveComment(match)" class="save-comment-button">저장</button>
+                      <button @click="cancelEditComment()" class="cancel-button">취소</button>
+                    </div>
+                  </span>
+                </div>
               </div>
               
               <div class="match-actions">
@@ -312,6 +333,10 @@ const selectedDateTime = ref(null);
 const editingLocation = ref(false);
 const newLocation = ref('');
 const currentEditMatch = ref(null);
+
+// 코멘트 편집 관련 상태
+const editingComment = ref(false);
+const newComment = ref('');
 
 // 필터링된 사용자 목록 (이미 선택된 사용자 A를 제외)
 const filteredUserList = computed(() => {
@@ -702,6 +727,70 @@ function isEditingDate(matchId) {
 // 현재 수정 중인 장소인지 확인
 function isEditingLocation(matchId) {
   return editingMatchId.value === matchId && editingLocation.value;
+}
+
+// 현재 수정 중인 코멘트인지 확인
+function isEditingComment(matchId) {
+  return editingMatchId.value === matchId && editingComment.value;
+}
+
+// 코멘트 편집 시작
+function startEditComment(match) {
+  editingMatchId.value = match.id;
+  editingComment.value = true;
+  newComment.value = match.admin_comment || '';
+  currentEditMatch.value = match;
+}
+
+// 코멘트 편집 취소
+function cancelEditComment() {
+  editingComment.value = false;
+  editingMatchId.value = null;
+  newComment.value = '';
+  currentEditMatch.value = null;
+}
+
+// 코멘트 저장 및 dating_chat 에 시스템 메시지 추가
+async function saveComment(match) {
+  try {
+    if (!newComment.value.trim()) {
+      alert('코멘트를 입력해주세요.');
+      return;
+    }
+    
+    // 1. dating_matched 테이블에 admin_comment 업데이트
+    const { error } = await supabase
+      .from('dating_matched')
+      .update({ admin_comment: newComment.value })
+      .eq('id', match.id);
+      
+    if (error) throw error;
+    
+    // 2. dating_chat 테이블에 시스템 메시지 추가
+    const { error: chatError } = await supabase
+      .from('dating_chat')
+      .insert({
+        matching_id: match.id,
+        sender_id: null,  // 시스템 메시지
+        message: `[관리자 코멘트] ${newComment.value}`,
+        message_type: 'system'
+      });
+      
+    if (chatError) throw chatError;
+    
+    // 3. UI에 보이는 매칭 데이터 업데이트
+    match.admin_comment = newComment.value;
+    
+    editingComment.value = false;
+    editingMatchId.value = null;
+    newComment.value = '';
+    currentEditMatch.value = null;
+    
+    alert('코멘트가 업데이트되었습니다.');
+  } catch (err) {
+    console.error('코멘트 수정 중 오류:', err);
+    alert('코멘트 수정에 실패했습니다.');
+  }
 }
 
 // 매칭된 사용자 목록 가져오기
@@ -1311,7 +1400,7 @@ async function sendSms() {
   cursor: pointer;
 }
 
-.location-input {
+.location-input, .comment-input {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -1319,12 +1408,18 @@ async function sendSms() {
   margin-bottom: 8px;
 }
 
+.comment-input {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
 .edit-actions {
   display: flex;
   gap: 8px;
 }
 
-.save-location-button {
+.save-location-button, .save-comment-button {
   background-color: #2ecc71;
   color: white;
   border: none;
