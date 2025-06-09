@@ -1264,7 +1264,6 @@ async function sendSms() {
 
 .view-link {
   display: inline-block;
-  margin-top: 5px;
   padding: 4px 8px;
   background-color: #3498db;
   color: white;
