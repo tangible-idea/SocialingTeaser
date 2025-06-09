@@ -160,8 +160,12 @@
                   <h4>{{ match.user1.name }}</h4>
                   <p>{{ calculateAge(match.user1.birth_year) }}세, {{ match.user1.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user1.field || '직업 정보 없음' }}</p>
+                  <p>{{ match.user1.phone ? `연락처: ${match.user1.phone}` : '연락처 정보 없음' }}</p>
                   <p class="user-uuid">UUID: {{ match.user1.id }}</p>
-                  <a :href="`/matching/${match.user1.id}`" class="view-link">여기서 보기</a>
+                  <div class="user-actions">
+                    <a :href="`/matching/${match.user1.id}`" class="view-link">여기서 보기</a>
+                    <button @click="openSmsModal(match.user1, match.user2.id)" class="sms-button" :disabled="!match.user1.phone">SMS 보내기</button>
+                  </div>
                 </div>
                 
                 <div class="match-separator">—</div>
@@ -170,8 +174,12 @@
                   <h4>{{ match.user2.name }}</h4>
                   <p>{{ calculateAge(match.user2.birth_year) }}세, {{ match.user2.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user2.field || '직업 정보 없음' }}</p>
+                  <p>{{ match.user2.phone ? `연락처: ${match.user2.phone}` : '연락처 정보 없음' }}</p>
                   <p class="user-uuid">UUID: {{ match.user2.id }}</p>
-                  <a :href="`/matching/${match.user2.id}`" class="view-link">여기서 보기</a>
+                  <div class="user-actions">
+                    <a :href="`/matching/${match.user2.id}`" class="view-link">여기서 보기</a>
+                    <button @click="openSmsModal(match.user2, match.user1.id)" class="sms-button" :disabled="!match.user2.phone">SMS 보내기</button>
+                  </div>
                 </div>
               </div>
               
@@ -248,6 +256,24 @@
       </div>
     </div>
   </div>
+
+  <!-- SMS 전송 확인 모달 -->
+  <div class="modal sms-modal" v-if="showSmsModal">
+    <div class="modal-content sms-content">
+      <h3>SMS 전송 확인</h3>
+      <div class="sms-details">
+        <p><strong>받는 사람:</strong> {{ smsRecipient.name }} ({{ smsRecipient.phone }})</p>
+        <div class="sms-message-preview">
+          <p><strong>메시지 내용:</strong></p>
+          <p class="message-text">[텐저블데이팅] 안녕하세요. {{ smsRecipient.name }}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩만 보낼 수 있고, 긴 이야기는 만나서 할 수 있도록 권장하도록 짜여진 시스템입니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/{{ matchedUserId }}</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="cancel-button" @click="cancelSmsModal()">취소</button>
+        <button class="send-button" @click="sendSms()" :disabled="sendingSms">{{ sendingSms ? '전송 중...' : 'SMS 전송' }}</button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -272,6 +298,12 @@ const matchedUsersList = ref([]);
 const promptTemplate = ref('');
 const savedPrompts = ref([]);
 const notificationMessage = ref('');
+
+// SMS 관련 상태
+const showSmsModal = ref(false);
+const smsRecipient = ref(null);
+const matchedUserId = ref('');
+const sendingSms = ref(false);
 
 // 일정 및 장소 편집 관련 상태
 const editingMatchId = ref(null);
@@ -308,7 +340,7 @@ async function fetchUsers() {
     
     const { data, error } = await supabase
       .from('dating')
-      .select('id, name, gender, birth_year, field, church_name, company_name, location, hobby, mbti, education, charm_points, ideal_type, ideal_type_priorities')
+      .select('id, name, gender, birth_year, field, church_name, company_name, location, hobby, mbti, education, charm_points, ideal_type, ideal_type_priorities, phone')
       .order('name');
       
     console.log('Supabase response data:', data);
@@ -778,6 +810,62 @@ function handleMatchSelected({ mainUser, matchUser }) {
   loadUserDetails('A');
   loadUserDetails('B');
 }
+
+// SMS 모달 열기
+function openSmsModal(user, partnerId) {
+  if (!user.phone) {
+    alert('사용자의 전화번호 정보가 없습니다.');
+    return;
+  }
+  
+  smsRecipient.value = user;
+  matchedUserId.value = partnerId;
+  showSmsModal.value = true;
+}
+
+// SMS 모달 닫기
+function cancelSmsModal() {
+  showSmsModal.value = false;
+  smsRecipient.value = null;
+  matchedUserId.value = '';
+}
+
+// SMS 전송
+async function sendSms() {
+  if (!smsRecipient.value || !smsRecipient.value.phone) {
+    alert('전화번호 정보가 없습니다.');
+    return;
+  }
+  
+  try {
+    sendingSms.value = true;
+    
+    const response = await fetch('https://api.tangibly.link/chat/sendsms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone: smsRecipient.value.phone,
+        message: `[텐저블데이팅] 안녕하세요. ${smsRecipient.value.name}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩 보낼 수 있으며, 긴 이야기는 만나서 할 수 있도록 시스템을 만들었습니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/${matchedUserId.value}`
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`SMS 전송 실패: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    alert('SMS가 성공적으로 전송되었습니다.');
+    cancelSmsModal();
+    
+  } catch (error) {
+    console.error('SMS 전송 중 오류:', error);
+    alert(`SMS 전송 중 오류가 발생했습니다: ${error.message}`);
+  } finally {
+    sendingSms.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -1099,6 +1187,74 @@ function handleMatchSelected({ mainUser, matchUser }) {
 
 .view-link:hover {
   background-color: #2980b9;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sms-button {
+  padding: 4px 8px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sms-button:hover {
+  background-color: #219653;
+}
+
+.sms-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* SMS Modal Styles */
+.sms-content {
+  width: 90%;
+  max-width: 500px;
+}
+
+.sms-details {
+  margin: 15px 0;
+}
+
+.sms-message-preview {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.message-text {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.send-button {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.send-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
 }
 
 .match-separator {
