@@ -165,6 +165,7 @@
                   <div class="user-actions">
                     <a :href="`/matching/${match.user1.id}`" class="view-link">여기서 보기</a>
                     <button @click="openSmsModal(match.user1, match.user2.id)" class="sms-button" :disabled="!match.user1.phone">SMS 보내기</button>
+                    <button @click="sendKakaoMessage(match.user1)" class="kakao-button" :disabled="!match.user1.phone">알림톡 보내기</button>
                   </div>
                 </div>
                 
@@ -179,6 +180,7 @@
                   <div class="user-actions">
                     <a :href="`/matching/${match.user2.id}`" class="view-link">여기서 보기</a>
                     <button @click="openSmsModal(match.user2, match.user1.id)" class="sms-button" :disabled="!match.user2.phone">SMS 보내기</button>
+                    <button @click="sendKakaoMessage(match.user2)" class="kakao-button" :disabled="!match.user2.phone">알림톡 보내기</button>
                   </div>
                 </div>
               </div>
@@ -955,6 +957,39 @@ async function sendSms() {
     sendingSms.value = false;
   }
 }
+
+// 카카오 알림톡 전송
+async function sendKakaoMessage(user) {
+  if (!user || !user.phone) {
+    alert('사용자의 전화번호 정보가 없습니다.');
+    return;
+  }
+  
+  try {
+    const response = await fetch('https://api.tangibly.link/chat/sendkakao/channel/matching', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        phone: user.phone,
+        name: user.name,
+        uuid: user.id
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`카카오 알림톡 전송 실패: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    alert('카카오 알림톡이 성공적으로 전송되었습니다.');
+    
+  } catch (error) {
+    console.error('카카오 알림톡 전송 중 오류:', error);
+    alert(`카카오 알림톡 전송 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
 </script>
 
 <style scoped>
@@ -1300,6 +1335,27 @@ async function sendSms() {
 
 .sms-button:disabled {
   background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.kakao-button {
+  background-color: #f9e000;
+  color: #3c1e1e;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.kakao-button:hover {
+  background-color: #e6d000;
+}
+
+.kakao-button:disabled {
+  background-color: #95a5a6;
+  color: white;
   cursor: not-allowed;
 }
 
