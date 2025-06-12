@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
+import SubmittedPage from '../views/SubmittedPage.vue'
 
 const routes = [
   {
@@ -21,6 +22,11 @@ const routes = [
     path: '/matching/:uuid',
     name: 'MatchingDetail',
     component: () => import('../views/MatchingDetailPage.vue')
+  },
+  {
+    path: '/submitted',
+    name: 'Submitted',
+    component: SubmittedPage
   }
 ]
 
