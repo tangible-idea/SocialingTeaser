@@ -2,6 +2,10 @@
   <div class="admin-page">
     <div class="admin-header">
       <h2>Admin Page</h2>
+      <div class="auth-info" v-if="user">
+        <span>{{ user.email }}</span>
+        <button @click="handleLogout" class="logout-button">로그아웃</button>
+      </div>
     </div>
 
     <div class="admin-tabs">
@@ -300,8 +304,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import supabase from '../supabase';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
+import supabase from '../supabase'
 import MatchingAlgorithm from '../components/MatchingAlgorithm.vue';
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
@@ -345,6 +351,21 @@ const filteredUserList = computed(() => {
   if (!selectedUserA.value) return userList.value;
   return userList.value.filter(user => user.id !== selectedUserA.value);
 });
+
+// Auth 스토어와 라우터 초기화
+const router = useRouter();
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
+
+// 로그아웃 처리
+async function handleLogout() {
+  try {
+    await authStore.signOut();
+    router.push('/login');
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+  }
+}
 
 // 페이지 로드 시 사용자 목록 가져오기
 onMounted(async () => {
@@ -1002,8 +1023,37 @@ async function sendKakaoMessage(user) {
 }
 
 .admin-header {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.auth-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-info span {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.logout-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #c0392b;
 }
 
 .admin-header h1 {
