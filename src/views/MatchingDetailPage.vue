@@ -309,7 +309,9 @@ const questionText = ref('');
 
 // 질문카드 관련 변수
 const showQuestionCardModal = ref(false);
-const predefinedQuestions = [
+
+// 모든 가능한 질문 목록
+const allPredefinedQuestions = [
   "교회를 다니게 된 계기 알고 싶어요.",
   "가장 좋아하는 찬양곡이나 CCM은 뭐예요?",
   "기도 제목 중에서 제일 기억에 남는 건 뭐였나요?",
@@ -326,10 +328,44 @@ const predefinedQuestions = [
   "요즘 나를 가장 웃게 만드는 일은 뭔가요?",
   "성경 속에 살 수 있다면 어느 시대에서 살아보고 싶어요?",
   "가장 좋아하는 성경의 말씀은 뭐예요?",
-  "라면 끓일 때 넣는 ‘비밀 레시피’가 있다면?",
+  "라면 끓일 때 넣는 '비밀 레시피'가 있다면?",
   "모든 음식이 사라지고 단 하나만 남을 수 있다면, 그것은?",
   "하루 동안 동물로 살아야 한다면 어떤 동물을 골라요? "
 ];
+
+// 날짜에 기반한 랜덤한 질문 목록 생성 함수
+function getRandomQuestionsBasedOnDate(allQuestions, count = 6) {
+  // 오늘 날짜를 YYYYMMDD 형식으로 가져와서 시드로 사용
+  const today = new Date();
+  const dateString = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+  
+  // 날짜 문자열을 숫자 시드로 변환
+  let seed = 0;
+  for (let i = 0; i < dateString.length; i++) {
+    seed = ((seed * 31) + dateString.charCodeAt(i)) % 2147483647;
+  }
+  
+  // 시드 기반의 의사 난수 생성 함수
+  function seededRandom() {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  }
+  
+  // 원본 배열을 복사하여 수정하지 않도록 함
+  const questionsCopy = [...allQuestions];
+  
+  // Fisher-Yates 셔플 알고리즘으로 시드 기반 랜덤하게 섞기
+  for (let i = questionsCopy.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom() * (i + 1));
+    [questionsCopy[i], questionsCopy[j]] = [questionsCopy[j], questionsCopy[i]];
+  }
+  
+  // 섞인 배열에서 처음 'count'개의 질문 반환
+  return questionsCopy.slice(0, count);
+}
+
+// 일일 랜덤 질문 6개 선택하여 사용
+const predefinedQuestions = getRandomQuestionsBasedOnDate(allPredefinedQuestions, 6);
 const remainingCharacters = ref(50); // 기본 50자 제한
 const answerText = ref('');
 const selectedQuestionId = ref(null);
