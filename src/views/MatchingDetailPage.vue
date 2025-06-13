@@ -21,12 +21,9 @@
     <div class="match-detail-container" v-else>
       <div class="match-info-card">
         <!-- 1. 만남 일정 카드 (맨 위에 배치) -->
-        <div class="profile-card meeting-card">
-          <div class="profile-header">
-            <h4>만남 일정</h4>
-          </div>
-          <div class="profile-content meeting-content">
-            <div class="profile-details">
+        <div class="profile-card meeting-card no-padding">
+          <div class="meeting-content no-padding">
+            <div class="profile-details no-margin">
               <div class="meeting-info-row">
                 <span class="meeting-info-value">📅 {{ matchData.meeting_date ? formatMeetingDate(matchData.meeting_date) : '아직 정해지지 않았습니다' }}</span>
               </div>
@@ -128,6 +125,7 @@
                 <div class="profile-name">{{ partnerInfo.name }}</div>
                 <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}</div>
                 <div class="profile-info">{{ partnerInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">📍 {{ partnerInfo.location || '정보 없음' }}</div>
                 <div class="profile-info">키: {{ partnerInfo.height || '정보 없음' }}cm</div>
                 <div class="profile-info">MBTI: {{ partnerInfo.mbti || '정보 없음' }}</div>
               </div>
@@ -147,6 +145,7 @@
                 <div class="profile-name">{{ currentUserInfo.name }}</div>
                 <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}</div>
                 <div class="profile-info">{{ currentUserInfo.field || '정보 없음' }}</div>
+                <div class="profile-info">📍 {{ currentUserInfo.location || '정보 없음' }}</div>
                 <div class="profile-info">키: {{ currentUserInfo.height || '정보 없음' }}cm</div> 
                 <div class="profile-info">MBTI: {{ currentUserInfo.mbti || '정보 없음' }}</div>
               </div>
@@ -1213,7 +1212,15 @@ function formatTime(timestamp) {
 }
 
 .meeting-content {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem;
+}
+
+.no-padding {
+  padding: 0 !important;
+}
+
+.no-margin {
+  margin: 0 !important;
 }
 
 .meeting-info-row {
