@@ -451,6 +451,23 @@ async function fetchMatchingData() {
     // 남은 질문 글자수 설정
     remainingCharacters.value = matchingData.message_ticket || 50;
     
+    // 사용자 조회 카운트 증가
+    // 현재 유저가 user1인지 user2인지 확인
+    const isUser1 = matchingData.user1_id === userUuid;
+    
+    // 해당 유저의 view count를 1 증가시키는 업데이트 수행
+    const viewUpdateField = isUser1 ? { user1_view: (matchingData.user1_view || 0) + 1 } : { user2_view: (matchingData.user2_view || 0) + 1 };
+    
+    // view count 증가 업데이트
+    const { error: updateError } = await supabase
+      .from('dating_matched')
+      .update(viewUpdateField)
+      .eq('id', matchingData.id);
+    
+    if (updateError) {
+      console.error('조회수 업데이트 중 오류 발생:', updateError);
+    }
+    
     // 채팅 메시지 로드
     await fetchChatMessages();
     
