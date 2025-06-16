@@ -10,7 +10,7 @@
           :disabled="loading">
           <option value="" disabled>주 사용자를 선택하세요</option>
           <option v-for="user in userList" :key="user.id" :value="user.id">
-            {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }})
+            {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }}) - 가입: {{ new Date(user.created_at).toLocaleDateString() }}
           </option>
         </select>
       </div>
