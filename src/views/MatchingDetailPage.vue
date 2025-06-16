@@ -917,7 +917,7 @@ async function sendQuestion() {
 async function sendQuestionCard(question) {
   try {
     if (remainingCharacters.value <= 0) {
-      alert('질문 글자수가 모두 소진되었습니다.');
+      alert('질문 글자수가 모두 소진되었습니다. 관리자에게 문의하세요!');
       return;
     }
     
@@ -948,6 +948,30 @@ async function sendQuestionCard(question) {
     
     // 마지막 질문 시간 업데이트
     await updateQuestionTimestamp();
+    
+    // 상대방에게 알림 메시지 전송
+    try {
+      // 상대방 정보가 있는지 확인
+      if (partnerInfo.value && partnerInfo.value.phone) {
+        const response = await fetch('https://api.tangibly.link/chat/sendkakao/channel/new_message_from_paterner', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phone: partnerInfo.value.phone,
+            url: `social.tangibly.link/matching/${partnerInfo.value.id}`
+          })
+        });
+        
+        if (!response.ok) {
+          console.error('알림 전송 중 오류가 발생했습니다:', await response.text());
+        }
+      }
+    } catch (notificationError) {
+      console.error('알림 전송 중 오류가 발생했습니다:', notificationError);
+      // 알림 전송 실패해도 질문카드는 이미 저장되었으므로 계속 진행
+    }
     
     // 성공적으로 저장되면 배열에 추가
     if (data) {
