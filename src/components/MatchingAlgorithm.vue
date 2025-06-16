@@ -18,11 +18,28 @@
       <div class="user-profile-card main-user" v-if="mainUser">
         <div class="profile-header">
           <h3>{{ mainUser.name }} 님의 프로필</h3>
+
           <button @click="requestRecommendation" class="recommendation-button" :disabled="recommendationLoading">
             <span v-if="!recommendationLoading">추천알고리즘</span>
             <span v-else>추천 중...</span>
           </button>
+        </div> <!-- End of profile-header -->
+        <!-- Main User Images -->
+        <div class="all-profile-images-container main-user-profile-card-images" style="margin-top: 10px; margin-bottom: 15px;">
+          <div class="image-slot" @click="openImageModal(mainUser, 'profile')">
+            <img v-if="mainUserDisplayImages.profile_photo" :src="mainUserDisplayImages.profile_photo" alt="프로필 사진" class="profile-image-item">
+            <span v-else class="image-placeholder">프로필<br>사진</span>
+          </div>
+          <div class="image-slot" @click="openImageModal(mainUser, 'church')">
+            <img v-if="mainUserDisplayImages.church_verification" :src="mainUserDisplayImages.church_verification" alt="교회 인증" class="profile-image-item">
+            <span v-else class="image-placeholder">교회<br>인증</span>
+          </div>
+          <div class="image-slot" @click="openImageModal(mainUser, 'company')">
+            <img v-if="mainUserDisplayImages.company_verification" :src="mainUserDisplayImages.company_verification" alt="직장 인증" class="profile-image-item">
+            <span v-else class="image-placeholder">직장<br>인증</span>
+          </div>
         </div>
+        <!-- profile-details div will follow here -->
         <div class="profile-details">
           <p><strong>나이:</strong> {{ calculateAge(mainUser.birth_year) }}세</p>
           <p><strong>성별:</strong> {{ mainUser.gender === '남자' ? '남성' : '여성' }}</p>
@@ -104,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import supabase from '../supabase';
 import axios from 'axios';
 import VueEasyLightbox from 'vue-easy-lightbox';
@@ -128,24 +145,32 @@ const lightboxVisible = ref(false);
 const lightboxImgs = ref([]);
 const lightboxIndex = ref(0);
 
-const openImageModal = (recommendation, clickedImageType) => {
+const openImageModal = (userOrRecommendation, imageType) => {
+  let targetUser = userOrRecommendation; // Can be mainUser or a recommendation object
+  // If using mainUserDisplayImages for mainUser, ensure we get the original mainUser object for all its properties
+  if (targetUser === mainUser.value) { // Check if the passed user object is the mainUser
+    targetUser = mainUser.value;
+  }
+
   const images = [];
+  const userImages = (targetUser === mainUser.value) ? mainUserDisplayImages.value : targetUser;
+
   let currentIndex = 0;
   let imageCounter = 0;
 
-  if (recommendation.profile_photo) {
-    images.push(recommendation.profile_photo);
-    if (clickedImageType === 'profile') currentIndex = imageCounter;
+  if (userImages.profile_photo) {
+    images.push(userImages.profile_photo);
+    if (imageType === 'profile') currentIndex = imageCounter;
     imageCounter++;
   }
-  if (recommendation.church_verification) {
-    images.push(recommendation.church_verification);
-    if (clickedImageType === 'church') currentIndex = imageCounter;
+  if (userImages.church_verification) {
+    images.push(userImages.church_verification);
+    if (imageType === 'church') currentIndex = imageCounter;
     imageCounter++;
   }
-  if (recommendation.company_verification) {
-    images.push(recommendation.company_verification);
-    if (clickedImageType === 'company') currentIndex = imageCounter;
+  if (userImages.company_verification) {
+    images.push(userImages.company_verification);
+    if (imageType === 'company') currentIndex = imageCounter;
     imageCounter++;
   }
 
@@ -163,6 +188,11 @@ const onLightboxHide = () => {
 // State variables
 const selectedMainUser = ref('');
 const mainUser = ref(null);
+const mainUserDisplayImages = ref({
+  profile_photo: null,
+  church_verification: null,
+  company_verification: null
+});
 const potentialMatches = ref([]);
 const aiLoading = ref(false);
 const aiError = ref('');
@@ -171,14 +201,48 @@ const recommendationLoading = ref(false);
 const topRecommendations = ref([]);
 
 // Watch for main user selection
-watch(selectedMainUser, async (newValue) => {
-  if (newValue) {
-    await loadMainUserDetails();
+watch(selectedMainUser, async (newVal) => {
+  if (newVal) {
+    await loadMainUserDetails(); // This will set mainUser.value
   } else {
     mainUser.value = null;
-    potentialMatches.value = [];
+    topRecommendations.value = []; 
+    aiAnalysisResults.value = {}; 
+    mainUserDisplayImages.value = { // Clear images if no user is selected
+      profile_photo: null,
+      church_verification: null,
+      company_verification: null
+    };
   }
 });
+
+// Watch for mainUser changes to update display images
+watch(mainUser, async (currentUser) => {
+  if (currentUser) {
+    // Reset display images to show placeholders immediately
+    mainUserDisplayImages.value = {
+      profile_photo: null,
+      church_verification: null,
+      company_verification: null
+    };
+    await nextTick(); // Wait for DOM to potentially clear old images
+    mainUserDisplayImages.value = {
+      profile_photo: currentUser.profile_photo || null,
+      church_verification: currentUser.church_verification || null,
+      company_verification: currentUser.company_verification || null
+    };
+    findPotentialMatches(); // Find matches for the new mainUser
+    topRecommendations.value = []; // Clear previous recommendations
+    aiAnalysisResults.value = {}; // Clear previous AI analysis
+  } else {
+    // If mainUser is null, clear display images
+    mainUserDisplayImages.value = {
+      profile_photo: null,
+      church_verification: null,
+      company_verification: null
+    };
+  }
+}, { immediate: false }); // 'immediate: false' to avoid running on initial undefined state if not needed
 
 // Calculate age from birth year
 function calculateAge(birthYearData) {
@@ -238,21 +302,24 @@ function formatPriorities(priorities) {
 }
 
 // Load main user details
+// Load main user details
 async function loadMainUserDetails() {
-  if (!selectedMainUser.value) return;
+  if (!selectedMainUser.value) {
+    mainUser.value = null; // Ensure mainUser is nulled out if selection is cleared
+    return;
+  }
   
   try {
     // Find the user in the list
     const user = props.userList.find(u => u.id === selectedMainUser.value);
     if (user) {
-      mainUser.value = user;
-      // Find potential matches of the opposite gender
-      findPotentialMatches();
-      // Reset any existing AI analysis results when changing the main user
-      aiAnalysisResults.value = {};
+      mainUser.value = user; // This will trigger the watch(mainUser, ...) callback
+    } else {
+      mainUser.value = null; // User not found, clear mainUser
     }
   } catch (err) {
     console.error('Error loading main user details:', err);
+    mainUser.value = null;
   }
 }
 
