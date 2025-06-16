@@ -19,10 +19,15 @@
         <div class="profile-header">
           <h3>{{ mainUser.name }} 님의 프로필</h3>
 
-          <button @click="requestRecommendation" class="recommendation-button" :disabled="recommendationLoading">
+          <div class="recommendation-controls">
+            <select v-model="selectedApiModel" class="api-model-select">
+              <option v-for="model in apiModels" :key="model" :value="model">{{ model }}</option>
+            </select>
+            <button @click="requestRecommendation" class="recommendation-button" :disabled="recommendationLoading">
             <span v-if="!recommendationLoading">추천알고리즘</span>
             <span v-else>추천 중...</span>
-          </button>
+            </button>
+          </div>
         </div> <!-- End of profile-header -->
         <!-- Main User Images -->
         <div class="all-profile-images-container main-user-profile-card-images" style="margin-top: 10px; margin-bottom: 15px;">
@@ -199,6 +204,9 @@ const aiError = ref('');
 const aiAnalysisResults = ref({});
 const recommendationLoading = ref(false);
 const topRecommendations = ref([]);
+
+const apiModels = ref(['Claude-Sonnet-4', 'ChatGPT-4o-Latest', 'GPT-4.1', 'Gemini-2.5-Pro-Preview']);
+const selectedApiModel = ref(apiModels.value[0]);
 
 // Watch for main user selection
 watch(selectedMainUser, async (newVal) => {
@@ -508,7 +516,9 @@ ${allCandidates}
 }`;
     
     console.log('AI 추천 알고리즘 요청 전송');
-    const response = await axios.post('https://ai.tangibly.link/call/Claude-Sonnet-4', {
+    const apiUrl = `https://ai.tangibly.link/call/${selectedApiModel.value}`;
+    console.log(`Calling API: ${apiUrl}`);
+    const response = await axios.post(apiUrl, {
       apikey: apiKey,
       request: prompt
     });
@@ -585,22 +595,7 @@ async function getAiAnalysis(match) {
     // 환경 변수를 직접 참조하거나 vite.config.js에서 정의한 변수 사용
     const apiKey = import.meta.env.VITE_POE_API_KEY || import.meta.env.POE_API_KEY || 'oqblhi8pIB7QFd1aNeRYHh7xQfdEHGW9yu3G6EHLiQE'; 
     if (!apiKey) throw new Error('API 키를 찾을 수 없습니다. 환경 변수를 확인하세요.');
-    const prompt = `
-
-### 사용자 A 정보:
-${match.mainUserInfo}
-
-### 사용자 B 정보:
-${match.matchUserInfo}
-
-## 요청사항:
-1. MBTI를 기반 매칭평가, S와 N이 가장 중요. F와 T가 그 다음으로 중요. 나머지는 중요하지 않음.
-2. 이상형 우선순위 평가. 서로 상대방의 이상형이 일치하는지 평가.
-3. 이성을 볼 때 우선순위 평가. 서로 이성을 볼 때 보는 부분이 일치하는지 평가.
-4. 거리가 비슷한지 평가.
-5. 직업이 궁합이 맞는지 평가. 혹은 비슷한 직업인지?
-6. 나이가 적당한 차이가 있는지? 여성이 더 어린지?
-두 사용자의 궁합 분석을 한국어로 제공해주세요.`;
+    const prompt = `두 사용자의 프로필을 보고 궁합을 분석해주세요.\n\n### 사용자 1 정보:\n${formatUserInfoString(match.mainUser)}\n\n### 사용자 2 정보:\n${formatUserInfoString(match.user)}\n\n## 요청사항:\n1. 두 사용자의 MBTI 궁합을 분석해주세요. S/N, T/F 지표를 중심으로 설명해주세요.\n2. 두 사용자의 이상형 및 우선순위가 얼마나 일치하는지 분석해주세요.\n3. 두 사용자의 종교적 신념(교회 출석, 신앙 중요도)이 얼마나 비슷한지 평가해주세요.\n4. 두 사용자의 거주 지역이 얼마나 가까운지 평가해주세요.\n5. 직업이 궁합이 맞는지 평가. 혹은 비슷한 직업인지?\n6. 나이가 적당한 차이가 있는지? 여성이 더 어린지?\n두 사용자의 궁합 분석을 한국어로 제공해주세요.`;
     const response = await axios.post('https://ai.tangibly.link/call/gpt-4o-mini', {
       apikey: apiKey,
       request: prompt
@@ -666,6 +661,19 @@ ${match.matchUserInfo}
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.recommendation-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.api-model-select {
+  padding: 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
 }
 
 .recommendation-button {
