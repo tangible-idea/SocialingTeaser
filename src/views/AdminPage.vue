@@ -402,7 +402,7 @@ async function fetchUsers() {
     
     const { data, error } = await supabase
       .from('dating')
-      .select('id, name, gender, birth_year, field, church_name, company_name, location, hobby, mbti, education, charm_points, ideal_type, ideal_type_priorities, phone, created_at')
+      .select('id, name, gender, birth_year, birth_date, height, field, company_name, education, church_name, first_church_attendance, location, hobby, mbti, charm_points, ideal_type, ideal_type_priorities, phone, purchase_contact, created_at, profile_photo, church_verification, company_verification')
       .order('name');
       
     console.log('Supabase response data:', data);

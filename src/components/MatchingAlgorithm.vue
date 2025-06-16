@@ -48,10 +48,33 @@
           </div>
           <div class="recommendation-details">
             <div class="user-info">
-              <p>{{ calculateAge(recommendation.birth_year) }}세, {{ recommendation.gender === '남자' ? '남성' : '여성' }}</p>
-              <p>{{ recommendation.field }} {{ recommendation.company_name ? `at ${recommendation.company_name}` : '' }}</p>
-              <p>{{ recommendation.location || '지역 정보 없음' }}</p>
-              <p>{{ recommendation.mbti || 'MBTI 정보 없음' }}</p>
+              <div class="all-profile-images-container">
+                <div class="image-slot" @click="openImageModal(recommendation, 'profile')">
+                  <img v-if="recommendation.profile_photo" :src="recommendation.profile_photo" alt="프로필 사진" class="profile-image-item">
+                  <span v-else class="image-placeholder">프로필<br>사진</span>
+                </div>
+                <div class="image-slot" @click="openImageModal(recommendation, 'church')">
+                  <img v-if="recommendation.church_verification" :src="recommendation.church_verification" alt="교회 인증" class="profile-image-item">
+                  <span v-else class="image-placeholder">교회<br>인증</span>
+                </div>
+                <div class="image-slot" @click="openImageModal(recommendation, 'company')">
+                  <img v-if="recommendation.company_verification" :src="recommendation.company_verification" alt="직장 인증" class="profile-image-item">
+                  <span v-else class="image-placeholder">직장<br>인증</span>
+                </div>
+              </div>
+              <p>{{ calculateAge(recommendation.birth_year) }}세 ({{ recommendation.birth_date ? new Date(recommendation.birth_date).toLocaleDateString() : '생일 정보 없음' }}), {{ recommendation.gender === '남자' ? '남성' : '여성' }}</p>
+              <p><strong>키:</strong> {{ recommendation.height || '정보 없음' }}cm</p>
+              <p><strong>직업:</strong> {{ recommendation.field || '정보 없음' }} {{ recommendation.company_name ? `(${recommendation.company_name})` : '' }}</p>
+              <p><strong>학력:</strong> {{ recommendation.education || '정보 없음' }}</p>
+              <p><strong>지역:</strong> {{ recommendation.location || '정보 없음' }}</p>
+              <p><strong>교회:</strong> {{ recommendation.church_name || '정보 없음' }} (첫 출석일: {{ recommendation.first_church_attendance ? new Date(recommendation.first_church_attendance).toLocaleDateString() : '정보 없음' }})</p>
+              <p><strong>취미:</strong> {{ recommendation.hobby || '정보 없음' }}</p>
+              <p><strong>MBTI:</strong> {{ recommendation.mbti || '정보 없음' }}</p>
+              <p><strong>매력 포인트:</strong> {{ recommendation.charm_points || '정보 없음' }}</p>
+              <p><strong>이상형:</strong> {{ recommendation.ideal_type || '정보 없음' }}</p>
+              <p><strong>이상형 우선순위:</strong> {{ formatPriorities(recommendation.ideal_type_priorities) }}</p>
+              <p><strong>연락처:</strong> {{ recommendation.phone || '정보 없음' }}</p>
+              <p><strong>연락처 구매 여부:</strong> {{ recommendation.purchase_contact ? '예' : '아니오' }}</p>
             </div>
             <div class="recommendation-reason">
               <h5>추천 이유</h5>
@@ -71,6 +94,12 @@
     <div class="no-matches" v-else-if="mainUser">
       <p>매칭 가능한 사용자가 없습니다.</p>
     </div>
+    <vue-easy-lightbox
+      :visible="lightboxVisible"
+      :imgs="lightboxImgs"
+      :index="lightboxIndex"
+      @hide="onLightboxHide"
+    ></vue-easy-lightbox>
   </div>
 </template>
 
@@ -78,8 +107,8 @@
 import { ref, computed, watch } from 'vue';
 import supabase from '../supabase';
 import axios from 'axios';
+import VueEasyLightbox from 'vue-easy-lightbox';
 
-// Props
 const props = defineProps({
   userList: {
     type: Array,
@@ -93,6 +122,43 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['match-selected', 'create-match']);
+
+// Lightbox state and functions
+const lightboxVisible = ref(false);
+const lightboxImgs = ref([]);
+const lightboxIndex = ref(0);
+
+const openImageModal = (recommendation, clickedImageType) => {
+  const images = [];
+  let currentIndex = 0;
+  let imageCounter = 0;
+
+  if (recommendation.profile_photo) {
+    images.push(recommendation.profile_photo);
+    if (clickedImageType === 'profile') currentIndex = imageCounter;
+    imageCounter++;
+  }
+  if (recommendation.church_verification) {
+    images.push(recommendation.church_verification);
+    if (clickedImageType === 'church') currentIndex = imageCounter;
+    imageCounter++;
+  }
+  if (recommendation.company_verification) {
+    images.push(recommendation.company_verification);
+    if (clickedImageType === 'company') currentIndex = imageCounter;
+    imageCounter++;
+  }
+
+  if (images.length > 0) {
+    lightboxImgs.value = images;
+    lightboxIndex.value = currentIndex;
+    lightboxVisible.value = true;
+  }
+};
+
+const onLightboxHide = () => {
+  lightboxVisible.value = false;
+};
 
 // State variables
 const selectedMainUser = ref('');
@@ -908,4 +974,40 @@ ${match.matchUserInfo}
     flex: none;
   }
 }
+
+.all-profile-images-container {
+  display: flex;
+  justify-content: center; /* 중앙 정렬하여 아이템들을 모음 */
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 10px; /* 이미지 슬롯 간의 간격 */
+}
+
+.image-slot {
+  width: 60px;
+  height: 60px;
+  border: 1px solid #ddd;
+  border-radius: 8px; /* 모서리 둥글게 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background-color: #f8f8f8;
+}
+
+.profile-image-item {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 이미지가 슬롯을 꽉 채우도록 */
+}
+
+.image-placeholder {
+  font-size: 10px;
+  color: #888;
+  text-align: center;
+  line-height: 1.2; /* 두 줄 텍스트를 위한 줄 간격 */
+  padding: 5px; /* 내부 여백 */
+}
+
+
 </style>
