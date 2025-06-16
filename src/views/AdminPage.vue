@@ -167,6 +167,7 @@
                   </h4>
                   <p>{{ calculateAge(match.user1.birth_year) }}세, {{ match.user1.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user1.field || '직업 정보 없음' }}</p>
+                  <p><strong>휴대폰:</strong> {{ match.user1.phone || '정보 없음' }}</p>
                   <div class="user-stats">
                     <span class="view-count" title="프로필 조회수"><i class="fa-regular fa-eye"></i> {{ match.user1_view || 0 }}</span>
                   </div>
@@ -188,6 +189,7 @@
                   </h4>
                   <p>{{ calculateAge(match.user2.birth_year) }}세, {{ match.user2.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user2.field || '직업 정보 없음' }}</p>
+                  <p><strong>휴대폰:</strong> {{ match.user2.phone || '정보 없음' }}</p>
                   <div class="user-stats">
                     <span class="view-count" title="프로필 조회수"><i class="fa-regular fa-eye"></i> {{ match.user2_view || 0 }}</span>
                   </div>

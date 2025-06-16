@@ -28,15 +28,15 @@
         <div class="all-profile-images-container main-user-profile-card-images" style="margin-top: 10px; margin-bottom: 15px;">
           <div class="image-slot" @click="openImageModal(mainUser, 'profile')">
             <img v-if="mainUserDisplayImages.profile_photo" :src="mainUserDisplayImages.profile_photo" alt="프로필 사진" class="profile-image-item">
-            <span v-else class="image-placeholder">프로필<br>사진</span>
+            <div v-else class="skeleton-loader"></div>
           </div>
           <div class="image-slot" @click="openImageModal(mainUser, 'church')">
             <img v-if="mainUserDisplayImages.church_verification" :src="mainUserDisplayImages.church_verification" alt="교회 인증" class="profile-image-item">
-            <span v-else class="image-placeholder">교회<br>인증</span>
+            <div v-else class="skeleton-loader"></div>
           </div>
           <div class="image-slot" @click="openImageModal(mainUser, 'company')">
             <img v-if="mainUserDisplayImages.company_verification" :src="mainUserDisplayImages.company_verification" alt="직장 인증" class="profile-image-item">
-            <span v-else class="image-placeholder">직장<br>인증</span>
+            <div v-else class="skeleton-loader"></div>
           </div>
         </div>
         <!-- profile-details div will follow here -->
@@ -1074,6 +1074,24 @@ ${match.matchUserInfo}
   text-align: center;
   line-height: 1.2; /* 두 줄 텍스트를 위한 줄 간격 */
   padding: 5px; /* 내부 여백 */
+}
+
+.skeleton-loader {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 
