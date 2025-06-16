@@ -161,13 +161,19 @@
             <div v-for="match in matchedUsersList" :key="match.id" class="match-item">
               <div class="match-users">
                 <div class="match-user">
-                  <h4>{{ match.user1.name }}</h4>
+                  <h4>
+                    {{ match.user1.name }}
+                    <span class="acceptance-emoji" :title="match.user1_accepted ? '수락함' : '대기 중'">{{ match.user1_accepted ? '✅' : '⬜️' }}</span>
+                  </h4>
                   <p>{{ calculateAge(match.user1.birth_year) }}세, {{ match.user1.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user1.field || '직업 정보 없음' }}</p>
-                  <p>{{ match.user1.phone ? `연락처: ${match.user1.phone}` : '연락처 정보 없음' }}</p>
+                  <div class="user-stats">
+                    <span class="view-count" title="프로필 조회수"><i class="fa-regular fa-eye"></i> {{ match.user1_view || 0 }}</span>
+                  </div>
                   <p class="user-uuid">UUID: {{ match.user1.id }}</p>
                   <div class="user-actions">
-                    <a :href="`/matching/${match.user1.id}`" class="view-link">여기서 보기</a>
+                    <a :href="`/matching/${match.user1.id}`" class="action-button view-link">매칭 접속</a>
+                    <a :href="`/profile/${match.user1.id}`" class="action-button profile-link">프로필 보기</a>
                     <button @click="openSmsModal(match.user1, match.user2.id)" class="sms-button" :disabled="!match.user1.phone">SMS 보내기</button>
                     <button @click="sendKakaoMessage(match.user1)" class="kakao-button" :disabled="!match.user1.phone">알림톡 보내기</button>
                   </div>
@@ -176,13 +182,19 @@
                 <div class="match-separator">—</div>
                 
                 <div class="match-user">
-                  <h4>{{ match.user2.name }}</h4>
+                  <h4>
+                    {{ match.user2.name }}
+                    <span class="acceptance-emoji" :title="match.user2_accepted ? '수락함' : '대기 중'">{{ match.user2_accepted ? '✅' : '⬜️' }}</span>
+                  </h4>
                   <p>{{ calculateAge(match.user2.birth_year) }}세, {{ match.user2.gender === '남자' ? '남성' : '여성' }}</p>
                   <p>{{ match.user2.field || '직업 정보 없음' }}</p>
-                  <p>{{ match.user2.phone ? `연락처: ${match.user2.phone}` : '연락처 정보 없음' }}</p>
+                  <div class="user-stats">
+                    <span class="view-count" title="프로필 조회수"><i class="fa-regular fa-eye"></i> {{ match.user2_view || 0 }}</span>
+                  </div>
                   <p class="user-uuid">UUID: {{ match.user2.id }}</p>
                   <div class="user-actions">
-                    <a :href="`/matching/${match.user2.id}`" class="view-link">여기서 보기</a>
+                    <a :href="`/matching/${match.user2.id}`" class="action-button view-link">매칭 접속</a>
+                    <a :href="`/profile/${match.user2.id}`" class="action-button profile-link">프로필 보기</a>
                     <button @click="openSmsModal(match.user2, match.user1.id)" class="sms-button" :disabled="!match.user2.phone">SMS 보내기</button>
                     <button @click="sendKakaoMessage(match.user2)" class="kakao-button" :disabled="!match.user2.phone">알림톡 보내기</button>
                   </div>
@@ -193,6 +205,8 @@
                 <p class="match-date">매칭일: {{ new Date(match.matched_at).toLocaleDateString() }}</p>
                 <p class="match-status" :class="{'status-active': match.status === 'active', 'status-inactive': match.status !== 'active'}">상태: {{ match.status === 'active' ? '활성' : '비활성' }}</p>
               </div>
+
+
               
               <!-- 미팅 일정과 장소 정보 -->
               <div class="meeting-info">
@@ -853,6 +867,10 @@ async function fetchMatchedUsers() {
     // 매칭 정보와 사용자 정보 결합
     matchedUsersList.value = matchesData.map(match => ({
       ...match,
+      user1_accepted: match.user1_accepted || false,
+      user2_accepted: match.user2_accepted || false,
+      user1_view: match.user1_view || 0,
+      user2_view: match.user2_view || 0,
       user1: usersMap[match.user1_id],
       user2: usersMap[match.user2_id]
     }));
@@ -1122,11 +1140,37 @@ async function sendKakaoMessage(user) {
   flex: 1;
 }
 
-.user-selection label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #555;
+/* Action button styles for links */
+.action-button {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  color: white;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-right: 8px;
+}
+
+.action-button.view-link {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+
+.action-button.view-link:hover {
+  background-color: #2980b9;
+}
+
+.action-button.profile-link {
+  background-color: #9b59b6;
+  border-color: #9b59b6;
+}
+
+.action-button.profile-link:hover {
+  background-color: #8e44ad;
 }
 
 .user-select {
