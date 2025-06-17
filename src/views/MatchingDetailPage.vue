@@ -30,27 +30,44 @@
               <div class="meeting-info-row">
                 <span class="meeting-info-value">📍 {{ matchData.meeting_place || '아직 정해지지 않았습니다' }}</span>
               </div>
+
             </div>
           </div>
           
           <div class="meeting-actions">
             <div class="meeting-actions-row">
-              <!-- 현재 사용자가 수락했는지 확인 -->
+              <!-- 일정 수락 / 수락 완료 버튼 -->
               <button 
-                v-if="matchData.user1_id === userUuid ? matchData.user1_accepted : matchData.user2_accepted"
-                class="card-action-btn cancel-button half-width" 
-                @click="cancelSchedule">
-                일정 수락 취소
+                v-if="matchData.user1_id === userUuid ? matchData.user1_accepted : (matchData.user2_id === userUuid ? matchData.user2_accepted : false)" 
+                class="action-button accepted" 
+                disabled
+              >
+                <i class="fas fa-check-circle"></i> 수락 완료
               </button>
               <button 
-                v-else 
-                class="card-action-btn accept-button half-width" 
-                @click="acceptSchedule">
-                일정 수락
+                v-else-if="(matchData.user1_id === userUuid ? !matchData.user1_accepted : (matchData.user2_id === userUuid ? !matchData.user2_accepted : false)) && matchData.meeting_date"
+                @click="acceptMeeting" 
+                class="action-button accept"
+              >
+                <i class="fas fa-calendar-check"></i> 일정 수락
               </button>
-              
-              <button class="card-action-btn change-button half-width" @click="openDatePicker">
-                일정 변경
+
+              <!-- 캘린더에 추가 버튼 -->
+              <button 
+                v-if="matchData.meeting_date" 
+                @click="addToCalendar" 
+                class="action-button calendar"
+              >
+                <i class="fas fa-calendar-plus"></i> 캘린더 추가
+              </button>
+
+              <!-- 일정 변경 버튼 -->
+              <button 
+                v-if="matchData.meeting_date && (matchData.user1_id === userUuid || matchData.user2_id === userUuid)" 
+                @click="changeSchedule" 
+                class="action-button change"
+              >
+                <i class="fas fa-edit"></i> 일정 변경
               </button>
             </div>
           </div>
@@ -1162,6 +1179,80 @@ function formatTime(timestamp) {
   }
 }
 
+
+const formatToIcsLocalTime = (date) => {
+  const pad = (num) => (num < 10 ? '0' : '') + num;
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+};
+
+const formatToIcsUtcTime = (date) => {
+  const pad = (num) => (num < 10 ? '0' : '') + num;
+  return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}T${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(date.getUTCSeconds())}Z`;
+};
+
+const addToCalendar = () => {
+  if (!matchData.value || !matchData.value.meeting_date) {
+    alert('미팅 날짜가 설정되지 않았습니다.'); // "Meeting date is not set."
+    return;
+  }
+
+  const title = matchData.value.title || '소셜링 약속'; // "Socializing Appointment"
+  const location = matchData.value.meeting_place || '미정'; // "Undecided"
+  // For ICS, newlines in DESCRIPTION must be escaped as \n
+  const description = `소셜링 티저 앱을 통한 매칭 약속입니다.\n상세 장소: ${location}`;
+
+  // Assume matchData.value.meeting_date is a string representing local date/time of the event
+  const startDate = new Date(matchData.value.meeting_date);
+  if (isNaN(startDate.getTime())) {
+    alert('유효하지 않은 미팅 날짜입니다.'); // "Invalid meeting date."
+    return;
+  }
+
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Event duration set to 1 hour
+
+  const dtStartFormatted = formatToIcsLocalTime(startDate);
+  const dtEndFormatted = formatToIcsLocalTime(endDate);
+  const dtStampFormatted = formatToIcsUtcTime(new Date()); // Current timestamp in UTC
+  const uid = `socialing-${Date.now()}@socialingteaser.app`; // Unique ID for the event
+
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//SocialingTeaserApp//Calendar Event//KO',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${dtStampFormatted}`,
+    `DTSTART:${dtStartFormatted}`,
+    `DTEND:${dtEndFormatted}`,
+    `SUMMARY:${title}`,
+    `LOCATION:${location}`,
+    `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
+    'STATUS:CONFIRMED',
+    'SEQUENCE:0', // For updates, 0 for new
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n'); // CRLF line endings are important for ICS
+
+  const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+  // Sanitize title for filename and use YYYY-MM-DD from meeting date
+  const filenameBase = title.replace(/[^\wㄱ-힣-]/g, '_');
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filenameBase}_${startDate.toISOString().substring(0,10)}.ics`;
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href); // Clean up the blob URL
+};
+
+const changeSchedule = () => {
+  // Placeholder for changing schedule logic
+  // This might involve navigating to a new page or showing a modal
+  alert('일정 변경 기능은 현재 준비 중입니다.'); // "Change schedule feature is currently under development."
+  // Example: router.push({ name: 'ChangeMeetingSchedule', params: { matchId: matchData.value.id } });
+};
 </script>
 
 <style scoped>
@@ -1833,5 +1924,60 @@ function formatTime(timestamp) {
   .action-button {
     width: 100%;
   }
+}
+
+/* Styles for action buttons in a row */
+.meeting-actions-row {
+  display: flex;
+  flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+  gap: 10px; /* Space between buttons */
+  justify-content: center; /* Center buttons if they don't fill the row */
+  margin-top: 15px; /* Add some margin above the button row */
+  padding: 0 10px; /* Add some padding if buttons are too close to card edges */
+}
+
+/* Base action-button style should be defined elsewhere or ensure it covers these properties */
+/* For example: */
+/*
+.action-button {
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.action-button:active {
+  transform: translateY(1px);
+}
+*/
+
+/* Specific styles for calendar button */
+.action-button.calendar {
+  background-color: #FF69B4; /* Pink */
+  color: white;
+}
+.action-button.calendar:hover {
+  background-color: #FF1493; /* Darker pink */
+}
+
+/* Specific styles for change schedule button */
+.action-button.change {
+  background-color: #17a2b8; /* Info blue */
+  color: white;
+}
+.action-button.change:hover {
+  background-color: #138496; /* Darker info blue */
+}
+
+/* Ensure icons in buttons are styled if not covered by .action-button */
+.action-button i {
+  font-size: 1.1em; /* Slightly larger icon */
+  margin-right: 5px; /* If gap property is not supported or for fine-tuning */
 }
 </style>
