@@ -1196,7 +1196,7 @@ const addToCalendar = () => {
     return;
   }
 
-  const title = matchData.value.title || '소셜링 약속'; // "Socializing Appointment"
+  const title = matchData.value.title || '텐저블데이팅 만남일정'; // "Socializing Appointment"
   const location = matchData.value.meeting_place || '미정'; // "Undecided"
   // For ICS, newlines in DESCRIPTION must be escaped as \n
   const description = `소셜링 티저 앱을 통한 매칭 약속입니다.\n상세 장소: ${location}`;
