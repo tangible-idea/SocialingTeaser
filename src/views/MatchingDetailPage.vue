@@ -1980,4 +1980,44 @@ const changeSchedule = () => {
   font-size: 1.1em; /* Slightly larger icon */
   margin-right: 5px; /* If gap property is not supported or for fine-tuning */
 }
+
+/* Styles for a more compact, borderless meeting schedule display */
+.profile-card.meeting-card {
+  border: none;
+  box-shadow: none;
+  padding: 12px 15px; /* Reduced padding. Effective if not overridden by .no-padding !important */
+  margin-bottom: 15px; /* Reduced bottom margin */
+  background-color: transparent; /* Ensure no conflicting background from .profile-card */
+  border-radius: 8px; /* Optional: adjust if a different roundness is desired */
+}
+
+.profile-card.meeting-card .meeting-content {
+  padding: 0; /* Content itself should not add more padding if card has it */
+}
+
+.profile-card.meeting-card .profile-details {
+  padding: 0;
+  margin: 0;
+}
+
+.profile-card.meeting-card .meeting-info-row {
+  padding: 3px 0; /* Tighter vertical spacing for date/place lines */
+  display: flex;
+  align-items: center;
+}
+
+.profile-card.meeting-card .meeting-info-row:last-of-type {
+  margin-bottom: 0; /* No extra margin after the last info line */
+}
+
+.profile-card.meeting-card .meeting-info-value {
+  font-size: 0.9em; /* Slightly smaller font for compactness */
+  /* Icons are text emojis, so flex alignment on parent row is key */
+}
+
+/* Adjust spacing for action buttons if the card's structure changed */
+.profile-card.meeting-card .meeting-actions {
+  margin-top: 12px; /* Consistent spacing above action buttons */
+  padding-top: 0; /* Buttons are within the card's new padding */
+}
 </style>
