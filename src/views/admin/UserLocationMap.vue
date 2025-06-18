@@ -71,7 +71,7 @@ export default {
         
         const { data, error } = await supabase
           .from('dating')
-          .select('id, name, location, gender')
+          .select('id, name, location, gender, birth_year, created_at')
           .not('location', 'is', null);
         
         if (error) {
@@ -153,18 +153,46 @@ export default {
               }
             });
             
+            // 가입일 포맷팅 및 경과일수 계산
+            const formatDateWithDaysPassed = (dateString) => {
+              if (!dateString) return '정보 없음';
+              
+              const date = new Date(dateString);
+              const formattedDate = date.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+              
+              // 경과일수 계산
+              const today = new Date();
+              const diffTime = Math.abs(today - date);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              
+              return `${formattedDate} (가입 후 ${diffDays}일)`;
+            };
+            
             // 정보창 생성
             const infoWindow = new window.naver.maps.InfoWindow({
               content: `
                 <div class="info-window">
-                  <div class="info-title">${user.name}</div>
+                  <div class="info-header">
+                    <div class="info-title">${user.name}</div>
+                    <div class="info-close-btn" onclick="(function(){window.closeMarkerInfo${user.id}(); return false;})()">✕</div>
+                  </div>
                   <div class="info-content">
                     <p>성별: ${user.gender}</p>
                     <p>지역: ${user.location}</p>
+                    <p>출생년도: ${user.birth_year || '정보 없음'}</p>
+                    <p>가입일: ${formatDateWithDaysPassed(user.created_at)}</p>
+                  </div>
+                  <div class="info-actions">
+                    <button class="profile-button" onclick="window.location.href='/profile/${user.id}'">프로필 보기</button>
                   </div>
                 </div>
               `
             });
+            
+            // X 버튼으로 정보창 닫기 위한 전역 함수 설정
+            window[`closeMarkerInfo${user.id}`] = () => {
+              infoWindow.close();
+            };
             
             // 마커 클릭 이벤트
             window.naver.maps.Event.addListener(marker, 'click', () => {
@@ -339,18 +367,62 @@ export default {
 
 :global(.info-window) {
   padding: 10px;
-  min-width: 150px;
+  min-width: 200px;
 }
 
-:global(.info-title) {
-  font-weight: bold;
+:global(.info-header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 5px;
   border-bottom: 1px solid #eee;
   padding-bottom: 5px;
 }
 
+:global(.info-title) {
+  font-weight: bold;
+}
+
+:global(.info-close-btn) {
+  cursor: pointer;
+  font-size: 14px;
+  color: #777;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+:global(.info-close-btn:hover) {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
 :global(.info-content p) {
-  margin: 3px 0;
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+:global(.info-actions) {
+  margin-top: 10px;
+  text-align: center;
+}
+
+:global(.profile-button) {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+:global(.profile-button:hover) {
+  background-color: #2980b9;
 }
 
 @media (max-width: 768px) {
