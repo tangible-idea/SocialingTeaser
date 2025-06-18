@@ -215,8 +215,9 @@ export default {
             const profileBtn = document.createElement('button');
             profileBtn.className = 'profile-button';
             profileBtn.textContent = '프로필 보기';
-            profileBtn.addEventListener('click', () => {
-              router.push(`/profile/${user.id}`);
+            profileBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              window.open(`/profile/${user.id}`, '_blank');
             });
             
             actionsDiv.appendChild(profileBtn);
