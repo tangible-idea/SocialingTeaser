@@ -48,6 +48,7 @@
         <div class="profile-details">
           <p><strong>나이:</strong> {{ calculateAge(mainUser.birth_year) }}세</p>
           <p><strong>성별:</strong> {{ mainUser.gender === '남자' ? '남성' : '여성' }}</p>
+          <p><strong>키:</strong> {{ mainUser.height || '정보 없음' }}cm</p>
           <p><strong>직업:</strong> {{ mainUser.field }}</p>
           <p><strong>회사:</strong> {{ mainUser.company_name || '정보 없음' }}</p>
           <p><strong>지역:</strong> {{ mainUser.location || '정보 없음' }}</p>

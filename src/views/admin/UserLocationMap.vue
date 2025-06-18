@@ -71,7 +71,7 @@ export default {
         
         const { data, error } = await supabase
           .from('dating')
-          .select('id, name, location, gender, birth_year, created_at')
+          .select('id, name, location, church_name, gender, birth_year, created_at')
           .not('location', 'is', null);
         
         if (error) {
