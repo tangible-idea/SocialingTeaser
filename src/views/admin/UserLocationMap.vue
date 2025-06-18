@@ -168,31 +168,78 @@ export default {
               return `${formattedDate} (가입 후 ${diffDays}일)`;
             };
             
-            // 정보창 생성
-            const infoWindow = new window.naver.maps.InfoWindow({
-              content: `
-                <div class="info-window">
-                  <div class="info-header">
-                    <div class="info-title">${user.name}</div>
-                    <div class="info-close-btn" onclick="(function(){window.closeMarkerInfo${user.id}(); return false;})()">✕</div>
-                  </div>
-                  <div class="info-content">
-                    <p>성별: ${user.gender}</p>
-                    <p>지역: ${user.location}</p>
-                    <p>출생년도: ${user.birth_year || '정보 없음'}</p>
-                    <p>가입일: ${formatDateWithDaysPassed(user.created_at)}</p>
-                  </div>
-                  <div class="info-actions">
-                    <button class="profile-button" onclick="window.location.href='/profile/${user.id}'">프로필 보기</button>
-                  </div>
-                </div>
-              `
+            // DOM 요소 직접 생성 (문자열 대신 DOM 요소 사용)
+            const contentContainer = document.createElement('div');
+            contentContainer.className = 'info-window';
+            
+            // 헤더 생성
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'info-header';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'info-title';
+            titleDiv.textContent = user.name;
+            
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'info-close-btn';
+            closeBtn.textContent = '✕';
+            
+            headerDiv.appendChild(titleDiv);
+            headerDiv.appendChild(closeBtn);
+            
+            // 컨텐츠 생성
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'info-content';
+            
+            const genderP = document.createElement('p');
+            genderP.innerHTML = `성별: ${user.gender}`;
+            
+            const locationP = document.createElement('p');
+            locationP.innerHTML = `지역: ${user.location}`;
+            
+            const birthYearP = document.createElement('p');
+            birthYearP.innerHTML = `출생년도: ${user.birth_year || '정보 없음'}`;
+            
+            const createdAtP = document.createElement('p');
+            createdAtP.innerHTML = `가입일: ${formatDateWithDaysPassed(user.created_at)}`;
+            
+            contentDiv.appendChild(genderP);
+            contentDiv.appendChild(locationP);
+            contentDiv.appendChild(birthYearP);
+            contentDiv.appendChild(createdAtP);
+            
+            // 액션 버튼 생성
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'info-actions';
+            
+            const profileBtn = document.createElement('button');
+            profileBtn.className = 'profile-button';
+            profileBtn.textContent = '프로필 보기';
+            profileBtn.addEventListener('click', () => {
+              router.push(`/profile/${user.id}`);
             });
             
-            // X 버튼으로 정보창 닫기 위한 전역 함수 설정
-            window[`closeMarkerInfo${user.id}`] = () => {
+            actionsDiv.appendChild(profileBtn);
+            
+            // 전체 컨테이너에 요소들 추가
+            contentContainer.appendChild(headerDiv);
+            contentContainer.appendChild(contentDiv);
+            contentContainer.appendChild(actionsDiv);
+            
+            // 정보창 생성
+            const infoWindow = new window.naver.maps.InfoWindow({
+              content: contentContainer,
+              backgroundColor: '#fff',
+              borderWidth: 1,
+              borderColor: '#ddd',
+              disableAnchor: true,
+              pixelOffset: new window.naver.maps.Point(0, -10)
+            });
+            
+            // 닫기 버튼 이벤트 추가
+            closeBtn.addEventListener('click', () => {
               infoWindow.close();
-            };
+            });
             
             // 마커 클릭 이벤트
             window.naver.maps.Event.addListener(marker, 'click', () => {
