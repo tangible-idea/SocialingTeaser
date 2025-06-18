@@ -30,6 +30,12 @@
       >
         Matching List
       </button>
+      <button 
+        class="tab-button" 
+        @click="navigateToUserMap"
+      >
+        사용자 위치 지도
+      </button>
     </div>
 
     <div class="admin-content">
@@ -381,6 +387,11 @@ async function handleLogout() {
   } catch (error) {
     console.error('로그아웃 실패:', error);
   }
+}
+
+// 사용자 위치 지도 페이지로 이동
+function navigateToUserMap() {
+  router.push('/admin/user-map');
 }
 
 // 페이지 로드 시 사용자 목록 가져오기

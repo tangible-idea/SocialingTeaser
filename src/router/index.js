@@ -31,6 +31,12 @@ const routes = [
     component: () => import('../views/MatchingDetailPage.vue')
   },
   {
+    path: '/admin/user-map',
+    name: 'UserLocationMap',
+    component: () => import('../views/admin/UserLocationMap.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/submitted',
     name: 'Submitted',
     component: SubmittedPage
