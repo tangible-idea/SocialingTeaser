@@ -37,6 +37,19 @@
           {{ isLoading ? '로그인 중...' : '로그인' }}
         </button>
       </form>
+      
+      <div class="social-login">
+        <p>또는 소셜 로그인</p>
+        <button 
+          @click="handleKakaoLogin" 
+          class="kakao-login-button"
+          type="button"
+          :disabled="isLoading"
+        >
+          <img src="https://developers.kakao.com/assets/img/about/logos/kakaotalksharing/kakaotalk_sharing_btn_small.png" alt="Kakao" class="kakao-icon">
+          카카오로 로그인
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -55,6 +68,31 @@ export default {
     const error = ref('')
     const message = ref('')
     const isLoading = ref(false)
+
+    const handleKakaoLogin = async () => {
+      error.value = ''
+      message.value = ''
+      isLoading.value = true
+      
+      try {
+        const { data, error: authError } = await supabase.auth.signInWithOAuth({
+          provider: 'kakao',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+            queryParams: {
+              scope: 'profile_nickname,profile_image'
+            }
+          }
+        })
+        
+        if (authError) throw authError
+        
+        // 리다이렉트가 자동으로 처리됨
+      } catch (err) {
+        error.value = '카카오 로그인 실패: ' + (err.message || '알 수 없는 오류가 발생했습니다.')
+        isLoading.value = false
+      }
+    }
     
     const handleLogin = async () => {
       error.value = ''
@@ -84,7 +122,8 @@ export default {
       error,
       message,
       isLoading,
-      handleLogin
+      handleLogin,
+      handleKakaoLogin
     }
   }
 }
@@ -176,5 +215,64 @@ input:focus {
   background-color: #d4edda;
   color: #155724;
   border: 1px solid #c3e6cb;
+}
+
+.social-login {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.social-login p {
+  color: #777;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.social-login p::before,
+.social-login p::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background-color: #ddd;
+}
+
+.social-login p::before {
+  left: 0;
+}
+
+.social-login p::after {
+  right: 0;
+}
+
+.kakao-login-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #FEE500;
+  color: #191919;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.kakao-login-button:hover {
+  background-color: #E6CF00;
+}
+
+.kakao-login-button:disabled {
+  background-color: #fef29d;
+  cursor: not-allowed;
+}
+
+.kakao-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
 }
 </style>

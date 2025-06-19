@@ -40,6 +40,11 @@ const routes = [
     path: '/submitted',
     name: 'Submitted',
     component: SubmittedPage
+  },
+  {
+    path: '/auth/callback',
+    name: 'AuthCallback',
+    component: () => import('../views/AuthCallback.vue')
   }
 ]
 
