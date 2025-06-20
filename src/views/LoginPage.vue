@@ -80,7 +80,7 @@ export default {
           options: {
             redirectTo: `${window.location.origin}/auth/callback`,
             queryParams: {
-              scope: 'profile_nickname,profile_image'
+              scope: 'profile_nickname,profile_image,account_email'
             }
           }
         })
