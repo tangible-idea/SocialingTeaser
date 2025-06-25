@@ -45,11 +45,11 @@
                 <i class="fas fa-check-circle"></i> 수락 완료
               </button>
               <button 
-                v-else-if="(matchData.user1_id === userUuid ? !matchData.user1_accepted : (matchData.user2_id === userUuid ? !matchData.user2_accepted : false)) && matchData.meeting_date"
-                @click="acceptMeeting" 
+                v-else-if="matchData.meeting_date && !(matchData.user1_id === userUuid ? matchData.user1_accepted : (matchData.user2_id === userUuid ? matchData.user2_accepted : false))" 
+                @click="acceptSchedule" 
                 class="action-button accept"
               >
-                <i class="fas fa-calendar-check"></i> 일정 수락
+                <i class="fas fa-check-circle"></i> 만남 수락
               </button>
 
               <!-- 캘린더에 추가 버튼 -->
@@ -64,7 +64,7 @@
               <!-- 일정 변경 버튼 -->
               <button 
                 v-if="matchData.meeting_date && (matchData.user1_id === userUuid || matchData.user2_id === userUuid)" 
-                @click="changeSchedule" 
+                @click="openDatePicker" 
                 class="action-button change"
               >
                 <i class="fas fa-edit"></i> 일정 변경
@@ -360,7 +360,8 @@ const allPredefinedQuestions = [
   "내 인생 영화는?",
   "주말엔 집콕 vs 나들이?",
   "핸드폰 배경화면은?",
-  "좋아하는 숫자?",
+  "가장 좋아하는 숫자?",
+  "가장 좋아하는 베이글?"
 ];
 
 // 날짜에 기반한 랜덤한 질문 목록 생성 함수
@@ -825,7 +826,7 @@ async function acceptSchedule() {
     }
     
     // 시스템 메시지 추가
-    await addSystemMessage(`${currentUserInfo.value.name}님이 일정을 수락하셨습니다.`);
+    await addSystemMessage(`${currentUserInfo.value.name}님이 만남을 수락하셨습니다.`);
     
   } catch (err) {
     console.error('일정 수락 중 오류 발생:', err);
