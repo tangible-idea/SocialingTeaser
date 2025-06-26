@@ -138,6 +138,13 @@
               <h4>상대방 정보</h4>
             </div>
             <div class="profile-content">
+              <!-- 사진 placeholder - 우측상단 -->
+              <div class="photo-placeholder top-right" @click="handlePartnerPhotoClick">
+                <img v-if="isPartnerPhotoRevealed" :src="getPartnerPhotoUrl()" alt="상대방 사진" class="revealed-photo" />
+                <div v-else class="question-mark-simple">
+                  ?
+                </div>
+              </div>
               <div class="profile-details">
                 <div class="profile-name">{{ partnerInfo.name }}</div>
                 <div class="profile-info">{{ formatBirthYear(partnerInfo.birth_year) }}</div>
@@ -158,6 +165,13 @@
               <h4>내 정보</h4>
             </div>
             <div class="profile-content">
+              <!-- 사진 placeholder - 우측상단 -->
+              <div class="photo-placeholder top-right" @click="handleMyPhotoClick">
+                <img v-if="isMyPhotoRevealed" :src="getMyPhotoUrl()" alt="내 사진" class="revealed-photo" />
+                <div v-else class="question-mark-simple">
+                  ?
+                </div>
+              </div>
               <div class="profile-details">
                 <div class="profile-name">{{ currentUserInfo.name }}</div>
                 <div class="profile-info">{{ formatBirthYear(currentUserInfo.birth_year) }}</div>
@@ -271,6 +285,89 @@
         </div>
       </div>
       
+      <!-- 사진 공유 모달 -->
+      <div v-if="showPhotoShareModal" class="modal photo-modal">
+        <div class="modal-content photo-modal-content">
+          <h3>사진 공유</h3>
+          
+          <!-- 사진 공유 요청 상태 표시 -->
+          <div v-if="photoShareData" class="photo-share-status">
+            <div class="status-item">
+              <span class="status-label">내 사진:</span>
+              <span :class="['status-value', { 'uploaded': isMyPhotoUploaded }]">
+                {{ isMyPhotoUploaded ? '업로드 완료' : '업로드 대기' }}
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">상대방 사진:</span>
+              <span :class="['status-value', { 'uploaded': isPartnerPhotoUploaded }]">
+                {{ isPartnerPhotoUploaded ? '업로드 완료' : '업로드 대기' }}
+              </span>
+            </div>
+          </div>
+          
+          <!-- 사진 업로드 섹션 -->
+          <div v-if="!isMyPhotoUploaded" class="photo-upload-section">
+            <p class="upload-instruction">사진을 선택해주세요 (JPG, PNG 형식만 가능)</p>
+            <input 
+              type="file" 
+              ref="photoInput"
+              @change="handlePhotoSelect"
+              accept="image/jpeg,image/png,image/jpg"
+              style="display: none;"
+            />
+            <button @click="$refs.photoInput.click()" class="photo-select-btn">
+              📷 사진 선택하기
+            </button>
+            
+            <!-- 선택된 사진 미리보기 -->
+            <div v-if="photoPreview" class="photo-preview">
+              <img :src="photoPreview" alt="선택된 사진" class="preview-image" />
+              <button @click="uploadPhoto" class="upload-btn" :disabled="uploading">
+                {{ uploading ? '업로드 중...' : '사진 업로드' }}
+              </button>
+            </div>
+          </div>
+          
+          <!-- 사진 공개 섹션 (둘 다 업로드 완료시) -->
+          <div v-if="isMyPhotoUploaded && isPartnerPhotoUploaded && photoShareData.photos_revealed" class="photos-revealed">
+            <h4>공유된 사진들</h4>
+            <div class="shared-photos">
+              <div class="photo-container">
+                <p>내 사진</p>
+                <img :src="getMyPhotoUrl()" alt="내 사진" class="shared-photo" />
+              </div>
+              <div class="photo-container">
+                <p>상대방 사진</p>
+                <img :src="getPartnerPhotoUrl()" alt="상대방 사진" class="shared-photo" />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 대기 메시지 (한쪽만 업로드 완료시) -->
+          <div v-else-if="isMyPhotoUploaded && !isPartnerPhotoUploaded" class="waiting-message">
+            <p>📱 상대방이 사진을 업로드하면 서로의 사진을 볼 수 있습니다.</p>
+          </div>
+          
+          <div class="modal-actions">
+            <button @click="showPhotoShareModal = false" class="cancel-button">닫기</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 사진 확대 모달 -->
+      <div v-if="showPhotoEnlargeModal" class="modal photo-enlarge-modal" @click="closePhotoEnlarge">
+        <div class="modal-content photo-enlarge-content" @click.stop>
+          <div class="enlarge-header">
+            <h3>{{ enlargePhotoOwner }} 사진</h3>
+            <button @click="closePhotoEnlarge" class="close-btn">×</button>
+          </div>
+          <div class="enlarge-photo-container">
+            <img :src="enlargePhotoUrl" :alt="enlargePhotoOwner + ' 사진'" class="enlarged-photo" />
+          </div>
+        </div>
+      </div>
+      
       <!-- 날짜 선택 모달 -->
       <div v-if="showDatePicker" class="modal date-modal">
         <div class="modal-content calendar-content">
@@ -327,6 +424,13 @@ const questionText = ref('');
 
 // 질문카드 관련 변수
 const showQuestionCardModal = ref(false);
+const showPhotoShareModal = ref(false);
+const photoShareData = ref(null);
+const selectedPhoto = ref(null);
+const photoPreview = ref(null);
+const showPhotoEnlargeModal = ref(false);
+const enlargePhotoUrl = ref('');
+const enlargePhotoOwner = ref('');
 
 // 모든 가능한 질문 목록
 const allPredefinedQuestions = [
@@ -401,6 +505,9 @@ const remainingCharacters = ref(50); // 기본 50자 제한
 const answerText = ref('');
 const selectedQuestionId = ref(null);
 
+// 사진 공유 관련 변수
+const uploading = ref(false);
+
 // 프로필 수정 관련 변수
 // 프로필 수정 모달 표시 상태
 const showProfileEditor = ref(false);
@@ -420,6 +527,28 @@ const currentDate = computed(() => {
     month: 'long',
     day: 'numeric'
   });
+});
+
+// 사진 공유 상태 확인
+const isMyPhotoUploaded = computed(() => {
+  if (!photoShareData.value || !matchData.value) return false;
+  const isUser1 = matchData.value.user1_id === userUuid;
+  return isUser1 ? !!photoShareData.value.user1_photo_url : !!photoShareData.value.user2_photo_url;
+});
+
+const isPartnerPhotoUploaded = computed(() => {
+  if (!photoShareData.value || !matchData.value) return false;
+  const isUser1 = matchData.value.user1_id === userUuid;
+  return isUser1 ? !!photoShareData.value.user2_photo_url : !!photoShareData.value.user1_photo_url;
+});
+
+// 사진 공개 상태 확인
+const isMyPhotoRevealed = computed(() => {
+  return photoShareData.value && photoShareData.value.photos_revealed && isMyPhotoUploaded.value;
+});
+
+const isPartnerPhotoRevealed = computed(() => {
+  return photoShareData.value && photoShareData.value.photos_revealed && isPartnerPhotoUploaded.value;
 });
 
 onMounted(async () => {
@@ -501,6 +630,9 @@ async function fetchMatchingData() {
     
     // 채팅 메시지 로드
     await fetchChatMessages();
+    
+    // 사진 공유 데이터 로드
+    await fetchPhotoShareData();
     
     // 파트너 ID 확인 (현재 사용자가 아닌 사람)
     const partnerId = matchingData.user1_id === userUuid 
@@ -1254,6 +1386,211 @@ const changeSchedule = () => {
   alert('일정 변경 기능은 현재 준비 중입니다.'); // "Change schedule feature is currently under development."
   // Example: router.push({ name: 'ChangeMeetingSchedule', params: { matchId: matchData.value.id } });
 };
+
+// 사진 공유 관련 함수들
+async function requestPhotoShare() {
+  try {
+    // 기존 사진 공유 데이터 확인
+    await fetchPhotoShareData();
+    
+    // 사진 공유 요청 시스템 메시지 추가 (처음 요청시만)
+    if (!photoShareData.value) {
+      await addSystemMessage(`${currentUserInfo.value.name}님이 사진 공유를 요청했습니다. 서로 사진을 업로드하면 공개됩니다.`);
+      
+      // 사진 공유 레코드 생성
+      const { data, error } = await supabase
+        .from('dating_photo_sharing')
+        .insert({
+          matching_id: matchData.value.id,
+          photos_revealed: false
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      photoShareData.value = data;
+    }
+    
+    // 모달 열기
+    showPhotoShareModal.value = true;
+  } catch (err) {
+    console.error('사진 공유 요청 중 오류:', err);
+    alert('사진 공유 요청 중 오류가 발생했습니다.');
+  }
+}
+
+async function fetchPhotoShareData() {
+  try {
+    const { data, error } = await supabase
+      .from('dating_photo_sharing')
+      .select('*')
+      .eq('matching_id', matchData.value.id)
+      .single();
+      
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+    
+    photoShareData.value = data;
+  } catch (err) {
+    console.error('사진 공유 데이터 조회 중 오류:', err);
+  }
+}
+
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // 파일 타입 확인
+  if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+    alert('JPG, PNG 형식의 이미지만 업로드 가능합니다.');
+    return;
+  }
+  
+  // 파일 크기 확인 (5MB 제한)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('파일 크기는 5MB 이하만 가능합니다.');
+    return;
+  }
+  
+  selectedPhoto.value = file;
+  
+  // 미리보기 생성
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    photoPreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function uploadPhoto() {
+  if (!selectedPhoto.value || !photoShareData.value) return;
+  
+  try {
+    uploading.value = true;
+    
+    // 파일명 생성
+    const fileExt = selectedPhoto.value.name.split('.').pop();
+    const fileName = `${matchData.value.id}_${userUuid}_${Date.now()}.${fileExt}`;
+    
+    // Supabase Storage에 업로드
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('dating-photos')
+      .upload(fileName, selectedPhoto.value);
+      
+    if (uploadError) throw uploadError;
+    
+    // 공개 URL 생성
+    const { data: urlData } = supabase.storage
+      .from('dating-photos')
+      .getPublicUrl(fileName);
+      
+    if (!urlData.publicUrl) {
+      throw new Error('사진 URL 생성에 실패했습니다.');
+    }
+    
+    // DB 업데이트
+    const isUser1 = matchData.value.user1_id === userUuid;
+    const updateData = isUser1 
+      ? { 
+          user1_photo_url: urlData.publicUrl,
+          user1_uploaded_at: new Date().toISOString()
+        }
+      : { 
+          user2_photo_url: urlData.publicUrl,
+          user2_uploaded_at: new Date().toISOString()
+        };
+    
+    const { data, error } = await supabase
+      .from('dating_photo_sharing')
+      .update(updateData)
+      .eq('id', photoShareData.value.id)
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    photoShareData.value = data;
+    
+    // 양쪽 모두 업로드 완료시 photos_revealed를 true로 설정
+    if (data.user1_photo_url && data.user2_photo_url && !data.photos_revealed) {
+      const { data: revealData, error: revealError } = await supabase
+        .from('dating_photo_sharing')
+        .update({ photos_revealed: true })
+        .eq('id', data.id)
+        .select()
+        .single();
+        
+      if (revealError) throw revealError;
+      
+      photoShareData.value = revealData;
+      
+      // 사진 공개 시스템 메시지 추가
+      await addSystemMessage('양쪽 모두 사진을 업로드했습니다! 이제 서로의 사진을 볼 수 있습니다.');
+    } else {
+      // 업로드 완료 시스템 메시지
+      await addSystemMessage(`${currentUserInfo.value.name}님이 사진을 업로드했습니다.`);
+    }
+    
+    // 상태 초기화
+    selectedPhoto.value = null;
+    photoPreview.value = null;
+    
+  } catch (err) {
+    console.error('사진 업로드 중 오류:', err);
+    alert('사진 업로드 중 오류가 발생했습니다.');
+  } finally {
+    uploading.value = false;
+  }
+}
+
+function getMyPhotoUrl() {
+  if (!photoShareData.value || !matchData.value) return '';
+  const isUser1 = matchData.value.user1_id === userUuid;
+  return isUser1 ? photoShareData.value.user1_photo_url : photoShareData.value.user2_photo_url;
+}
+
+function getPartnerPhotoUrl() {
+  if (!photoShareData.value || !matchData.value) return '';
+  const isUser1 = matchData.value.user1_id === userUuid;
+  return isUser1 ? photoShareData.value.user2_photo_url : photoShareData.value.user1_photo_url;
+}
+
+// 사진 placeholder 클릭 핸들러
+function handlePartnerPhotoClick() {
+  if (isPartnerPhotoRevealed.value) {
+    // 이미 공개된 사진인 경우 확대 보기
+    enlargePhoto(getPartnerPhotoUrl(), partnerInfo.value.name || '상대방');
+    return;
+  }
+  
+  // 사진 공유 요청
+  requestPhotoShare();
+}
+
+function handleMyPhotoClick() {
+  if (isMyPhotoRevealed.value) {
+    // 이미 공개된 내 사진인 경우 확대 보기
+    enlargePhoto(getMyPhotoUrl(), currentUserInfo.value.name || '나');
+    return;
+  }
+  
+  // 사진 공유 요청
+  requestPhotoShare();
+}
+
+// 사진 확대 보기
+function enlargePhoto(photoUrl, ownerName) {
+  enlargePhotoUrl.value = photoUrl;
+  enlargePhotoOwner.value = ownerName;
+  showPhotoEnlargeModal.value = true;
+}
+
+function closePhotoEnlarge() {
+  showPhotoEnlargeModal.value = false;
+  enlargePhotoUrl.value = '';
+  enlargePhotoOwner.value = '';
+}
 </script>
 
 <style scoped>
@@ -2020,5 +2357,323 @@ const changeSchedule = () => {
 .profile-card.meeting-card .meeting-actions {
   margin-top: 12px; /* Consistent spacing above action buttons */
   padding-top: 0; /* Buttons are within the card's new padding */
+}
+
+/* 프로필 컨텐츠와 사진 placeholder 스타일 */
+.profile-content {
+  position: relative;
+}
+
+.photo-placeholder {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.photo-placeholder.top-right {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+}
+
+.photo-placeholder:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.question-mark-simple {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 600;
+  color: #8a8d94;
+  transition: all 0.3s ease;
+}
+
+.photo-placeholder:hover .question-mark-simple {
+  color: #666;
+  transform: scale(1.05);
+}
+
+.revealed-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  transition: all 0.3s ease;
+}
+
+.revealed-photo:hover {
+  border-color: #45a049;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+  transform: scale(1.02);
+}
+
+/* 사진 확대 모달 스타일 */
+.photo-enlarge-modal {
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.photo-enlarge-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.enlarge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.enlarge-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.enlarge-photo-container {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f8f9fa;
+}
+
+.enlarged-photo {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  object-fit: contain;
+}
+
+@media (max-width: 600px) {
+  .photo-placeholder {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .profile-name-with-photo {
+    gap: 0.5rem;
+  }
+  
+  .enlarge-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .enlarge-photo-container {
+    padding: 1rem;
+  }
+  
+  .enlarged-photo {
+    max-height: 60vh;
+  }
+}
+
+/* 사진 공유 모달 스타일 */
+.photo-modal .modal-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.photo-share-status {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.status-item:last-child {
+  margin-bottom: 0;
+}
+
+.status-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.status-value {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.status-value.uploaded {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.photo-upload-section {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.upload-instruction {
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.photo-select-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.photo-select-btn:hover {
+  background-color: #0056b3;
+}
+
+.photo-preview {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.preview-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.upload-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.upload-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.upload-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.photos-revealed {
+  text-align: center;
+}
+
+.photos-revealed h4 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.shared-photos {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.photo-container {
+  text-align: center;
+}
+
+.photo-container p {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.shared-photo {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.waiting-message {
+  text-align: center;
+  padding: 2rem;
+  background-color: #fff3cd;
+  border-radius: 8px;
+  border: 1px solid #ffeaa7;
+}
+
+.waiting-message p {
+  color: #856404;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .shared-photos {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .photo-modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
 }
 </style>
