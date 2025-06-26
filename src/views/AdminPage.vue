@@ -79,34 +79,145 @@
             <div class="user-profiles">
               <div class="user-profile-card" v-if="userA">
                 <h3>User A: {{ userA.name }}</h3>
-                <div class="profile-details">
-                  <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
-                  <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
-                  <p><strong>직업:</strong> {{ userA.field }}</p>
-                  <p><strong>회사:</strong> {{ userA.company_name || '정보 없음' }}</p>
-                  <p><strong>지역:</strong> {{ userA.location || '정보 없음' }}</p>
-                  <p><strong>교회:</strong> {{ userA.church_name || '정보 없음' }}</p>
-                  <p><strong>취미:</strong> {{ userA.hobby || '정보 없음' }}</p>
-                  <p><strong>MBTI:</strong> {{ userA.mbti || '정보 없음' }}</p>
-                  <p><strong>학력:</strong> {{ userA.education || '정보 없음' }}</p>
-                  <p><strong>매력 포인트:</strong> {{ userA.charm_points || '정보 없음' }}</p>
+                
+                <div class="profile-images" v-if="userA">
+                  <div class="image-container" v-if="userA.profile_photo">
+                    <img :src="userA.profile_photo" alt="프로필 사진" class="profile-image">
+                    <span class="image-label">프로필</span>
+                  </div>
+                  <div class="image-container" v-if="userA.church_verification">
+                    <img :src="userA.church_verification" alt="교회 인증" class="profile-image">
+                    <span class="image-label">교회 인증</span>
+                  </div>
+                  <div class="image-container" v-if="userA.company_verification">
+                    <img :src="userA.company_verification" alt="직장 인증" class="profile-image">
+                    <span class="image-label">직장 인증</span>
+                  </div>
+                </div>
+                
+                <div class="profile-sections">
+                  <div class="profile-section">
+                    <h4>기본 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>ID:</strong> {{ userA.id }}</p>
+                      <p><strong>이름:</strong> {{ userA.name || '정보 없음' }}</p>
+                      <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
+                      <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
+                      <p><strong>생일:</strong> {{ userA.birth_date ? new Date(userA.birth_date).toLocaleDateString() : '정보 없음' }}</p>
+                      <p><strong>생년:</strong> {{ userA.birth_year || '정보 없음' }}</p>
+                      <p><strong>키:</strong> {{ userA.height || '정보 없음' }}cm</p>
+                      <p><strong>가입일:</strong> {{ userA.created_at ? new Date(userA.created_at).toLocaleString() : '정보 없음' }}</p>
+                      <p><strong>연락처:</strong> {{ userA.phone || '정보 없음' }}</p>
+                      <p><strong>연락처 구매 여부:</strong> {{ userA.purchase_contact ? '예' : '아니오' }}</p>
+                      <p><strong>프라이빗 설정:</strong> {{ userA.private ? '예' : '아니오' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>직업/학력/위치</h4>
+                    <div class="profile-details">
+                      <p><strong>직업:</strong> {{ userA.field || '정보 없음' }}</p>
+                      <p><strong>회사:</strong> {{ userA.company_name || '정보 없음' }}</p>
+                      <p><strong>학력:</strong> {{ userA.education || '정보 없음' }}</p>
+                      <p><strong>지역:</strong> {{ userA.location || '정보 없음' }}</p>
+                      <p><strong>신청 경로:</strong> {{ userA.application_source || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>교회/신앙 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>교회:</strong> {{ userA.church_name || '정보 없음' }}</p>
+                      <p><strong>첫 교회 출석:</strong> {{ userA.first_church_attendance || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>성격/취향</h4>
+                    <div class="profile-details">
+                      <p><strong>MBTI:</strong> {{ userA.mbti || '정보 없음' }}</p>
+                      <p><strong>취미:</strong> {{ userA.hobby || '정보 없음' }}</p>
+                      <p><strong>매력 포인트:</strong> {{ userA.charm_points || '정보 없음' }}</p>
+                      <p><strong>이상형:</strong> {{ userA.ideal_type || '정보 없음' }}</p>
+                      <p><strong>이상형 우선순위:</strong> {{ formatPriorities(userA.ideal_type_priorities) || '정보 없음' }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
               <div class="user-profile-card" v-if="userB">
                 <h3>User B: {{ userB.name }}</h3>
-                <div class="profile-details">
-                  <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
-                  <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
-                  <p><strong>직업:</strong> {{ userB.field }}</p>
-                  <p><strong>회사:</strong> {{ userB.company_name || '정보 없음' }}</p>
-                  <p><strong>지역:</strong> {{ userB.location || '정보 없음' }}</p>
-                  <p><strong>교회:</strong> {{ userB.church_name || '정보 없음' }}</p>
-                  <p><strong>취미:</strong> {{ userB.hobby || '정보 없음' }}</p>
-                  <p><strong>MBTI:</strong> {{ userB.mbti || '정보 없음' }}</p>
-                  <p><strong>학력:</strong> {{ userB.education || '정보 없음' }}</p>
-                  <p><strong>매력 포인트:</strong> {{ userB.charm_points || '정보 없음' }}</p>
+                
+                <div class="profile-images" v-if="userB">
+                  <div class="image-container" v-if="userB.profile_photo">
+                    <img :src="userB.profile_photo" alt="프로필 사진" class="profile-image">
+                    <span class="image-label">프로필</span>
+                  </div>
+                  <div class="image-container" v-if="userB.church_verification">
+                    <img :src="userB.church_verification" alt="교회 인증" class="profile-image">
+                    <span class="image-label">교회 인증</span>
+                  </div>
+                  <div class="image-container" v-if="userB.company_verification">
+                    <img :src="userB.company_verification" alt="직장 인증" class="profile-image">
+                    <span class="image-label">직장 인증</span>
+                  </div>
                 </div>
+                
+                <div class="profile-sections">
+                  <div class="profile-section">
+                    <h4>기본 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>ID:</strong> {{ userB.id }}</p>
+                      <p><strong>이름:</strong> {{ userB.name || '정보 없음' }}</p>
+                      <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
+                      <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
+                      <p><strong>생일:</strong> {{ userB.birth_date ? new Date(userB.birth_date).toLocaleDateString() : '정보 없음' }}</p>
+                      <p><strong>생년:</strong> {{ userB.birth_year || '정보 없음' }}</p>
+                      <p><strong>키:</strong> {{ userB.height || '정보 없음' }}cm</p>
+                      <p><strong>가입일:</strong> {{ userB.created_at ? new Date(userB.created_at).toLocaleString() : '정보 없음' }}</p>
+                      <p><strong>연락처:</strong> {{ userB.phone || '정보 없음' }}</p>
+                      <p><strong>연락처 구매 여부:</strong> {{ userB.purchase_contact ? '예' : '아니오' }}</p>
+                      <p><strong>프라이빗 설정:</strong> {{ userB.private ? '예' : '아니오' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>직업/학력/위치</h4>
+                    <div class="profile-details">
+                      <p><strong>직업:</strong> {{ userB.field || '정보 없음' }}</p>
+                      <p><strong>회사:</strong> {{ userB.company_name || '정보 없음' }}</p>
+                      <p><strong>학력:</strong> {{ userB.education || '정보 없음' }}</p>
+                      <p><strong>지역:</strong> {{ userB.location || '정보 없음' }}</p>
+                      <p><strong>신청 경로:</strong> {{ userB.application_source || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>교회/신앙 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>교회:</strong> {{ userB.church_name || '정보 없음' }}</p>
+                      <p><strong>첫 교회 출석:</strong> {{ userB.first_church_attendance || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>성격/취향</h4>
+                    <div class="profile-details">
+                      <p><strong>MBTI:</strong> {{ userB.mbti || '정보 없음' }}</p>
+                      <p><strong>취미:</strong> {{ userB.hobby || '정보 없음' }}</p>
+                      <p><strong>매력 포인트:</strong> {{ userB.charm_points || '정보 없음' }}</p>
+                      <p><strong>이상형:</strong> {{ userB.ideal_type || '정보 없음' }}</p>
+                      <p><strong>이상형 우선순위:</strong> {{ formatPriorities(userB.ideal_type_priorities) || '정보 없음' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              
+              <div class="matching-actions" v-if="userA && userB">
+                <button @click="matchUsers(userA, userB)" class="match-button">
+                  <i class="fas fa-heart"></i> 매칭하기
+                </button>
               </div>
             </div>
           </div>
@@ -573,37 +684,29 @@ function copyToClipboard() {
     });
 }
 
-// 프롬프트 저장하기
-async function savePrompt() {
-  try {
-    loading.value = true;
-    
-    const { data, error } = await supabase
-      .from('matching_prompts')
-      .insert([
-        { 
-          user_a_id: selectedUserA.value,
-          user_b_id: selectedUserB.value,
-          prompt_template: promptTemplate.value,
-          rendered_prompt: renderTemplate()
-        }
-      ]);
-      
-    if (error) throw error;
-    
-    alert('프롬프트가 저장되었습니다!');
-  } catch (err) {
-    console.error('Error saving prompt:', err);
-    alert('프롬프트 저장에 실패했습니다.');
-  } finally {
-    loading.value = false;
-  }
-}
-
 // 매치 선택 처리
 function handleMatchSelect(match) {
   selectedUserB.value = match.matchUser.id;
   loadUserDetails('B');
+}
+
+// Match two users together
+async function matchUsers(user1, user2) {
+  try {
+    if (!user1 || !user2) {
+      alert('매칭할 유저 정보가 없습니다.');
+      return;
+    }
+    
+    // 이미 매칭되었는지 확인하는 과정과 데이터베이스에 저장하는 작업은 createMatch 함수에서 처리합니다
+    createMatch({
+      user1Id: user1.id,
+      user2Id: user2.id
+    });
+  } catch (error) {
+    console.error('매칭 작업 중 오류 발생:', error);
+    alert(`매칭 작업 중 오류가 발생했습니다: ${error.message}`);
+  }
 }
 
 // 두 유저를 매칭하고 dating_matched 테이블에 저장
@@ -672,6 +775,34 @@ function formatDateTime(dateString) {
   const minute = String(date.getMinutes()).padStart(2, '0');
   
   return `${year}년 ${month}월 ${day}일 ${weekday}요일 ${hour}시 ${minute}분`;
+}
+
+// 이상형 우선순위 포맷팅
+function formatPriorities(priorities) {
+  if (!priorities) return '정보 없음';
+  
+  try {
+    // JSON 문자열로 저장된 경우 파싱
+    const priorityData = typeof priorities === 'string' ? JSON.parse(priorities) : priorities;
+    
+    // 배열인 경우
+    if (Array.isArray(priorityData)) {
+      return priorityData.join(', ');
+    }
+    
+    // 객체인 경우 (키-값 쌍)
+    if (typeof priorityData === 'object') {
+      return Object.entries(priorityData)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+    }
+    
+    // 그 외의 경우 문자열로 변환
+    return String(priorities);
+  } catch (error) {
+    console.error('이상형 우선순위 포맷팅 오류:', error);
+    return String(priorities);
+  }
 }
 
 // 일정 수정 시작
@@ -990,7 +1121,7 @@ async function sendSms() {
       },
       body: JSON.stringify({
         phone: smsRecipient.value.phone,
-        message: `[텐저블데이팅] 안녕하세요. ${smsRecipient.value.name}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩 보낼 수 있으며, 긴 이야기는 만나서 할 수 있도록 시스템을 만들었습니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/${matchedUserId.value}`
+        message: `[텐저블데이팅] 안녕하세요. ${smsRecipient.value.name}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩만 보낼 수 있으며, 긴 이야기는 만나서 할 수 있도록 시스템을 만들었습니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/${matchedUserId.value}`
       })
     });
     
@@ -1725,6 +1856,128 @@ async function sendKakaoMessage(user) {
   padding: 6px 12px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.matching-actions {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+  width: 100%;
+}
+
+.profile-images {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.image-container {
+  position: relative;
+  width: 32%;
+  height: 180px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.image-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0,0,0,0.6);
+  color: white;
+  text-align: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.profile-sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.user-profile-card {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  margin: 10px;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.user-profile-card:hover {
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.profile-section {
+  flex: 1;
+  min-width: 250px;
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.profile-section:hover {
+  transform: translateY(-3px);
+}
+
+.profile-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e74c3c;
+  color: #34495e;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.match-button {
+  background-color: #e74c3c;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-button i {
+  font-size: 18px;
+}
+
+.match-button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 @media (max-width: 768px) {
