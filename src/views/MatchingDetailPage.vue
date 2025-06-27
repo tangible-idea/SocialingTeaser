@@ -1529,7 +1529,7 @@ async function uploadPhoto() {
       await addSystemMessage('양쪽 모두 사진을 업로드했습니다! 이제 서로의 사진을 볼 수 있습니다.');
     } else {
       // 업로드 완료 시스템 메시지
-      await addSystemMessage(`${currentUserInfo.value.name}님이 사진을 업로드했습니다.`);
+      await addSystemMessage(`${currentUserInfo.value.name}님이 사진을 업로드했습니다. 두 분 다 사진을 업로드하시면, 서로 사진을 볼 수 있습니다!`);
     }
     
     // 상태 초기화
