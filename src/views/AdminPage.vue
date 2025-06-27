@@ -451,13 +451,13 @@
         </div>
       </div>
       <div class="modal-actions deactivation-actions">
-        <button class="user1-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'user1')">
+        <button class="user1-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'user1')">
           {{ currentMatchForDeactivation ? currentMatchForDeactivation.user1.name : '' }}에게 알림톡 전송
         </button>
-        <button class="user2-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'user2')">
+        <button class="user2-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'user2')">
           {{ currentMatchForDeactivation ? currentMatchForDeactivation.user2.name : '' }}에게 알림톡 전송
         </button>
-        <button class="send-both-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'both')">
+        <button class="send-both-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'both')">
           둘 다 알림톡 전송 + 비활성화
         </button>
       </div>
@@ -1101,32 +1101,58 @@ async function updateMatchStatus(match, newStatus) {
 }
 
 // 카카오 알림톡 발송 처리
-async function sendKakaoNotification(match, target) {
+async function sendKakaoCancelNotification(match, target) {
   if (!match) return;
   
   try {
     sendingKakaoNotification.value = true;
-    
-    // API 설정
-    const apiUrl = 'https://api.tangibly.link/chat/sendkakao/channel/cancel_matching';
-    const headers = {
-      'Content-Type': 'application/json'
-    };
+    console.log('매칭 정보:', match);
+    console.log('타겟:', target);
     
     // 시나리오에 따른 처리
     if (target === 'both') {
-      // 둘 다 보내고 비활성화
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          users: [match.user1.id, match.user2.id],
-          match_id: match.id
-        })
-      });
+      // user1에게 알림톡 전송
+      if (match.user1 && match.user1.phone) {
+        // user1 파라미터 출력
+        const user1Params = {
+          phone: match.user1.phone,
+          name: match.user1.name
+        };
+        console.log('user1 알림톡 파라미터:', user1Params);
+        
+        const responseUser1 = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(user1Params)
+        });
+        
+        if (!responseUser1.ok) {
+          throw new Error(`${match.user1.name}님에게 알림톡 전송 실패: ${responseUser1.status}`);
+        }
+      }
       
-      if (!response.ok) {
-        throw new Error(`API 응답 오류: ${response.status}`);
+      // user2에게 알림톡 전송
+      if (match.user2 && match.user2.phone) {
+        // user2 파라미터 출력
+        const user2Params = {
+          phone: match.user2.phone,
+          name: match.user2.name
+        };
+        console.log('user2 알림톡 파라미터:', user2Params);
+        
+        const responseUser2 = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(user2Params)
+        });
+        
+        if (!responseUser2.ok) {
+          throw new Error(`${match.user2.name}님에게 알림톡 전송 실패: ${responseUser2.status}`);
+        }
       }
       
       // 성공 시 매칭도 비활성화
@@ -1135,15 +1161,32 @@ async function sendKakaoNotification(match, target) {
       alert(`${match.user1.name}님과 ${match.user2.name}님에게 알림톡이 발송되었고 매칭이 비활성화되었습니다.`);
     } else {
       // 한 명에게만 보내기
-      const targetUser = target === 'user1' ? match.user1 : match.user2;
+      console.log('한 명에게 보내기 - target:', target);
+      console.log('match.user1:', match.user1);
+      console.log('match.user2:', match.user2);
       
-      const response = await fetch(apiUrl, {
+      // targetUser 선택
+      const targetUser = target === 'user1' ? match.user1 : match.user2;
+      console.log('선택된 targetUser:', targetUser);
+      
+      // 전화번호 검증
+      if (!targetUser || !targetUser.phone) {
+        throw new Error(`전송 대상 사용자(${target})의 전화번호 정보가 없습니다.`);
+      }
+      
+      // targetUser 파라미터 출력
+      const targetUserParams = {
+        phone: targetUser.phone,
+        name: targetUser.name
+      };
+      console.log(`${target} 알림톡 파라미터:`, targetUserParams);
+      
+      const response = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
         method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          users: [targetUser.id],
-          match_id: match.id
-        })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(targetUserParams)
       });
       
       if (!response.ok) {
