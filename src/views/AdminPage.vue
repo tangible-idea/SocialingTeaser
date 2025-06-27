@@ -434,6 +434,35 @@
       </div>
     </div>
   </div>
+  
+  <!-- 매칭 비활성화 확인 모달 -->
+  <div class="modal deactivation-modal" v-if="showDeactivationModal">
+    <div class="modal-content deactivation-content">
+      <div class="modal-header">
+        <h3>알림톡 메시지 및 매칭 비활성화</h3>
+        <button class="close-button" @click="showDeactivationModal = false">&times;</button>
+      </div>
+      <div class="deactivation-details">
+        <p v-if="currentMatchForDeactivation">
+          <strong>{{ currentMatchForDeactivation.user1.name }}</strong>님과 <strong>{{ currentMatchForDeactivation.user2.name }}</strong>님의 매칭 조정을 진행하시겠습니까?
+        </p>
+        <div class="kakao-template-info">
+          <p>알림톡 템플릿 확인: <a href="https://console.coolsms.co.kr/kakao/templates/KA01TP250627022436875yik2j6LnE1U" target="_blank">템플릿 보기</a></p>
+        </div>
+      </div>
+      <div class="modal-actions deactivation-actions">
+        <button class="user1-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'user1')">
+          {{ currentMatchForDeactivation ? currentMatchForDeactivation.user1.name : '' }}에게 알림톡 전송
+        </button>
+        <button class="user2-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'user2')">
+          {{ currentMatchForDeactivation ? currentMatchForDeactivation.user2.name : '' }}에게 알림톡 전송
+        </button>
+        <button class="send-both-button" @click="sendKakaoNotification(currentMatchForDeactivation, 'both')">
+          둘 다 알림톡 전송 + 비활성화
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -478,6 +507,11 @@ const currentEditMatch = ref(null);
 // 코멘트 편집 관련 상태
 const editingComment = ref(false);
 const newComment = ref('');
+
+// 비활성화 확인 모달 관련 상태
+const showDeactivationModal = ref(false);
+const currentMatchForDeactivation = ref(null);
+const sendingKakaoNotification = ref(false);
 
 // 필터링된 사용자 목록 (이미 선택된 사용자 A를 제외)
 const filteredUserList = computed(() => {
@@ -1028,10 +1062,22 @@ async function fetchMatchedUsers() {
 }
 
 // 매칭 상태 변경(활성/비활성)
-async function toggleMatchStatus(match) {
+function toggleMatchStatus(match) {
+  // 활성화인 경우에만 확인 모달 보여주기
+  if (match.status === 'active') {
+    // 비활성화 모달 열기
+    currentMatchForDeactivation.value = match;
+    showDeactivationModal.value = true;
+  } else {
+    // 비활성화 → 활성화는 바로 진행
+    updateMatchStatus(match, 'active', false);
+  }
+}
+
+// 실제 매칭 상태 변경 처리 함수
+async function updateMatchStatus(match, newStatus) {
   try {
-    const newStatus = match.status === 'active' ? 'inactive' : 'active';
-    
+    // 상태 업데이트
     const { error } = await supabase
       .from('dating_matched')
       .update({ status: newStatus })
@@ -1042,11 +1088,80 @@ async function toggleMatchStatus(match) {
     // 화면에서 상태 변경
     match.status = newStatus;
     
+    // 비활성화 모달 닫기
+    showDeactivationModal.value = false;
+    currentMatchForDeactivation.value = null;
+    
     alert(`매칭 상태가 '${newStatus === 'active' ? '활성' : '비활성'}'으로 변경되었습니다.`);
     
   } catch (error) {
     console.error('매칭 상태 변경 중 오류:', error);
     alert(`매칭 상태를 변경하는 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
+
+// 카카오 알림톡 발송 처리
+async function sendKakaoNotification(match, target) {
+  if (!match) return;
+  
+  try {
+    sendingKakaoNotification.value = true;
+    
+    // API 설정
+    const apiUrl = 'https://api.tangibly.link/chat/sendkakao/channel/cancel_matching';
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    // 시나리오에 따른 처리
+    if (target === 'both') {
+      // 둘 다 보내고 비활성화
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          users: [match.user1.id, match.user2.id],
+          match_id: match.id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API 응답 오류: ${response.status}`);
+      }
+      
+      // 성공 시 매칭도 비활성화
+      await updateMatchStatus(match, 'inactive');
+      
+      alert(`${match.user1.name}님과 ${match.user2.name}님에게 알림톡이 발송되었고 매칭이 비활성화되었습니다.`);
+    } else {
+      // 한 명에게만 보내기
+      const targetUser = target === 'user1' ? match.user1 : match.user2;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          users: [targetUser.id],
+          match_id: match.id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API 응답 오류: ${response.status}`);
+      }
+      
+      alert(`${targetUser.name}님에게 알림톡이 발송되었습니다.`);
+    }
+    
+    // 모달 닫기
+    showDeactivationModal.value = false;
+    currentMatchForDeactivation.value = null;
+    
+  } catch (error) {
+    console.error('알림톡 발송 중 오류:', error);
+    alert(`알림톡 발송 중 오류가 발생했습니다: ${error.message}`);
+  } finally {
+    sendingKakaoNotification.value = false;
   }
 }
 
@@ -1805,6 +1920,91 @@ async function sendKakaoMessage(user) {
   padding: 8px 16px;
   cursor: pointer;
   font-weight: bold;
+}
+
+/* 비활성화 모달 스타일 */
+.deactivation-modal .modal-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.deactivation-details {
+  margin-bottom: 20px;
+}
+
+.deactivation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.user1-button, .user2-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.send-both-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.user1-button:hover, .user2-button:hover {
+  background-color: #217dbb;
+}
+
+.send-both-button:hover {
+  background-color: #c0392b;
+}
+
+.kakao-template-info {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #fff9e6;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+}
+
+.kakao-template-info a {
+  color: #3498db;
+  text-decoration: underline;
+  font-weight: 500;
 }
 
 .match-info {
