@@ -20,9 +20,43 @@
         <span class="stat-label">위치 표시 가능:</span>
         <span class="stat-value">{{ geocodedLocations.length }}명</span>
       </div>
+      <div class="stat-item">
+        <span class="stat-label">위치 표시 불가능:</span>
+        <span class="stat-value">{{ unmappableLocations.length }}명</span>
+      </div>
     </div>
     
     <div id="map" ref="mapRef" class="naver-map"></div>
+    
+    <div v-if="unmappableLocations.length > 0" class="unmappable-users">
+      <h3>위치 표시 불가능 사용자 리스트</h3>
+      <div class="users-table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>성별</th>
+              <th>나이</th>
+              <th>위치정보</th>
+              <th>교회명</th>
+              <th>가입일</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in unmappableLocations" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.gender }}</td>
+              <td>{{ user.birth_year ? (new Date().getFullYear() - user.birth_year) : "-" }}</td>
+              <td>{{ user.location }}</td>
+              <td>{{ user.church_name || "-" }}</td>
+              <td>{{ formatDateWithDaysPassed(user.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
     
     <div v-if="errorMessage" class="error-message">
       {{ errorMessage }}
@@ -42,6 +76,7 @@ export default {
     const markers = ref([]);
     const userLocations = ref([]);
     const geocodedLocations = ref([]);
+    const unmappableLocations = ref([]);
     const loading = ref(false);
     const errorMessage = ref('');
     
@@ -127,6 +162,7 @@ export default {
       });
       markers.value = [];
       geocodedLocations.value = [];
+      unmappableLocations.value = [];
       
       const bounds = new window.naver.maps.LatLngBounds();
       let hasValidCoordinates = false;
@@ -267,6 +303,11 @@ export default {
       if (hasValidCoordinates) {
         map.value.fitBounds(bounds);
       }
+      
+      // 지오코딩에 실패한 사용자 추출
+      unmappableLocations.value = userLocations.value.filter(user => {
+        return !geocodedLocations.value.some(geocodedUser => geocodedUser.id === user.id);
+      });
     };
     
     // 맵 초기화
@@ -304,13 +345,33 @@ export default {
       initMap();
     });
     
+    // 가입일 포맷팅 및 경과일수 계산
+    const formatDateWithDaysPassed = (dateString) => {
+      if (!dateString) return '-';
+      
+      const createdAt = new Date(dateString);
+      const now = new Date();
+      
+      // 경과일 계산
+      const diffTime = Math.abs(now - createdAt);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      const year = createdAt.getFullYear();
+      const month = createdAt.getMonth() + 1;
+      const day = createdAt.getDate();
+      
+      return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} (${diffDays}일 전)`;
+    };
+    
     return {
       mapRef,
       loading,
       errorMessage,
       userLocations,
       geocodedLocations,
-      reloadMap
+      unmappableLocations,
+      reloadMap,
+      formatDateWithDaysPassed
     };
   }
 };
@@ -473,9 +534,68 @@ export default {
   background-color: #2980b9;
 }
 
+.unmappable-users {
+  margin-top: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.unmappable-users h3 {
+  margin-top: 0;
+  color: #e74c3c;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.users-table-container {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.users-table th,
+.users-table td {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.users-table th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.users-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.users-table tr:hover {
+  background-color: #f1f1f1;
+}
+
 @media (max-width: 768px) {
   .naver-map {
     height: 400px;
+  }
+  
+  .users-table {
+    font-size: 12px;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 6px 8px;
   }
 }
 </style>

@@ -167,7 +167,7 @@ async function submitApplication() {
       console.log('Sending SMS confirmation...');
       const smsMessage = `${formData.value.name} 님 참가신청해주셔서 감사합니다! 아래 네이버 구매링크로 구매하시면 휴대폰번호가 매칭되어서 자동으로 리스트에 올라갑니다. 매칭결과가 나오면 다시 알려드릴께요!`;
       
-      const smsResponse = await fetch('http://api.tangibly.link/sendsms', {
+      const smsResponse = await fetch('https://api.tangibly.link/sendsms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

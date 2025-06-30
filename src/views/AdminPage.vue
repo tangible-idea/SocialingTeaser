@@ -79,34 +79,145 @@
             <div class="user-profiles">
               <div class="user-profile-card" v-if="userA">
                 <h3>User A: {{ userA.name }}</h3>
-                <div class="profile-details">
-                  <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
-                  <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
-                  <p><strong>직업:</strong> {{ userA.field }}</p>
-                  <p><strong>회사:</strong> {{ userA.company_name || '정보 없음' }}</p>
-                  <p><strong>지역:</strong> {{ userA.location || '정보 없음' }}</p>
-                  <p><strong>교회:</strong> {{ userA.church_name || '정보 없음' }}</p>
-                  <p><strong>취미:</strong> {{ userA.hobby || '정보 없음' }}</p>
-                  <p><strong>MBTI:</strong> {{ userA.mbti || '정보 없음' }}</p>
-                  <p><strong>학력:</strong> {{ userA.education || '정보 없음' }}</p>
-                  <p><strong>매력 포인트:</strong> {{ userA.charm_points || '정보 없음' }}</p>
+                
+                <div class="profile-images" v-if="userA">
+                  <div class="image-container" v-if="userA.profile_photo">
+                    <img :src="userA.profile_photo" alt="프로필 사진" class="profile-image">
+                    <span class="image-label">프로필</span>
+                  </div>
+                  <div class="image-container" v-if="userA.church_verification">
+                    <img :src="userA.church_verification" alt="교회 인증" class="profile-image">
+                    <span class="image-label">교회 인증</span>
+                  </div>
+                  <div class="image-container" v-if="userA.company_verification">
+                    <img :src="userA.company_verification" alt="직장 인증" class="profile-image">
+                    <span class="image-label">직장 인증</span>
+                  </div>
+                </div>
+                
+                <div class="profile-sections">
+                  <div class="profile-section">
+                    <h4>기본 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>ID:</strong> {{ userA.id }}</p>
+                      <p><strong>이름:</strong> {{ userA.name || '정보 없음' }}</p>
+                      <p><strong>성별:</strong> {{ userA.gender === '남자' ? '남성' : '여성' }}</p>
+                      <p><strong>나이:</strong> {{ calculateAge(userA.birth_year) }}세</p>
+                      <p><strong>생일:</strong> {{ userA.birth_date ? new Date(userA.birth_date).toLocaleDateString() : '정보 없음' }}</p>
+                      <p><strong>생년:</strong> {{ userA.birth_year || '정보 없음' }}</p>
+                      <p><strong>키:</strong> {{ userA.height || '정보 없음' }}cm</p>
+                      <p><strong>가입일:</strong> {{ userA.created_at ? new Date(userA.created_at).toLocaleString() : '정보 없음' }}</p>
+                      <p><strong>연락처:</strong> {{ userA.phone || '정보 없음' }}</p>
+                      <p><strong>연락처 구매 여부:</strong> {{ userA.purchase_contact ? '예' : '아니오' }}</p>
+                      <p><strong>프라이빗 설정:</strong> {{ userA.private ? '예' : '아니오' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>직업/학력/위치</h4>
+                    <div class="profile-details">
+                      <p><strong>직업:</strong> {{ userA.field || '정보 없음' }}</p>
+                      <p><strong>회사:</strong> {{ userA.company_name || '정보 없음' }}</p>
+                      <p><strong>학력:</strong> {{ userA.education || '정보 없음' }}</p>
+                      <p><strong>지역:</strong> {{ userA.location || '정보 없음' }}</p>
+                      <p><strong>신청 경로:</strong> {{ userA.application_source || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>교회/신앙 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>교회:</strong> {{ userA.church_name || '정보 없음' }}</p>
+                      <p><strong>첫 교회 출석:</strong> {{ userA.first_church_attendance || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>성격/취향</h4>
+                    <div class="profile-details">
+                      <p><strong>MBTI:</strong> {{ userA.mbti || '정보 없음' }}</p>
+                      <p><strong>취미:</strong> {{ userA.hobby || '정보 없음' }}</p>
+                      <p><strong>매력 포인트:</strong> {{ userA.charm_points || '정보 없음' }}</p>
+                      <p><strong>이상형:</strong> {{ userA.ideal_type || '정보 없음' }}</p>
+                      <p><strong>이상형 우선순위:</strong> {{ formatPriorities(userA.ideal_type_priorities) || '정보 없음' }}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
               <div class="user-profile-card" v-if="userB">
                 <h3>User B: {{ userB.name }}</h3>
-                <div class="profile-details">
-                  <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
-                  <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
-                  <p><strong>직업:</strong> {{ userB.field }}</p>
-                  <p><strong>회사:</strong> {{ userB.company_name || '정보 없음' }}</p>
-                  <p><strong>지역:</strong> {{ userB.location || '정보 없음' }}</p>
-                  <p><strong>교회:</strong> {{ userB.church_name || '정보 없음' }}</p>
-                  <p><strong>취미:</strong> {{ userB.hobby || '정보 없음' }}</p>
-                  <p><strong>MBTI:</strong> {{ userB.mbti || '정보 없음' }}</p>
-                  <p><strong>학력:</strong> {{ userB.education || '정보 없음' }}</p>
-                  <p><strong>매력 포인트:</strong> {{ userB.charm_points || '정보 없음' }}</p>
+                
+                <div class="profile-images" v-if="userB">
+                  <div class="image-container" v-if="userB.profile_photo">
+                    <img :src="userB.profile_photo" alt="프로필 사진" class="profile-image">
+                    <span class="image-label">프로필</span>
+                  </div>
+                  <div class="image-container" v-if="userB.church_verification">
+                    <img :src="userB.church_verification" alt="교회 인증" class="profile-image">
+                    <span class="image-label">교회 인증</span>
+                  </div>
+                  <div class="image-container" v-if="userB.company_verification">
+                    <img :src="userB.company_verification" alt="직장 인증" class="profile-image">
+                    <span class="image-label">직장 인증</span>
+                  </div>
                 </div>
+                
+                <div class="profile-sections">
+                  <div class="profile-section">
+                    <h4>기본 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>ID:</strong> {{ userB.id }}</p>
+                      <p><strong>이름:</strong> {{ userB.name || '정보 없음' }}</p>
+                      <p><strong>성별:</strong> {{ userB.gender === '남자' ? '남성' : '여성' }}</p>
+                      <p><strong>나이:</strong> {{ calculateAge(userB.birth_year) }}세</p>
+                      <p><strong>생일:</strong> {{ userB.birth_date ? new Date(userB.birth_date).toLocaleDateString() : '정보 없음' }}</p>
+                      <p><strong>생년:</strong> {{ userB.birth_year || '정보 없음' }}</p>
+                      <p><strong>키:</strong> {{ userB.height || '정보 없음' }}cm</p>
+                      <p><strong>가입일:</strong> {{ userB.created_at ? new Date(userB.created_at).toLocaleString() : '정보 없음' }}</p>
+                      <p><strong>연락처:</strong> {{ userB.phone || '정보 없음' }}</p>
+                      <p><strong>연락처 구매 여부:</strong> {{ userB.purchase_contact ? '예' : '아니오' }}</p>
+                      <p><strong>프라이빗 설정:</strong> {{ userB.private ? '예' : '아니오' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>직업/학력/위치</h4>
+                    <div class="profile-details">
+                      <p><strong>직업:</strong> {{ userB.field || '정보 없음' }}</p>
+                      <p><strong>회사:</strong> {{ userB.company_name || '정보 없음' }}</p>
+                      <p><strong>학력:</strong> {{ userB.education || '정보 없음' }}</p>
+                      <p><strong>지역:</strong> {{ userB.location || '정보 없음' }}</p>
+                      <p><strong>신청 경로:</strong> {{ userB.application_source || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>교회/신앙 정보</h4>
+                    <div class="profile-details">
+                      <p><strong>교회:</strong> {{ userB.church_name || '정보 없음' }}</p>
+                      <p><strong>첫 교회 출석:</strong> {{ userB.first_church_attendance || '정보 없음' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="profile-section">
+                    <h4>성격/취향</h4>
+                    <div class="profile-details">
+                      <p><strong>MBTI:</strong> {{ userB.mbti || '정보 없음' }}</p>
+                      <p><strong>취미:</strong> {{ userB.hobby || '정보 없음' }}</p>
+                      <p><strong>매력 포인트:</strong> {{ userB.charm_points || '정보 없음' }}</p>
+                      <p><strong>이상형:</strong> {{ userB.ideal_type || '정보 없음' }}</p>
+                      <p><strong>이상형 우선순위:</strong> {{ formatPriorities(userB.ideal_type_priorities) || '정보 없음' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              
+              <div class="matching-actions" v-if="userA && userB">
+                <button @click="matchUsers(userA, userB)" class="match-button">
+                  <i class="fas fa-heart"></i> 매칭하기
+                </button>
               </div>
             </div>
           </div>
@@ -327,6 +438,35 @@
       </div>
     </div>
   </div>
+  
+  <!-- 매칭 비활성화 확인 모달 -->
+  <div class="modal deactivation-modal" v-if="showDeactivationModal">
+    <div class="modal-content deactivation-content">
+      <div class="modal-header">
+        <h3>알림톡 메시지 및 매칭 비활성화</h3>
+        <button class="close-button" @click="showDeactivationModal = false">&times;</button>
+      </div>
+      <div class="deactivation-details">
+        <p v-if="currentMatchForDeactivation">
+          <strong>{{ currentMatchForDeactivation.user1.name }}</strong>님과 <strong>{{ currentMatchForDeactivation.user2.name }}</strong>님의 매칭 조정을 진행하시겠습니까?
+        </p>
+        <div class="kakao-template-info">
+          <p>알림톡 템플릿 확인: <a href="https://console.coolsms.co.kr/kakao/templates/KA01TP250627022436875yik2j6LnE1U" target="_blank">템플릿 보기</a></p>
+        </div>
+      </div>
+      <div class="modal-actions deactivation-actions">
+        <button class="user1-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'user1')">
+          {{ currentMatchForDeactivation ? currentMatchForDeactivation.user1.name : '' }}에게 알림톡 전송
+        </button>
+        <button class="user2-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'user2')">
+          {{ currentMatchForDeactivation ? currentMatchForDeactivation.user2.name : '' }}에게 알림톡 전송
+        </button>
+        <button class="send-both-button" @click="sendKakaoCancelNotification(currentMatchForDeactivation, 'both')">
+          둘 다 알림톡 전송 + 비활성화
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -371,6 +511,11 @@ const currentEditMatch = ref(null);
 // 코멘트 편집 관련 상태
 const editingComment = ref(false);
 const newComment = ref('');
+
+// 비활성화 확인 모달 관련 상태
+const showDeactivationModal = ref(false);
+const currentMatchForDeactivation = ref(null);
+const sendingKakaoNotification = ref(false);
 
 // 필터링된 사용자 목록 (이미 선택된 사용자 A를 제외)
 const filteredUserList = computed(() => {
@@ -577,37 +722,29 @@ function copyToClipboard() {
     });
 }
 
-// 프롬프트 저장하기
-async function savePrompt() {
-  try {
-    loading.value = true;
-    
-    const { data, error } = await supabase
-      .from('matching_prompts')
-      .insert([
-        { 
-          user_a_id: selectedUserA.value,
-          user_b_id: selectedUserB.value,
-          prompt_template: promptTemplate.value,
-          rendered_prompt: renderTemplate()
-        }
-      ]);
-      
-    if (error) throw error;
-    
-    alert('프롬프트가 저장되었습니다!');
-  } catch (err) {
-    console.error('Error saving prompt:', err);
-    alert('프롬프트 저장에 실패했습니다.');
-  } finally {
-    loading.value = false;
-  }
-}
-
 // 매치 선택 처리
 function handleMatchSelect(match) {
   selectedUserB.value = match.matchUser.id;
   loadUserDetails('B');
+}
+
+// Match two users together
+async function matchUsers(user1, user2) {
+  try {
+    if (!user1 || !user2) {
+      alert('매칭할 유저 정보가 없습니다.');
+      return;
+    }
+    
+    // 이미 매칭되었는지 확인하는 과정과 데이터베이스에 저장하는 작업은 createMatch 함수에서 처리합니다
+    createMatch({
+      user1Id: user1.id,
+      user2Id: user2.id
+    });
+  } catch (error) {
+    console.error('매칭 작업 중 오류 발생:', error);
+    alert(`매칭 작업 중 오류가 발생했습니다: ${error.message}`);
+  }
 }
 
 // 두 유저를 매칭하고 dating_matched 테이블에 저장
@@ -724,6 +861,34 @@ function formatDateTime(dateString) {
   const minute = String(date.getMinutes()).padStart(2, '0');
   
   return `${year}년 ${month}월 ${day}일 ${weekday}요일 ${hour}시 ${minute}분`;
+}
+
+// 이상형 우선순위 포맷팅
+function formatPriorities(priorities) {
+  if (!priorities) return '정보 없음';
+  
+  try {
+    // JSON 문자열로 저장된 경우 파싱
+    const priorityData = typeof priorities === 'string' ? JSON.parse(priorities) : priorities;
+    
+    // 배열인 경우
+    if (Array.isArray(priorityData)) {
+      return priorityData.join(', ');
+    }
+    
+    // 객체인 경우 (키-값 쌍)
+    if (typeof priorityData === 'object') {
+      return Object.entries(priorityData)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join(', ');
+    }
+    
+    // 그 외의 경우 문자열로 변환
+    return String(priorities);
+  } catch (error) {
+    console.error('이상형 우선순위 포맷팅 오류:', error);
+    return String(priorities);
+  }
 }
 
 // 일정 수정 시작
@@ -949,10 +1114,22 @@ async function fetchMatchedUsers() {
 }
 
 // 매칭 상태 변경(활성/비활성)
-async function toggleMatchStatus(match) {
+function toggleMatchStatus(match) {
+  // 활성화인 경우에만 확인 모달 보여주기
+  if (match.status === 'active') {
+    // 비활성화 모달 열기
+    currentMatchForDeactivation.value = match;
+    showDeactivationModal.value = true;
+  } else {
+    // 비활성화 → 활성화는 바로 진행
+    updateMatchStatus(match, 'active', false);
+  }
+}
+
+// 실제 매칭 상태 변경 처리 함수
+async function updateMatchStatus(match, newStatus) {
   try {
-    const newStatus = match.status === 'active' ? 'inactive' : 'active';
-    
+    // 상태 업데이트
     const { error } = await supabase
       .from('dating_matched')
       .update({ status: newStatus })
@@ -963,11 +1140,123 @@ async function toggleMatchStatus(match) {
     // 화면에서 상태 변경
     match.status = newStatus;
     
+    // 비활성화 모달 닫기
+    showDeactivationModal.value = false;
+    currentMatchForDeactivation.value = null;
+    
     alert(`매칭 상태가 '${newStatus === 'active' ? '활성' : '비활성'}'으로 변경되었습니다.`);
     
   } catch (error) {
     console.error('매칭 상태 변경 중 오류:', error);
     alert(`매칭 상태를 변경하는 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
+
+// 카카오 알림톡 발송 처리
+async function sendKakaoCancelNotification(match, target) {
+  if (!match) return;
+  
+  try {
+    sendingKakaoNotification.value = true;
+    console.log('매칭 정보:', match);
+    console.log('타겟:', target);
+    
+    // 시나리오에 따른 처리
+    if (target === 'both') {
+      // user1에게 알림톡 전송
+      if (match.user1 && match.user1.phone) {
+        // user1 파라미터 출력
+        const user1Params = {
+          phone: match.user1.phone,
+          name: match.user1.name
+        };
+        console.log('user1 알림톡 파라미터:', user1Params);
+        
+        const responseUser1 = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(user1Params)
+        });
+        
+        if (!responseUser1.ok) {
+          throw new Error(`${match.user1.name}님에게 알림톡 전송 실패: ${responseUser1.status}`);
+        }
+      }
+      
+      // user2에게 알림톡 전송
+      if (match.user2 && match.user2.phone) {
+        // user2 파라미터 출력
+        const user2Params = {
+          phone: match.user2.phone,
+          name: match.user2.name
+        };
+        console.log('user2 알림톡 파라미터:', user2Params);
+        
+        const responseUser2 = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(user2Params)
+        });
+        
+        if (!responseUser2.ok) {
+          throw new Error(`${match.user2.name}님에게 알림톡 전송 실패: ${responseUser2.status}`);
+        }
+      }
+      
+      // 성공 시 매칭도 비활성화
+      await updateMatchStatus(match, 'inactive');
+      
+      alert(`${match.user1.name}님과 ${match.user2.name}님에게 알림톡이 발송되었고 매칭이 비활성화되었습니다.`);
+    } else {
+      // 한 명에게만 보내기
+      console.log('한 명에게 보내기 - target:', target);
+      console.log('match.user1:', match.user1);
+      console.log('match.user2:', match.user2);
+      
+      // targetUser 선택
+      const targetUser = target === 'user1' ? match.user1 : match.user2;
+      console.log('선택된 targetUser:', targetUser);
+      
+      // 전화번호 검증
+      if (!targetUser || !targetUser.phone) {
+        throw new Error(`전송 대상 사용자(${target})의 전화번호 정보가 없습니다.`);
+      }
+      
+      // targetUser 파라미터 출력
+      const targetUserParams = {
+        phone: targetUser.phone,
+        name: targetUser.name
+      };
+      console.log(`${target} 알림톡 파라미터:`, targetUserParams);
+      
+      const response = await fetch('https://api.tangibly.link/chat/sendkakao/channel/cancel_matching', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(targetUserParams)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API 응답 오류: ${response.status}`);
+      }
+      
+      alert(`${targetUser.name}님에게 알림톡이 발송되었습니다.`);
+    }
+    
+    // 모달 닫기
+    showDeactivationModal.value = false;
+    currentMatchForDeactivation.value = null;
+    
+  } catch (error) {
+    console.error('알림톡 발송 중 오류:', error);
+    alert(`알림톡 발송 중 오류가 발생했습니다: ${error.message}`);
+  } finally {
+    sendingKakaoNotification.value = false;
   }
 }
 
@@ -1042,7 +1331,7 @@ async function sendSms() {
       },
       body: JSON.stringify({
         phone: smsRecipient.value.phone,
-        message: `[텐저블데이팅] 안녕하세요. ${smsRecipient.value.name}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩 보낼 수 있으며, 긴 이야기는 만나서 할 수 있도록 시스템을 만들었습니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/${matchedUserId.value}`
+        message: `[텐저블데이팅] 안녕하세요. ${smsRecipient.value.name}님께 좋은 인연을 찾았어요! 아래 링크에서 확인해보세요. 왜 두 분이 적합한 인연인지 메시지와 함께 간략한 프로필을 함께 볼 수 있도록 링크를 만들었습니다. 서로 질문카드를 하루에 1개씩만 보낼 수 있으며, 긴 이야기는 만나서 할 수 있도록 시스템을 만들었습니다. 좋은 인연이 되기를 응원합니다!  https://social.tangibly.link/matching/${matchedUserId.value}`
       })
     });
     
@@ -1750,6 +2039,91 @@ async function sendKakaoMessage(user) {
   font-weight: bold;
 }
 
+/* 비활성화 모달 스타일 */
+.deactivation-modal .modal-content {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.close-button {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.deactivation-details {
+  margin-bottom: 20px;
+}
+
+.deactivation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.user1-button, .user2-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.send-both-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.user1-button:hover, .user2-button:hover {
+  background-color: #217dbb;
+}
+
+.send-both-button:hover {
+  background-color: #c0392b;
+}
+
+.kakao-template-info {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #fff9e6;
+  border-radius: 6px;
+  border-left: 4px solid #ffc107;
+}
+
+.kakao-template-info a {
+  color: #3498db;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
 .match-info {
   display: flex;
   justify-content: space-between;
@@ -1799,6 +2173,128 @@ async function sendKakaoMessage(user) {
   padding: 6px 12px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.matching-actions {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+  width: 100%;
+}
+
+.profile-images {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  justify-content: center;
+  width: 100%;
+}
+
+.image-container {
+  position: relative;
+  width: 32%;
+  height: 180px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.image-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0,0,0,0.6);
+  color: white;
+  text-align: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.profile-sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.user-profile-card {
+  flex: 1;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  margin: 10px;
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.user-profile-card:hover {
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.profile-section {
+  flex: 1;
+  min-width: 250px;
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.profile-section:hover {
+  transform: translateY(-3px);
+}
+
+.profile-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e74c3c;
+  color: #34495e;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.match-button {
+  background-color: #e74c3c;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.match-button i {
+  font-size: 18px;
+}
+
+.match-button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 @media (max-width: 768px) {
