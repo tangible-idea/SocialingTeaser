@@ -2,17 +2,64 @@
   <div class="matching-algorithm">
     <div class="main-user-selection">
       <h3>매칭 대상자 선택</h3>
-      <div class="selection-wrapper">
-        <select 
-          v-model="selectedMainUser" 
-          class="user-select" 
-          @change="loadMainUserDetails"
-          :disabled="loading">
-          <option value="" disabled>주 사용자를 선택하세요</option>
-          <option v-for="user in userList" :key="user.id" :value="user.id">
-            {{ user.name }} ({{ user.gender === '남자' ? '남성' : '여성' }}) - 가입: {{ new Date(user.created_at).toLocaleDateString() }}
-          </option>
-        </select>
+      <div class="user-table-wrapper">
+        <div class="table-container">
+          <table class="selection-table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>성별</th>
+                <th>나이</th>
+                <th>가입일</th>
+                <th>지역</th>
+                <th>선택</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="user in filteredUserList" 
+                :key="user.id" 
+                :class="{ 
+                  'selected-row': selectedMainUser === user.id,
+                  'private-user': user.is_private 
+                }"
+                @click="selectUserFromTable(user.id)"
+              >
+                <td>{{ user.name }}</td>
+                <td>{{ user.gender === '남자' ? '남성' : '여성' }}</td>
+                <td>{{ calculateAge(user.birth_year) }}세</td>
+                <td>{{ new Date(user.created_at).toLocaleDateString() }}</td>
+                <td>{{ user.location || '정보 없음' }}</td>
+                <td>
+                  <div class="button-group">
+                    <button 
+                      class="select-user-btn" 
+                      :disabled="loading" 
+                      @click.stop="selectUserFromTable(user.id)">
+                      {{ selectedMainUser === user.id ? '선택됨' : '선택' }}
+                    </button>
+                    <button 
+                      class="toggle-private-btn"
+                      :class="{ 'private-active': user.is_private }"
+                      @click.stop="togglePrivateStatus(user)"
+                      :title="user.is_private ? '공개로 전환' : '비공개로 전환'"
+                    >
+                      {{ user.is_private ? '공개' : '비공개' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-filter">
+          <input 
+            type="text" 
+            v-model="tableFilter" 
+            placeholder="이름으로 검색" 
+            class="search-input" 
+          />
+        </div>
       </div>
       
       <div class="user-profile-card main-user" v-if="mainUser">
@@ -194,6 +241,7 @@ const onLightboxHide = () => {
 // State variables
 const selectedMainUser = ref('');
 const mainUser = ref(null);
+const tableFilter = ref('');
 const mainUserDisplayImages = ref({
   profile_photo: null,
   church_verification: null,
@@ -208,6 +256,52 @@ const topRecommendations = ref([]);
 
 const apiModels = ref(['Claude-Sonnet-4', 'ChatGPT-4o-Latest', 'GPT-4.1', 'Gemini-2.5-Pro-Preview']);
 const selectedApiModel = ref(apiModels.value[0]);
+
+// Filter userList based on search input
+const filteredUserList = computed(() => {
+  if (!props.userList) return [];
+  if (!tableFilter.value) return props.userList;
+  
+  return props.userList.filter(user => {
+    return user.name.toLowerCase().includes(tableFilter.value.toLowerCase()) ||
+           (user.location && user.location.toLowerCase().includes(tableFilter.value.toLowerCase()));
+  });
+});
+
+// Select a user from the table
+function selectUserFromTable(userId) {
+  selectedMainUser.value = userId;
+  loadMainUserDetails();
+}
+
+// Toggle a user's private status
+async function togglePrivateStatus(user) {
+  if (loading.value) return;
+  
+  try {
+    // Toggle the private status
+    const newPrivateStatus = !user.is_private;
+    
+    // Update UI immediately for responsiveness
+    user.is_private = newPrivateStatus;
+    
+    // Update the user's private status in the database
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_private: newPrivateStatus })
+      .eq('id', user.id);
+      
+    if (error) {
+      console.error('Error toggling private status:', error);
+      // Revert the UI change if the database update failed
+      user.is_private = !newPrivateStatus;
+      alert(`비공개 상태 변경 중 오류가 발생했습니다: ${error.message}`);
+    }
+  } catch (err) {
+    console.error('Error in togglePrivateStatus:', err);
+    alert('비공개 상태 변경 중 오류가 발생했습니다.');
+  }
+}
 
 // Watch for main user selection
 watch(selectedMainUser, async (newVal) => {
@@ -656,6 +750,122 @@ async function getAiAnalysis(match) {
   background-color: #fff;
 }
 
+/* Table Styles */
+.user-table-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto; /* Add vertical scroll */
+  max-height: 300px; /* Fixed height for table container */
+  margin-top: 0.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.table-filter {
+  margin-bottom: 0.75rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  margin-top: 0.75rem;
+}
+
+.selection-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.selection-table th {
+  background-color: #f5f8fa;
+  color: #334155;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.selection-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.selection-table tbody tr:hover {
+  background-color: #f1f5f9;
+  cursor: pointer;
+}
+
+.selected-row {
+  background-color: #e8f4ff !important;
+  border-left: 3px solid #3b82f6;
+}
+
+.private-user {
+  background-color: #f1f1f1 !important;
+  color: #666 !important;
+}
+
+.private-user td {
+  color: #666 !important;
+  font-style: italic;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.select-user-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.select-user-btn:hover {
+  background-color: #2563eb;
+}
+
+.select-user-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.toggle-private-btn {
+  background-color: #64748b;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-private-btn:hover {
+  background-color: #475569;
+}
+
+.toggle-private-btn.private-active {
+  background-color: #22c55e;
+}
+
+.toggle-private-btn.private-active:hover {
+  background-color: #16a34a;
+}
 
 .profile-header {
   display: flex;

@@ -111,6 +111,10 @@
             </div>
           </div>
 
+          <div class="manual-matching-controls" v-if="userA && userB">
+            <button @click="manualMatchUsers" class="match-button">매칭하기</button>
+          </div>
+
           <div class="prompt-section" v-if="userA && userB">
             <h3>Matching Prompt Generation</h3>
             <div class="template-controls">
@@ -651,6 +655,54 @@ async function createMatch({ user1Id, user2Id }) {
   } catch (error) {
     console.error('매칭 중 오류 발생:', error);
     alert(`매칭 중 오류가 발생했습니다: ${error.message}`);
+  }
+}
+
+// 사용자 간 매칭 여부 확인 함수
+async function checkExistingMatch(user1Id, user2Id) {
+  try {
+    const { data: existingMatch } = await supabase
+      .from('dating_matched')
+      .select('*')
+      .or(`user1_id.eq.${user1Id},user1_id.eq.${user2Id},user2_id.eq.${user1Id},user2_id.eq.${user2Id}`);
+    
+    return existingMatch && existingMatch.length > 0;
+  } catch (error) {
+    console.error('매칭 확인 중 오류:', error);
+    throw error;
+  }
+}
+
+// 수동 매칭
+async function manualMatchUsers() {
+  try {
+    if (!userA.value || !userB.value) {
+      alert('매칭할 두 사용자를 모두 선택해주세요.');
+      return;
+    }
+    
+    // 이미 매칭된 사용자인지 확인
+    const isAlreadyMatched = await checkExistingMatch(userA.value.id, userB.value.id);
+    if (isAlreadyMatched) {
+      alert('이미 매칭된 사용자입니다.');
+      return;
+    }
+    
+    // 매칭 생성
+    await createMatch({
+      user1Id: userA.value.id,
+      user2Id: userB.value.id
+    });
+    
+    alert('매칭이 완료되었습니다!');
+    
+    // 매칭 리스트 탭을 표시 중이면 목록 새로고침
+    if (activeTab.value === 'matchingList') {
+      fetchMatchedUsers();
+    }
+  } catch (error) {
+    console.error('매칭 작업 중 오류 발생:', error);
+    alert(`매칭 작업 중 오류가 발생했습니다: ${error.message}`);
   }
 }
 
@@ -1512,6 +1564,28 @@ async function sendKakaoMessage(user) {
   color: #ccc;
   margin: 0 15px;
   font-size: 18px;
+}
+
+/* Manual matching controls */
+.manual-matching-controls {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.manual-matching-controls .match-button {
+  background-color: #2980b9;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.manual-matching-controls .match-button:hover {
+  background-color: #3498db;
 }
 
 /* Meeting info styles */
