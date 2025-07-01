@@ -58,6 +58,37 @@
       </div>
     </div>
     
+    <!-- 전체 사용자 리스트 -->
+    <div class="all-users-section">
+      <h3>전체 사용자 리스트</h3>
+      <div class="users-table-container">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>성별</th>
+              <th>나이</th>
+              <th>위치정보</th>
+              <th>교회명</th>
+              <th>가입일</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in userLocations" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.gender }}</td>
+              <td>{{ user.birth_year ? (new Date().getFullYear() - user.birth_year) : "-" }}</td>
+              <td>{{ user.location }}</td>
+              <td>{{ user.church_name || "-" }}</td>
+              <td>{{ formatDateWithDaysPassed(user.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
     <div v-if="errorMessage" class="error-message">
       {{ errorMessage }}
     </div>
@@ -398,6 +429,31 @@ export default {
 .map-controls {
   display: flex;
   justify-content: flex-end;
+}
+
+.unmappable-users, .all-users-section {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.unmappable-users h3, .all-users-section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.all-users-section {
+  background-color: #f8f9fa;
+}
+
+.map-controls {
   margin-bottom: 1rem;
 }
 

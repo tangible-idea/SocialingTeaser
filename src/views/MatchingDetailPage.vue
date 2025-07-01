@@ -85,6 +85,7 @@
                 <!-- 일정 변경 요청에 대한 수락 버튼 (요청을 받은 사람만 볼 수 있음) -->
                 <div v-if="isDateChangeRequest(message) && message.sender_id !== userUuid && !message.answered" class="date-change-actions">
                   <button @click="acceptDateChange(message)" class="accept-button">일정 수락하기</button>
+                  <button @click="rejectDateChange(message)" class="reject-button">일정 거부하기</button>
                 </div>
               </div>
               
@@ -846,6 +847,36 @@ async function acceptDateChange(message) {
   } catch (err) {
     console.error('일정 수락 중 오류 발생:', err);
 alert('일정 수락을 처리할 수 없습니다. 다시 시도해주세요.');
+  }
+}
+
+// 일정 변경 요청 거부 함수
+async function rejectDateChange(message) {
+  try {
+    // 메시지를 거부됨으로 표시 (dating_chat 테이블에 answered 필드 업데이트)
+    const { error: messageUpdateError } = await supabase
+      .from('dating_chat')
+      .update({ 
+        answered: true
+      })
+      .eq('id', message.id);
+      
+    if (messageUpdateError) {
+      console.error('메시지 업데이트 중 오류 발생:', messageUpdateError);
+      throw messageUpdateError;
+    }
+    
+    // 현재 화면에서 보이는 데이터도 업데이트
+    message.answered = true;
+    
+    // 일정 거부 시스템 메시지 추가
+    await addSystemMessage(`${currentUserInfo.value.name}님이 일정 변경 요청을 거부하셨습니다.`);
+    
+    // 성공 메시지
+    alert('일정 변경이 거부되었습니다.');
+  } catch (err) {
+    console.error('일정 거부 중 오류 발생:', err);
+    alert('일정 거부를 처리할 수 없습니다. 다시 시도해주세요.');
   }
 }
 
@@ -2580,6 +2611,39 @@ function closePhotoEnlarge() {
 
 .photo-select-btn:hover {
   background-color: #0056b3;
+}
+
+.accept-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+  margin-right: 8px;
+}
+
+.accept-button:hover {
+  background-color: #45a049;
+}
+
+.reject-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.reject-button:hover {
+  background-color: #d32f2f;
 }
 
 .photo-preview {
