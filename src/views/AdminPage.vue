@@ -475,7 +475,7 @@ async function loadUserDetails(userType) {
 
 // 기본 템플릿 삽입
 function insertDefaultTemplate() {
-  promptTemplate.value = `하나님의 인도하심 매칭 분석: ${userA.value.name} & ${userB.value.name}
+  promptTemplate.value = `매칭 분석: ${userA.value.name} & ${userB.value.name}
 
 1. 기본 프로필
 
