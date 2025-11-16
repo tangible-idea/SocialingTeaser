@@ -612,18 +612,18 @@ ${allCandidates}
 }`;
     
     console.log('AI 추천 알고리즘 요청 전송');
-    const poeApiUrl = 'https://api.poe.com/v1/chat/completions';
-    console.log(`Calling Poe API: ${poeApiUrl} with model: ${selectedApiModel.value}`);
-    console.log('Using API Key:', apiKey ? 'Key exists' : 'Key missing');
 
-    const response = await axios.post(poeApiUrl, {
+    // Vite 프록시를 통해 Poe API 호출
+    const proxyUrl = '/api/poe/v1/chat/completions';
+    console.log(`Calling Poe API via Vite proxy: ${proxyUrl} with model: ${selectedApiModel.value}`);
+
+    const response = await axios.post(proxyUrl, {
       model: selectedApiModel.value,
       messages: [
         { role: 'user', content: prompt }
       ]
     }, {
       headers: {
-        'Api-Key': apiKey,
         'Content-Type': 'application/json'
       }
     });
@@ -632,14 +632,17 @@ ${allCandidates}
       throw new Error('API에서 유효한 응답을 받지 못했습니다.');
     }
 
-    // Poe API의 OpenAI 호환 응답 형식에서 content 추출
+    console.log('API 응답:', response.data);
+
+    // Poe API의 OpenAI 호환 응답에서 content 추출
     const content = response.data.choices?.[0]?.message?.content;
     if (!content) {
+      console.error('전체 응답 구조:', JSON.stringify(response.data, null, 2));
       throw new Error('API 응답에서 content를 찾을 수 없습니다.');
     }
 
-    var parsedJsonStr = content.replace('```json', '');
-    parsedJsonStr = parsedJsonStr.replace('```', '');
+    var parsedJsonStr = content.replace(/```json/g, '');
+    parsedJsonStr = parsedJsonStr.replace(/```/g, '');
 
     // Parse the API response
     const result = extractJsonFromText(parsedJsonStr);
