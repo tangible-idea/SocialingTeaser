@@ -254,7 +254,7 @@ const aiAnalysisResults = ref({});
 const recommendationLoading = ref(false);
 const topRecommendations = ref([]);
 
-const apiModels = ref(['Claude-Sonnet-4', 'ChatGPT-4o-Latest', 'GPT-4.1', 'Gemini-2.5-Pro-Preview']);
+const apiModels = ref(['GPT-5', 'claude-sonnet-4.5', 'gemini-2.5-flash']);
 const selectedApiModel = ref(apiModels.value[0]);
 
 // Filter userList based on search input
@@ -612,19 +612,33 @@ ${allCandidates}
 }`;
     
     console.log('AI 추천 알고리즘 요청 전송');
-    const apiUrl = `https://ai.tangibly.link/call/${selectedApiModel.value}`;
-    console.log(`Calling API: ${apiUrl}`);
-    const response = await axios.post(apiUrl, {
-      apikey: apiKey,
-      request: prompt
+    const poeApiUrl = 'https://api.poe.com/v1/chat/completions';
+    console.log(`Calling Poe API: ${poeApiUrl}`);
+    const response = await axios.post(poeApiUrl, {
+      model: selectedApiModel.value,
+      messages: [
+        { role: 'user', content: prompt }
+      ]
+    }, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      }
     });
     
     if (!response.data) {
       throw new Error('API에서 유효한 응답을 받지 못했습니다.');
     }
-    var parsedJsonStr = response.data.replace('```json', '');
+
+    // Poe API의 OpenAI 호환 응답 형식에서 content 추출
+    const content = response.data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('API 응답에서 content를 찾을 수 없습니다.');
+    }
+
+    var parsedJsonStr = content.replace('```json', '');
     parsedJsonStr = parsedJsonStr.replace('```', '');
-    
+
     // Parse the API response
     const result = extractJsonFromText(parsedJsonStr);
     if (!result || !result.recommendations) {
