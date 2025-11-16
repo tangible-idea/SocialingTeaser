@@ -613,7 +613,9 @@ ${allCandidates}
     
     console.log('AI 추천 알고리즘 요청 전송');
     const poeApiUrl = 'https://api.poe.com/v1/chat/completions';
-    console.log(`Calling Poe API: ${poeApiUrl}`);
+    console.log(`Calling Poe API: ${poeApiUrl} with model: ${selectedApiModel.value}`);
+    console.log('Using API Key:', apiKey ? 'Key exists' : 'Key missing');
+
     const response = await axios.post(poeApiUrl, {
       model: selectedApiModel.value,
       messages: [
@@ -621,7 +623,7 @@ ${allCandidates}
       ]
     }, {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Api-Key': apiKey,
         'Content-Type': 'application/json'
       }
     });
@@ -899,6 +901,14 @@ async function getAiAnalysis(match) {
   padding: 0.6rem;
   border-radius: 4px;
   border: 1px solid #ccc;
+  background-color: white;
+  color: #333;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.api-model-select option {
+  color: #333;
   background-color: white;
 }
 
