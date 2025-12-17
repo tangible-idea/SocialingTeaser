@@ -140,7 +140,20 @@ async function submitApplication() {
       height: formData.value.height,
       field: formData.value.field,
       mbti: formData.value.mbti,
-      hobby: formData.value.hobby
+      hobby: formData.value.hobby,
+      company_name: '',
+      private: false,
+      purchase_contact: '',
+      birth_date: '',
+      first_church_attendance: '',
+      charm_points: '',
+      ideal_type_priorities: [],
+      ideal_type: '',
+      education: '',
+      church_verification: '',
+      company_verification: '',
+      profile_photo: '',
+      application_source: 'web'
       // Let the database handle id (UUID) and created_at with their default values
     };
     
