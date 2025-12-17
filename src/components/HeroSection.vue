@@ -131,8 +131,6 @@ async function submitApplication() {
     console.log('Submitting to Supabase table "dating"');
     // First, save to Supabase
     const submissionData = {
-      // Generate a numeric ID for int8 field type (using timestamp to ensure uniqueness)
-      id: Date.now(),
       name: formData.value.name,
       birth_year: formData.value.birthYear,
       gender: formData.value.gender,
@@ -143,14 +141,15 @@ async function submitApplication() {
       field: formData.value.field,
       mbti: formData.value.mbti,
       hobby: formData.value.hobby
-      // Let the database handle created_at with its default NOW() value
+      // Let the database handle id (UUID) and created_at with their default values
     };
     
     console.log('Data being submitted to Supabase:', submissionData);
     
     const { data, error: err } = await supabase
       .from('dating')
-      .insert([submissionData]);
+      .insert([submissionData])
+      .select();
     
     console.log('Supabase response - data:', data);
     console.log('Supabase response - error:', err);
